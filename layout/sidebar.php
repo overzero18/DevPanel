@@ -41,9 +41,9 @@
         </li>
 
         <li class="nav-item mt-4">
-            <a href="#" class="nav-link text-white">
-                <i class="bi bi-gear-fill"></i>
-                Configuración
+            <a href="/devpanel/change_password.php" class="nav-link text-white">
+                <i class="bi bi-key-fill"></i>
+                Cambiar Contraseña
             </a>
         </li>
 
