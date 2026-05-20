@@ -6,6 +6,7 @@
 <!-- JS personalizado -->
 <script src="/devpanel/assets/js/app.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xterm/lib/xterm.js"></script>
+
 </body>
 
 </html>

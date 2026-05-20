@@ -1,0 +1,26 @@
+<FilesMatch "^config\.php$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+<FilesMatch "^\.env$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+<Directory "logs">
+    Order allow,deny
+    Deny from all
+</Directory>
+
+<Directory "tmp">
+    Order allow,deny
+    Deny from all
+</Directory>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^\.git/ - [F]
+    RewriteRule ^\.gitignore$ - [F]
+    RewriteRule ^README - [F]
+</IfModule>

@@ -1,6 +1,24 @@
 <?php
 
+require_once __DIR__ . '/../includes/security.php';
+
 header('Content-Type: application/json');
+
+authenticateSession();
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST')
+{
+    http_response_code(405);
+    echo json_encode(['success' => false, 'output' => 'Method not allowed']);
+    exit;
+}
+
+if (!validateCsrfToken())
+{
+    http_response_code(403);
+    echo json_encode(['success' => false, 'output' => 'CSRF token validation failed']);
+    exit;
+}
 
 $path   = $_POST['path']   ?? '';
 $host   = $_POST['host']   ?? '';
@@ -10,72 +28,54 @@ $remote = $_POST['remote'] ?? '/';
 
 if (!$path || !is_dir($path))
 {
-    echo json_encode([
+    http_response_code(400);
+    echo json_encode(['success' => false, 'output' => 'Ruta inválida']);
+    exit;
+}
 
-        'success' => false,
-        'output' => 'Ruta inválida'
-
-    ]);
-
+if (!validatePath($path))
+{
+    http_response_code(403);
+    echo json_encode(['success' => false, 'output' => 'Ruta no permitida']);
     exit;
 }
 
 if (!$host || !$user || !$pass)
 {
-    echo json_encode([
-
-        'success' => false,
-        'output' => 'Faltan datos FTP'
-
-    ]);
-
+    http_response_code(400);
+    echo json_encode(['success' => false, 'output' => 'Faltan datos FTP']);
     exit;
 }
 
-/* Crear script temporal lftp */
-$tmpScript =
-    '/tmp/devpanel_deploy_' .
-    uniqid() .
-    '.txt';
+if (!preg_match('#^[a-zA-Z0-9/.\_\-]+$#', $remote))
+{
+    http_response_code(400);
+    echo json_encode(['success' => false, 'output' => 'Ruta remota inválida']);
+    exit;
+}
+
+$tmpScript = '/tmp/devpanel_deploy_' . bin2hex(random_bytes(16)) . '.txt';
+
+$hostSafe   = sanitizeFtpCredential($host);
+$userSafe   = sanitizeFtpCredential($user);
+$passSafe   = sanitizeFtpCredential($pass);
+$pathSafe   = escapeshellarg($path);
+$remoteSafe = escapeshellarg($remote);
 
 $script = <<<EOL
-
-set ssl:verify-certificate no
-
-open $host
-
-user $user $pass
-
-mirror -R \
---delete \
---verbose \
---exclude-glob node_modules \
---exclude-glob .git \
---exclude-glob vendor \
---exclude-glob logs \
-"$path" "$remote"
-
+open $hostSafe
+user $userSafe $passSafe
+mirror -R --delete --verbose --exclude-glob node_modules --exclude-glob .git --exclude-glob vendor --exclude-glob logs $pathSafe $remoteSafe
 bye
-
 EOL;
 
 file_put_contents($tmpScript, $script);
 
-/* Ejecutar lftp */
-$command =
-    'lftp -f ' .
-    escapeshellarg($tmpScript) .
-    ' 2>&1';
-
+$command = 'lftp -f ' . escapeshellarg($tmpScript) . ' 2>&1';
 $output = shell_exec($command);
 
-/* Limpiar */
 unlink($tmpScript);
 
-echo json_encode([
+logAction('deploy_ftp', "Deployed to $host");
 
-    'success' => true,
-
-    'output' => $output
-
-]);
+echo json_encode(['success' => true, 'output' => $output]);

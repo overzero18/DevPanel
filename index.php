@@ -3,8 +3,17 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
+require_once __DIR__ . '/includes/security.php';
 require_once __DIR__ . '/includes/services.php';
 require_once __DIR__ . '/includes/projects.php';
+
+if (!isset($_SESSION[SESSION_TOKEN_KEY]))
+{
+    header('Location: login.html');
+    exit;
+}
+
+$csrfToken = generateCsrfToken();
 
 $apacheRunning = isApacheRunning();
 $mariadbRunning = isMariaDBRunning();
@@ -17,6 +26,8 @@ $projects = getProjects();
 <?php include 'layout/sidebar.php'; ?>
 
 <h1 class="mb-4 fw-bold">Dashboard</h1>
+
+
 <!-- Estadísticas sistema -->
 <div class="row g-4 mb-4">
 

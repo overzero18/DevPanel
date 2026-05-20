@@ -47,6 +47,13 @@
             </a>
         </li>
 
+        <li class="nav-item mt-auto pt-4 border-top border-secondary">
+            <a href="#" onclick="logout()" class="nav-link text-danger">
+                <i class="bi bi-box-arrow-right"></i>
+                Cerrar sesión
+            </a>
+        </li>
+
     </ul>
 </div>
 

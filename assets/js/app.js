@@ -1,62 +1,104 @@
+let csrfToken = '';
+
 document.addEventListener("DOMContentLoaded", () => {
 
     console.log("DevPanel iniciado 🚀");
 
+    const tokenElement = document.querySelector('meta[name="csrf-token"]');
+    if (tokenElement) {
+        csrfToken = tokenElement.getAttribute('content');
+    }
+
 });
+
+function checkAuth(response) {
+    if (response.status === 401) {
+        window.location.href = '/devpanel/login.html';
+        return false;
+    }
+    return true;
+}
+
+function addCsrfToken(formData) {
+    if (csrfToken && formData instanceof URLSearchParams) {
+        formData.append('csrf_token', csrfToken);
+    }
+    return formData;
+}
 
 function openFolder(path)
 {
+    const formData = new URLSearchParams();
+    formData.append('path', path);
+    formData.append('csrf_token', csrfToken);
+
     fetch('/devpanel/api/open_folder.php',
     {
         method: 'POST',
-
         headers:
         {
             'Content-Type': 'application/x-www-form-urlencoded'
         },
-
-        body: 'path=' + encodeURIComponent(path)
-    });
+        body: formData
+    })
+    .then(response => {
+        if (!checkAuth(response)) return;
+        return response.json();
+    })
+    .catch(error => console.error(error));
 }
 
 function openVSCode(path)
 {
+    const formData = new URLSearchParams();
+    formData.append('path', path);
+    formData.append('csrf_token', csrfToken);
+
     fetch('/devpanel/api/open_vscode.php',
     {
         method: 'POST',
-
         headers:
         {
             'Content-Type': 'application/x-www-form-urlencoded'
         },
-
-        body: 'path=' + encodeURIComponent(path)
-    });
+        body: formData
+    })
+    .then(response => {
+        if (!checkAuth(response)) return;
+        return response.json();
+    })
+    .catch(error => console.error(error));
 }
 
 function controlService(service, action)
 {
+    const formData = new URLSearchParams();
+    formData.append('service', service);
+    formData.append('action', action);
+    formData.append('csrf_token', csrfToken);
+
     fetch('/devpanel/api/service_control.php',
     {
         method: 'POST',
-
         headers:
         {
             'Content-Type': 'application/x-www-form-urlencoded'
         },
-
-        body:
-            'service=' + encodeURIComponent(service) +
-            '&action=' + encodeURIComponent(action)
+        body: formData
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!checkAuth(response)) return;
+        return response.json();
+    })
     .then(data =>
     {
-        alert(data.output);
-
-        location.reload();
+        if (data) {
+            alert(data.output);
+            location.reload();
+        }
     });
 }
+
 function createProject()
 {
     const input = document.getElementById('projectName');
@@ -69,18 +111,23 @@ function createProject()
         return;
     }
 
+    const formData = new URLSearchParams();
+    formData.append('name', name);
+    formData.append('csrf_token', csrfToken);
+
     fetch('/devpanel/api/create_project.php',
     {
         method: 'POST',
-
         headers:
         {
             'Content-Type': 'application/x-www-form-urlencoded'
         },
-
-        body: 'name=' + encodeURIComponent(name)
+        body: formData
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!checkAuth(response)) return;
+        return response.json();
+    })
     .then(data =>
     {
         if (!data.success)
@@ -100,6 +147,7 @@ function createProject()
         alert('Error creando proyecto');
     });
 }
+
 async function loadLogs()
 {
     try
@@ -107,6 +155,8 @@ async function loadLogs()
         const response = await fetch(
             '/devpanel/api/logs.php?type=apache'
         );
+
+        if (!checkAuth(response)) return;
 
         const data = await response.json();
 
@@ -132,7 +182,6 @@ async function loadLogs()
     }
 }
 
-/* Auto cargar logs */
 document.addEventListener("DOMContentLoaded", () =>
 {
     loadLogs();
@@ -147,6 +196,8 @@ async function loadSystemStats()
         const response = await fetch(
             '/devpanel/api/system_stats.php'
         );
+
+        if (!checkAuth(response)) return;
 
         const data = await response.json();
 
@@ -176,7 +227,6 @@ async function loadSystemStats()
     }
 }
 
-/* Auto refresh */
 document.addEventListener("DOMContentLoaded", () =>
 {
     loadSystemStats();
@@ -216,7 +266,6 @@ function initTerminal()
     {
         const charCode = data.charCodeAt(0);
 
-        /* Enter */
         if (charCode === 13)
         {
             term.write('\\r\\n');
@@ -230,7 +279,6 @@ function initTerminal()
             return;
         }
 
-        /* Backspace */
         if (charCode === 127)
         {
             if (currentCommand.length > 0)
@@ -254,21 +302,23 @@ async function executeCommand(command)
 {
     try
     {
+        const formData = new URLSearchParams();
+        formData.append('command', command);
+        formData.append('csrf_token', csrfToken);
+
         const response = await fetch(
             '/devpanel/api/terminal.php',
         {
             method: 'POST',
-
             headers:
             {
                 'Content-Type':
                     'application/x-www-form-urlencoded'
             },
-
-            body:
-                'command=' +
-                encodeURIComponent(command)
+            body: formData
         });
+
+        if (!checkAuth(response)) return;
 
         const data = await response.json();
 
@@ -287,27 +337,27 @@ function clearTerminal()
     term.write('$ ');
 }
 
-
-
 async function generateZip(path)
 {
     try
     {
+        const formData = new URLSearchParams();
+        formData.append('path', path);
+        formData.append('csrf_token', csrfToken);
+
         const response = await fetch(
             '/devpanel/api/generate_zip.php',
         {
             method: 'POST',
-
             headers:
             {
                 'Content-Type':
                     'application/x-www-form-urlencoded'
             },
-
-            body:
-                'path=' +
-                encodeURIComponent(path)
+            body: formData
         });
+
+        if (!checkAuth(response)) return;
 
         const data = await response.json();
 
@@ -318,7 +368,7 @@ async function generateZip(path)
             return;
         }
 
-        window.open(data.download, '_blank');
+       window.location.href = data.download;
     }
     catch(error)
     {
@@ -327,6 +377,7 @@ async function generateZip(path)
         alert('Error generando ZIP');
     }
 }
+
 function openDeployModal(project, path)
 {
     document.getElementById(
@@ -363,7 +414,6 @@ async function executeDeploy()
     const path =
         document.getElementById('deployProjectPath').value;
 
-    /* ZIP */
     if (type === 'zip')
     {
         generateZip(path);
@@ -371,7 +421,6 @@ async function executeDeploy()
         return;
     }
 
-    /* FTP */
     const formData = new URLSearchParams();
 
     formData.append('path', path);
@@ -396,6 +445,8 @@ async function executeDeploy()
         document.getElementById('ftpRemote').value
     );
 
+    formData.append('csrf_token', csrfToken);
+
     try
     {
         const response = await fetch(
@@ -403,16 +454,21 @@ async function executeDeploy()
         {
             method: 'POST',
 
-            headers:
-            {
-                'Content-Type':
-                    'application/x-www-form-urlencoded'
-            },
-
             body: formData
         });
 
+        if (!checkAuth(response)) return;
+
         const data = await response.json();
+
+        console.log(data);
+
+        if (!data.success)
+        {
+            alert(data.output || data.message);
+
+            return;
+        }
 
         alert(data.output || 'Deploy completado');
     }
@@ -421,5 +477,24 @@ async function executeDeploy()
         console.error(error);
 
         alert('Error deploy');
+    }
+}
+
+function logout()
+{
+    if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+        const formData = new URLSearchParams();
+        formData.append('csrf_token', csrfToken);
+
+        fetch('/devpanel/api/logout.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: formData
+        })
+            .then(() => {
+                window.location.href = '/devpanel/login.html';
+            });
     }
 }
