@@ -8,21 +8,17 @@
     Deny from all
 </FilesMatch>
 
-<Directory "logs">
+<FilesMatch "^actions\.log$">
     Order allow,deny
     Deny from all
-</Directory>
-
-<Directory "tmp">
-    Order allow,deny
-    Deny from all
-</Directory>
+</FilesMatch>
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteRule ^\.git/ - [F]
     RewriteRule ^\.gitignore$ - [F]
     RewriteRule ^README - [F]
+    RewriteRule ^logs/ - [F]
 </IfModule>
 
 Options -Indexes

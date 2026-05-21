@@ -1,0 +1,9 @@
+:root{
+    --bg:#0b0f14;
+    --panel:#0f1720;
+    --text:#e6eef6;
+    --muted:#98a2b3;
+}
+body{background:var(--bg);color:var(--text)}
+.devpanel-sidebar{background:var(--panel);color:var(--text);padding:1rem;width:220px}
+.devpanel-topbar{background:transparent;color:var(--text);padding:0.5rem}

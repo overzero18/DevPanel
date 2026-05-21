@@ -19,6 +19,13 @@
     <link rel="stylesheet" href="/devpanel/assets/css/style.css">
     <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.css">
+    <?php
+    // Load theme CSS if helper is available
+    @include_once __DIR__ . '/../includes/helpers/theme.php';
+    if (function_exists('devpanel_print_theme_link')) {
+        devpanel_print_theme_link();
+    }
+    ?>
 </head>
 
 <body>

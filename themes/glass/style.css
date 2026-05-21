@@ -1,0 +1,7 @@
+:root{
+    --bg:rgba(255,255,255,0.06);
+    --panel:rgba(255,255,255,0.04);
+    --text:#eaf0f6;
+}
+body{background:rgba(10,14,20,0.8);color:var(--text)}
+.devpanel-sidebar{backdrop-filter:blur(8px);background:var(--bg)}
