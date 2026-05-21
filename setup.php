@@ -24,9 +24,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$setupComplete)
     {
         $error = 'La contraseña es obligatoria';
     }
-    elseif (strlen($password) < 6)
+    elseif (strlen($password) < 12)
     {
-        $error = 'La contraseña debe tener al menos 6 caracteres';
+        $error = 'La contraseña debe tener al menos 12 caracteres';
     }
     elseif ($password !== $confirmPassword)
     {
@@ -162,14 +162,14 @@ PHP;
                 <div class="form-group">
                     <label for="password">Contraseña</label>
                     <input type="password" class="form-control" id="password" name="password"
-                           required minlength="6" placeholder="Mínimo 6 caracteres">
+                           required minlength="12" placeholder="Mínimo 12 caracteres">
                     <small class="form-text text-muted">Usa una contraseña fuerte</small>
                 </div>
 
                 <div class="form-group">
                     <label for="confirm_password">Confirmar Contraseña</label>
                     <input type="password" class="form-control" id="confirm_password"
-                           name="confirm_password" required minlength="6"
+                           name="confirm_password" required minlength="12"
                            placeholder="Repite la contraseña">
                 </div>
 

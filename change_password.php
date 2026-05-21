@@ -1,8 +1,5 @@
 <?php
 
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
-
 require_once __DIR__ . '/includes/security.php';
 
 if (!isset($_SESSION[SESSION_TOKEN_KEY]))
@@ -42,9 +39,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST')
         {
             $error = 'Debes ingresar una nueva contraseña';
         }
-        elseif (strlen($newPassword) < 6)
+        elseif (strlen($newPassword) < 12)
         {
-            $error = 'La nueva contraseña debe tener al menos 6 caracteres';
+            $error = 'La nueva contraseña debe tener al menos 12 caracteres';
         }
         elseif ($newPassword !== $confirmPassword)
         {

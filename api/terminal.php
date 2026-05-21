@@ -13,6 +13,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST')
     exit;
 }
 
+checkEndpointRateLimit('terminal', 30, 60);
+
 if (!validateCsrfToken())
 {
     http_response_code(403);
@@ -26,6 +28,13 @@ $command = trim($command);
 if ($command === '')
 {
     echo json_encode(['success' => false, 'output' => '']);
+    exit;
+}
+
+if (strlen($command) > 500)
+{
+    http_response_code(400);
+    echo json_encode(['success' => false, 'output' => 'Comando demasiado largo (máximo 500 caracteres)']);
     exit;
 }
 

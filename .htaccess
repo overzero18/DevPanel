@@ -24,3 +24,5 @@
     RewriteRule ^\.gitignore$ - [F]
     RewriteRule ^README - [F]
 </IfModule>
+
+Options -Indexes

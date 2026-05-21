@@ -13,6 +13,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST')
     exit;
 }
 
+checkEndpointRateLimit('deploy', 5, 60);
+
 if (!validateCsrfToken())
 {
     http_response_code(403);
@@ -54,7 +56,16 @@ if (!preg_match('#^[a-zA-Z0-9/.\_\-]+$#', $remote))
     exit;
 }
 
-$tmpScript = '/tmp/devpanel_deploy_' . bin2hex(random_bytes(16)) . '.txt';
+$tmpScript = tempnam(sys_get_temp_dir(), 'devpanel_deploy_');
+
+if ($tmpScript === false)
+{
+    http_response_code(500);
+    echo json_encode(['success' => false, 'output' => 'Error creando archivo temporal']);
+    exit;
+}
+
+chmod($tmpScript, 0600);
 
 $hostSafe   = sanitizeFtpCredential($host);
 $userSafe   = sanitizeFtpCredential($user);
@@ -69,12 +80,18 @@ mirror -R --delete --verbose --exclude-glob node_modules --exclude-glob .git --e
 bye
 EOL;
 
-file_put_contents($tmpScript, $script);
+if (file_put_contents($tmpScript, $script, LOCK_EX) === false)
+{
+    http_response_code(500);
+    echo json_encode(['success' => false, 'output' => 'Error escribiendo archivo temporal']);
+    @unlink($tmpScript);
+    exit;
+}
 
 $command = 'lftp -f ' . escapeshellarg($tmpScript) . ' 2>&1';
 $output = shell_exec($command);
 
-unlink($tmpScript);
+@unlink($tmpScript);
 
 logAction('deploy_ftp', "Deployed to $host");
 

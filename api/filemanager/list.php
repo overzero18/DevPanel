@@ -2,7 +2,17 @@
 
 header('Content-Type: application/json');
 
+require_once '../../includes/security.php';
 require_once '../../includes/helpers/filesystem.php';
+
+authenticateSession();
+
+if ($_SERVER['REQUEST_METHOD'] !== 'GET')
+{
+    http_response_code(405);
+    echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+    exit;
+}
 
 $path = $_GET['path'] ?? obtenerRutaBase();
 

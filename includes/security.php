@@ -1,7 +1,7 @@
 <?php
 
 ini_set('session.httponly', 1);
-ini_set('session.secure', 0);
+ini_set('session.secure', 1);
 ini_set('session.samesite', 'Strict');
 
 session_start();
@@ -73,10 +73,10 @@ function clearCsrfToken()
     unset($_SESSION[CSRF_TOKEN_KEY]);
 }
 
-function checkRateLimit()
+function checkEndpointRateLimit($action, $limit = 10, $window = 60)
 {
     $ip = $_SERVER['REMOTE_ADDR'];
-    $key = 'login_attempts_' . $ip;
+    $key = 'api_rate_' . $action . '_' . $ip;
 
     if (!isset($_SESSION[$key]))
     {
@@ -85,17 +85,19 @@ function checkRateLimit()
 
     $attempts = &$_SESSION[$key];
 
-    if (time() - $attempts['first_attempt'] > LOGIN_ATTEMPT_WINDOW)
+    if (time() - $attempts['first_attempt'] > $window)
     {
         $attempts = ['count' => 0, 'first_attempt' => time()];
     }
 
-    if ($attempts['count'] >= MAX_LOGIN_ATTEMPTS)
+    if ($attempts['count'] >= $limit)
     {
         http_response_code(429);
-        echo json_encode(['success' => false, 'message' => 'Too many login attempts. Try again later.']);
+        echo json_encode(['success' => false, 'message' => 'Rate limit exceeded. Try again later.']);
         exit;
     }
+
+    $attempts['count']++;
 }
 
 function recordLoginAttempt($success = false)
@@ -193,6 +195,12 @@ function validateCommand($command)
     if (!in_array($baseCommand, $allowedCommands))
     {
         logAction('command_blocked', "Blocked: $command");
+        return false;
+    }
+
+    if (preg_match('/[;&|`$<>\\n\\r]/', $command))
+    {
+        logAction('command_blocked', "Shell operators detected: $command");
         return false;
     }
 

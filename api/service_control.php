@@ -13,6 +13,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST')
     exit;
 }
 
+checkEndpointRateLimit('service_control', 10, 60);
+
 if (!validateCsrfToken())
 {
     http_response_code(403);

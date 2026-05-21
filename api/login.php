@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST')
     exit;
 }
 
-checkRateLimit();
+checkEndpointRateLimit('login', MAX_LOGIN_ATTEMPTS, LOGIN_ATTEMPT_WINDOW);
 
 $password = $_POST['password'] ?? '';
 

@@ -1,8 +1,5 @@
 <?php
 
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
-
 require_once __DIR__ . '/includes/security.php';
 require_once __DIR__ . '/includes/services.php';
 require_once __DIR__ . '/includes/projects.php';
