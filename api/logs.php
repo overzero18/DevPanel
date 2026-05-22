@@ -33,7 +33,16 @@ if (!file_exists($file))
     exit;
 }
 
-$content = shell_exec('tail -n 50 ' . escapeshellarg($file));
+$lines = file($file, FILE_IGNORE_NEW_LINES);
+
+if ($lines === false)
+{
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'No se pudo leer el log']);
+    exit;
+}
+
+$content = implode("\n", array_slice($lines, -50));
 $content = escapeHtml($content);
 
 logAction('view_logs', "Viewed $type logs");

@@ -46,8 +46,15 @@ $commands = [
 ];
 
 $command = $commands[$service][$action];
-$output = shell_exec($command . ' 2>&1');
+$result = runControlledCommand($command);
 
 logAction('service_control', "$service $action");
 
-echo json_encode(['success' => true, 'output' => $output]);
+if ($result['exit_code'] !== 0)
+{
+    http_response_code(500);
+    echo json_encode(['success' => false, 'output' => $result['output']]);
+    exit;
+}
+
+echo json_encode(['success' => true, 'output' => $result['output']]);
