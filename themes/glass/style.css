@@ -156,6 +156,18 @@ a:hover {
     box-shadow: 0 0 15px rgba(14, 165, 233, 0.2);
 }
 
+.btn-outline-secondary {
+    background: transparent;
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.btn-outline-secondary:hover {
+    background: var(--bg-secondary);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+}
+
 .btn-danger {
     background: rgba(239, 68, 68, 0.2);
     color: #fca5a5;
@@ -176,6 +188,18 @@ a:hover {
 .btn-success:hover {
     background: rgba(16, 185, 129, 0.3);
     border-color: #10b981;
+}
+
+.btn-info {
+    background: rgba(14, 165, 233, 0.2);
+    color: var(--accent-primary);
+    border: 1px solid rgba(14, 165, 233, 0.5);
+}
+
+.btn-info:hover {
+    background: rgba(14, 165, 233, 0.3);
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 15px rgba(14, 165, 233, 0.3);
 }
 
 /* Forms */

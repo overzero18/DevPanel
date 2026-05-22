@@ -139,7 +139,20 @@ a:hover {
 
 .btn-secondary:hover {
     background: var(--bg-tertiary);
-    border-color: rgba(59, 130, 246, 0.5);
+    border-color: var(--accent-primary);
+    color: var(--text-primary);
+}
+
+.btn-outline-secondary {
+    background: transparent;
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.btn-outline-secondary:hover {
+    background: var(--bg-secondary);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
 }
 
 .btn-danger {
@@ -158,6 +171,17 @@ a:hover {
 
 .btn-success:hover {
     background: #059669;
+}
+
+.btn-info {
+    background: rgba(59, 130, 246, 0.2);
+    color: var(--accent-primary);
+    border: 1px solid var(--accent-primary);
+}
+
+.btn-info:hover {
+    background: rgba(59, 130, 246, 0.3);
+    color: #60a5fa;
 }
 
 /* Forms */
