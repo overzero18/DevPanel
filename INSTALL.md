@@ -210,6 +210,14 @@ Seguridad: Solo se pueden ejecutar estos comandos:
 
 ## 🐛 Solución de Problemas
 
+### Diagnóstico automático
+
+```bash
+./scripts/devpanel-doctor.sh
+```
+
+El doctor revisa XAMPP, PHP, Git, Docker, config local y permisos críticos.
+
 ### "Error al guardar la contraseña"
 
 ```bash

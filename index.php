@@ -214,10 +214,16 @@ $writableProjectCount = count(array_filter($projects, function ($project) {
                     <h4 class="mb-1">Centro de notificaciones</h4>
                     <p class="text-secondary mb-0" id="notificationsSummary">Cargando eventos recientes.</p>
                 </div>
-                <button type="button" class="btn btn-outline-info" onclick="loadNotifications()">
-                    <i class="bi bi-arrow-clockwise"></i>
-                    Recargar
-                </button>
+                <div class="notification-actions">
+                    <button type="button" class="btn btn-outline-secondary" onclick="dismissAllNotifications()">
+                        <i class="bi bi-check2-all"></i>
+                        Limpiar
+                    </button>
+                    <button type="button" class="btn btn-outline-info" onclick="loadNotifications()">
+                        <i class="bi bi-arrow-clockwise"></i>
+                        Recargar
+                    </button>
+                </div>
             </div>
 
             <div class="notifications-list" id="notificationsList">
@@ -976,6 +982,11 @@ $writableProjectCount = count(array_filter($projects, function ($project) {
                         <div class="file-preview-empty">
                             Selecciona un archivo para ver su contenido.
                         </div>
+                    </div>
+
+                    <div class="file-editor-status" id="fileEditorStatus" hidden>
+                        <span id="fileEditorCursor">Ln 1, Col 1</span>
+                        <span id="fileEditorCount">0 caracteres</span>
                     </div>
                 </aside>
             </div>

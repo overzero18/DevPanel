@@ -286,8 +286,13 @@ function renderFilePreview(data)
 
     const body = document.getElementById('filePreviewBody');
     const saveButton = document.getElementById('filePreviewSave');
+    const editorStatus = document.getElementById('fileEditorStatus');
     body.innerHTML = '';
     saveButton.hidden = true;
+
+    if (editorStatus) {
+        editorStatus.hidden = true;
+    }
 
     if (data.mode === 'image') {
         const image = document.createElement('img');
@@ -304,12 +309,44 @@ function renderFilePreview(data)
         editor.className = 'file-preview-editor';
         editor.spellcheck = false;
         editor.value = data.content || '';
+        editor.addEventListener('input', updateFileEditorStatus);
+        editor.addEventListener('click', updateFileEditorStatus);
+        editor.addEventListener('keyup', updateFileEditorStatus);
+        editor.addEventListener('keydown', event => {
+            if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
+                event.preventDefault();
+                saveFilePreview();
+            }
+        });
         body.appendChild(editor);
         saveButton.hidden = false;
+        if (editorStatus) {
+            editorStatus.hidden = false;
+        }
+        updateFileEditorStatus();
         return;
     }
 
     showFilePreview(data.message || 'Preview no disponible');
+}
+
+function updateFileEditorStatus()
+{
+    const editor = document.getElementById('filePreviewEditor');
+    const cursor = document.getElementById('fileEditorCursor');
+    const count = document.getElementById('fileEditorCount');
+
+    if (!editor || !cursor || !count) {
+        return;
+    }
+
+    const beforeCursor = editor.value.slice(0, editor.selectionStart);
+    const lines = beforeCursor.split('\n');
+    const line = lines.length;
+    const column = lines[lines.length - 1].length + 1;
+
+    cursor.textContent = `Ln ${line}, Col ${column}`;
+    count.textContent = `${editor.value.length} caracteres`;
 }
 
 async function saveFilePreview()
@@ -498,9 +535,14 @@ function showFilePreview(message)
 {
     const body = document.getElementById('filePreviewBody');
     const saveButton = document.getElementById('filePreviewSave');
+    const editorStatus = document.getElementById('fileEditorStatus');
 
     if (saveButton) {
         saveButton.hidden = true;
+    }
+
+    if (editorStatus) {
+        editorStatus.hidden = true;
     }
 
     if (body) {

@@ -878,6 +878,12 @@ body {
     gap: 16px;
 }
 
+.notification-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
 .notifications-list {
     display: grid;
     gap: 10px;
@@ -888,7 +894,7 @@ body {
 
 .notification-row {
     display: grid;
-    grid-template-columns: 24px minmax(0, 1fr);
+    grid-template-columns: 24px minmax(0, 1fr) 30px;
     gap: 10px;
     padding: 10px 12px;
     border: 1px solid var(--border-color);
@@ -940,6 +946,20 @@ body {
 .notification-body span {
     color: var(--text-muted);
     font-size: 0.8rem;
+}
+
+.notification-dismiss {
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--overlay);
+    color: var(--text-muted);
+}
+
+.notification-dismiss:hover {
+    color: var(--accent-danger);
+    border-color: color-mix(in srgb, var(--accent-danger) 45%, transparent);
 }
 
 .text-muted,
@@ -1250,7 +1270,7 @@ body {
 
 .file-preview-panel {
     display: grid;
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
     min-height: 420px;
     overflow: hidden;
 }
@@ -1283,6 +1303,17 @@ body {
     font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
     font-size: 13px;
     line-height: 1.5;
+}
+
+.file-editor-status {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 14px;
+    border-top: 1px solid var(--border-color);
+    color: var(--text-muted);
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    font-size: 0.78rem;
 }
 
 .file-preview-image {

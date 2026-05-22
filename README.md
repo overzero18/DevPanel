@@ -1,5 +1,10 @@
 # DevPanel 🚀
 
+![PHP](https://img.shields.io/badge/PHP-7.4%2B-777BB4)
+![XAMPP](https://img.shields.io/badge/XAMPP-local-FB7A24)
+![MariaDB](https://img.shields.io/badge/MariaDB-ready-003545)
+![License](https://img.shields.io/badge/license-MIT-brightgreen)
+
 DevPanel is a lightweight development panel for Ubuntu built with PHP, XAMPP and JavaScript, designed to centralize and simplify the workflow of web development environments.
 
 The project provides a modern interface to manage services, projects, deployments and Linux tools directly from the browser.
@@ -47,6 +52,8 @@ The project provides a modern interface to manage services, projects, deployment
 * Real-time Apache logs
 * System monitoring
 * CPU / RAM / Disk usage
+* Persistent notification center
+* Docker detection and container actions
 
 ## 🎨 UI
 
@@ -54,6 +61,20 @@ The project provides a modern interface to manage services, projects, deployment
 * Responsive layout
 * Sidebar navigation
 * Dashboard cards
+* Dark, Cyber, Ubuntu and Glass themes
+
+---
+
+# 📸 Screenshots
+
+Add updated screenshots here before publishing:
+
+```text
+screenshots/dashboard.png
+screenshots/file-manager.png
+screenshots/database-manager.png
+screenshots/terminal.png
+```
 
 ---
 

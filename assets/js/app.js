@@ -854,9 +854,72 @@ function renderNotifications(items)
             body.appendChild(date);
             row.appendChild(icon);
             row.appendChild(body);
+
+            if (index === 0 && item.id) {
+                const close = document.createElement('button');
+                close.type = 'button';
+                close.className = 'notification-dismiss';
+                close.title = 'Ocultar';
+                close.innerHTML = '<i class="bi bi-x"></i>';
+                close.addEventListener('click', () => dismissNotification(item.id));
+                row.appendChild(close);
+            }
+
             container.appendChild(row);
         });
     });
+}
+
+async function dismissNotification(id)
+{
+    const formData = new URLSearchParams();
+    formData.append('id', id);
+    formData.append('csrf_token', csrfToken);
+
+    await postNotificationDismiss(formData);
+}
+
+async function dismissAllNotifications()
+{
+    const confirmed = await appConfirm('¿Ocultar todas las notificaciones actuales?', {
+        title: 'Limpiar notificaciones',
+        confirmText: 'Limpiar'
+    });
+
+    if (!confirmed) {
+        return;
+    }
+
+    const formData = new URLSearchParams();
+    formData.append('clear_all', '1');
+    formData.append('csrf_token', csrfToken);
+
+    await postNotificationDismiss(formData);
+}
+
+async function postNotificationDismiss(formData)
+{
+    try
+    {
+        const response = await fetch('/devpanel/api/notifications/dismiss.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: formData
+        });
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+        showToast(data.message || 'Notificación actualizada', data.success ? 'success' : 'danger');
+        loadNotifications();
+    }
+    catch(error)
+    {
+        console.error(error);
+        showToast('Error actualizando notificaciones', 'danger');
+    }
 }
 
 function getNotificationIcon(severity)
