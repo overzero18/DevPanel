@@ -8,6 +8,7 @@
 
 <!-- JS personalizado -->
 <script src="/devpanel/assets/js/app.js"></script>
+<script src="/devpanel/assets/js/filemanager.js"></script>
 
 </body>
 

@@ -37,6 +37,13 @@ if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK)
     exit;
 }
 
+if (!is_writable($path))
+{
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'No hay permisos de escritura en esta carpeta']);
+    exit;
+}
+
 $originalName = basename($_FILES['file']['name']);
 $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
 $blockedExtensions = ['php', 'php3', 'php4', 'php5', 'phtml', 'phar', 'cgi', 'pl', 'py', 'sh'];

@@ -43,12 +43,43 @@ if (!is_dir($path))
 }
 
 $items = listarArchivosDirectorio($path);
+$currentPath = realpath($path);
+$basePath = realpath(obtenerRutaBase());
+$breadcrumbs = [];
+
+if ($currentPath && $basePath)
+{
+    $relative = trim(substr($currentPath, strlen($basePath)), DIRECTORY_SEPARATOR);
+    $breadcrumbs[] = [
+        'name' => basename($basePath),
+        'path' => $basePath
+    ];
+
+    if ($relative !== '')
+    {
+        $runningPath = $basePath;
+        foreach (explode(DIRECTORY_SEPARATOR, $relative) as $segment)
+        {
+            $runningPath .= DIRECTORY_SEPARATOR . $segment;
+            $breadcrumbs[] = [
+                'name' => $segment,
+                'path' => $runningPath
+            ];
+        }
+    }
+}
 
 echo json_encode([
 
     'success' => true,
 
-    'currentPath' => realpath($path),
+    'currentPath' => $currentPath,
+
+    'basePath' => $basePath,
+
+    'parentPath' => $currentPath !== $basePath ? dirname($currentPath) : null,
+
+    'breadcrumbs' => $breadcrumbs,
 
     'items' => $items
 

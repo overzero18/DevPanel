@@ -70,6 +70,10 @@ if (!function_exists('listarArchivosDirectorio')) {
                     ? null
                     : filesize($rutaCompleta),
 
+                'sizeLabel' => $esDirectorio
+                    ? '--'
+                    : formatearTamanoArchivo(filesize($rutaCompleta)),
+
                 'modified' =>
                     date(
                         'Y-m-d H:i:s',
@@ -95,5 +99,22 @@ if (!function_exists('listarArchivosDirectorio')) {
         });
 
         return $resultado;
+    }
+}
+
+if (!function_exists('formatearTamanoArchivo')) {
+    function formatearTamanoArchivo($bytes)
+    {
+        $units = ['B', 'KB', 'MB', 'GB'];
+        $size = max(0, (float) $bytes);
+        $unitIndex = 0;
+
+        while ($size >= 1024 && $unitIndex < count($units) - 1)
+        {
+            $size /= 1024;
+            $unitIndex++;
+        }
+
+        return round($size, $unitIndex === 0 ? 0 : 1) . ' ' . $units[$unitIndex];
     }
 }

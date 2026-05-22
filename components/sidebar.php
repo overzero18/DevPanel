@@ -16,6 +16,12 @@ $primaryLinks = [
         'match' => [],
     ],
     [
+        'url' => '/devpanel/index.php#file-manager',
+        'icon' => 'files',
+        'label' => 'File Manager',
+        'match' => [],
+    ],
+    [
         'url' => '/devpanel/index.php#logsContainer',
         'icon' => 'journal-text',
         'label' => 'Logs',

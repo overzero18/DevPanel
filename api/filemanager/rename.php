@@ -21,46 +21,48 @@ if (!validateCsrfToken())
     exit;
 }
 
-$path = $_POST['path'] ?? obtenerRutaBase();
+$path = $_POST['path'] ?? '';
 $name = trim($_POST['name'] ?? '');
 
-if (!$path || !is_dir($path) || !validatePath($path))
+if (!$path || !file_exists($path) || !validatePath($path))
 {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'Ruta no permitida']);
     exit;
 }
 
-if (!preg_match('/^[a-zA-Z0-9._ -]{1,80}$/', $name) || $name === '.' || $name === '..')
+if (!preg_match('/^[a-zA-Z0-9._ -]{1,160}$/', $name) || $name === '.' || $name === '..')
 {
     http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'Nombre de carpeta inválido']);
+    echo json_encode(['success' => false, 'message' => 'Nombre inválido']);
     exit;
 }
 
-if (!is_writable($path))
+$realPath = realpath($path);
+$parent = dirname($realPath);
+$target = $parent . DIRECTORY_SEPARATOR . $name;
+
+if (!is_writable($parent))
 {
     http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'No hay permisos de escritura en esta carpeta']);
+    echo json_encode(['success' => false, 'message' => 'No hay permisos para renombrar en esta carpeta']);
     exit;
 }
-
-$target = rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $name;
 
 if (file_exists($target))
 {
     http_response_code(409);
-    echo json_encode(['success' => false, 'message' => 'La carpeta ya existe']);
+    echo json_encode(['success' => false, 'message' => 'Ya existe un elemento con ese nombre']);
     exit;
 }
 
-if (!mkdir($target, 0755))
+if (!validatePath($parent) || !rename($realPath, $target))
 {
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'No se pudo crear la carpeta']);
+    echo json_encode(['success' => false, 'message' => 'No se pudo renombrar']);
     exit;
 }
 
-logAction('filemanager_mkdir', $target);
+logAction('filemanager_rename', "$realPath -> $target");
 
-echo json_encode(['success' => true, 'message' => 'Carpeta creada']);
+echo json_encode(['success' => true, 'message' => 'Elemento renombrado']);
