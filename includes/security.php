@@ -77,25 +77,28 @@ function clearCsrfToken()
 
 function checkEndpointRateLimit($action, $limit = 10, $window = 60)
 {
-    if (!is_dir(RATE_LIMIT_DIR) && !mkdir(RATE_LIMIT_DIR, 0755, true))
-    {
-        http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Rate limit storage unavailable']);
-        exit;
-    }
-
     $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
     $safeKey = preg_replace('/[^a-zA-Z0-9_.-]/', '_', $action . '_' . $ip);
     $rateFile = RATE_LIMIT_DIR . '/' . hash('sha256', $safeKey) . '.json';
     $attempts = ['count' => 0, 'first_attempt' => time()];
+    $usePersistentStorage = is_dir(RATE_LIMIT_DIR) || mkdir(RATE_LIMIT_DIR, 0755, true);
 
-    if (file_exists($rateFile))
+    if ($usePersistentStorage && file_exists($rateFile))
     {
         $stored = json_decode(file_get_contents($rateFile), true);
 
         if (is_array($stored))
         {
             $attempts = array_merge($attempts, $stored);
+        }
+    }
+    elseif (!$usePersistentStorage)
+    {
+        $sessionKey = 'api_rate_' . $safeKey;
+
+        if (isset($_SESSION[$sessionKey]) && is_array($_SESSION[$sessionKey]))
+        {
+            $attempts = array_merge($attempts, $_SESSION[$sessionKey]);
         }
     }
 
@@ -113,12 +116,12 @@ function checkEndpointRateLimit($action, $limit = 10, $window = 60)
 
     $attempts['count']++;
 
-    if (file_put_contents($rateFile, json_encode($attempts), LOCK_EX) === false)
+    if ($usePersistentStorage && file_put_contents($rateFile, json_encode($attempts), LOCK_EX) !== false)
     {
-        http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Rate limit storage unavailable']);
-        exit;
+        return;
     }
+
+    $_SESSION['api_rate_' . $safeKey] = $attempts;
 }
 
 function recordLoginAttempt($success = false)
@@ -132,6 +135,8 @@ function recordLoginAttempt($success = false)
         {
             unlink($rateFile);
         }
+
+        unset($_SESSION['api_rate_' . $safeKey]);
     }
 }
 
