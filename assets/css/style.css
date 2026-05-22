@@ -625,6 +625,46 @@ body {
     min-height: 38px;
 }
 
+.project-template-picker {
+    display: grid;
+    gap: 10px;
+}
+
+.project-template-grid {
+    display: grid;
+    gap: 8px;
+}
+
+.project-template-option {
+    display: grid;
+    grid-template-columns: 18px minmax(0, 1fr);
+    gap: 10px;
+    align-items: flex-start;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--bg-primary) 34%, transparent);
+    cursor: pointer;
+}
+
+.project-template-option:has(input:checked) {
+    border-color: color-mix(in srgb, var(--accent-primary) 55%, transparent);
+    background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+}
+
+.project-template-option input {
+    margin-top: 4px;
+}
+
+.project-template-option strong,
+.project-template-option small {
+    display: block;
+}
+
+.project-template-option small {
+    color: var(--text-muted);
+}
+
 .project-activity-card {
     display: grid;
     gap: 16px;

@@ -190,6 +190,7 @@ Formato:
 - 📊 **Dashboard** - Estado de servicios y stats del sistema
 - 🖥️ **Terminal** - Ejecuta comandos seguros desde el navegador
 - 📁 **Gestor de Proyectos** - Crea, abre y despliega proyectos
+- 🧩 **Plantillas de Proyectos** - PHP, HTML estático, Node/Vite, Laravel starter y WordPress starter
 - 🧭 **Actividad de Proyectos** - Archivos recientes, acciones y commits
 - 🗄️ **MariaDB Manager** - Crear, importar, exportar y eliminar bases de datos
 - 🎨 **Temas** - Dark, Cyber, Ubuntu y Glass

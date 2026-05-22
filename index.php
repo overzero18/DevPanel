@@ -4,6 +4,7 @@ require_once __DIR__ . '/includes/security.php';
 require_once __DIR__ . '/includes/helpers/config.php';
 require_once __DIR__ . '/includes/services.php';
 require_once __DIR__ . '/includes/projects.php';
+require_once __DIR__ . '/includes/helpers/project_templates.php';
 
 if (!isset($_SESSION[SESSION_TOKEN_KEY]))
 {
@@ -22,6 +23,7 @@ $githubUser = devpanelConfig('GITHUB_USER', '');
 $githubRepo = devpanelConfig('GITHUB_REPO', '');
 $githubRemoteUrl = devpanelConfig('GITHUB_REMOTE_URL', '');
 $runtimeSettings = devpanelConfig();
+$projectTemplates = devpanelProjectTemplates();
 
 $projects = getProjects();
 $projectCount = count($projects);
@@ -1033,6 +1035,28 @@ $writableProjectCount = count(array_filter($projects, function ($project) {
                 <small class="text-secondary">
                     Solo letras, números, guiones y guiones bajos.
                 </small>
+
+                <div class="project-template-picker mt-4">
+                    <label class="form-label">
+                        Plantilla
+                    </label>
+
+                    <div class="project-template-grid">
+                        <?php foreach ($projectTemplates as $templateKey => $template): ?>
+                            <label class="project-template-option">
+                                <input
+                                    type="radio"
+                                    name="projectTemplate"
+                                    value="<?php echo htmlspecialchars($templateKey, ENT_QUOTES, 'UTF-8'); ?>"
+                                    <?php echo $templateKey === 'php' ? 'checked' : ''; ?>>
+                                <span>
+                                    <strong><?php echo htmlspecialchars($template['label'], ENT_QUOTES, 'UTF-8'); ?></strong>
+                                    <small><?php echo htmlspecialchars($template['description'], ENT_QUOTES, 'UTF-8'); ?></small>
+                                </span>
+                            </label>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
 
             </div>
 

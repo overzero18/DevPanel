@@ -288,6 +288,7 @@ function createProject()
 
     const formData = new URLSearchParams();
     formData.append('name', name);
+    formData.append('template', document.querySelector('input[name="projectTemplate"]:checked')?.value || 'php');
     formData.append('csrf_token', csrfToken);
 
     fetch('/devpanel/api/create_project.php',

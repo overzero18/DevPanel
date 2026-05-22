@@ -34,6 +34,7 @@ The project provides a modern interface to manage services, projects, deployment
 
 * Automatic project detection
 * Project type detection (Laravel, WordPress, PHP, Node, Composer, Static)
+* Project templates from UI (PHP, Static HTML, Node/Vite, Laravel starter, WordPress starter)
 * Recent project activity
 * Recent files, panel actions and Git commits per project
 * Open projects in browser

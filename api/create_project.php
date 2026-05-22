@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../includes/security.php';
 require_once __DIR__ . '/../includes/helpers/config.php';
+require_once __DIR__ . '/../includes/helpers/project_templates.php';
 
 header('Content-Type: application/json');
 
@@ -23,6 +24,7 @@ if (!validateCsrfToken())
 
 $name = $_POST['name'] ?? '';
 $name = trim($name);
+$template = trim((string) ($_POST['template'] ?? 'php'));
 
 if ($name === '')
 {
@@ -38,6 +40,13 @@ if (!preg_match('/^[a-zA-Z0-9_-]+$/', $name))
     exit;
 }
 
+if (!array_key_exists($template, devpanelProjectTemplates()))
+{
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'Plantilla inválida']);
+    exit;
+}
+
 $path = rtrim(devpanelConfig('HTDOCS_PATH', '/opt/lampp/htdocs'), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $name;
 
 if (is_dir($path))
@@ -47,8 +56,21 @@ if (is_dir($path))
     exit;
 }
 
-$createCommand = 'sudo /usr/local/bin/devpanel-create-project ' . escapeshellarg($name);
-$createResult = runControlledCommand($createCommand);
+$basePath = dirname($path);
+$createResult = ['exit_code' => 0, 'output' => ''];
+
+if (is_writable($basePath))
+{
+    if (!mkdir($path, 0755, true))
+    {
+        $createResult = ['exit_code' => 1, 'output' => 'mkdir failed'];
+    }
+}
+else
+{
+    $createCommand = 'sudo /usr/local/bin/devpanel-create-project ' . escapeshellarg($name);
+    $createResult = runControlledCommand($createCommand);
+}
 
 if ($createResult['exit_code'] !== 0 || !is_dir($path))
 {
@@ -61,10 +83,21 @@ if ($createResult['exit_code'] !== 0 || !is_dir($path))
     exit;
 }
 
+if (!devpanelApplyProjectTemplate($path, $name, $template))
+{
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Proyecto creado, pero no se pudo aplicar la plantilla',
+        'output' => $createResult['output']
+    ]);
+    exit;
+}
+
 $vscodeCommand = 'sudo /usr/local/bin/devpanel-open-vscode ' . escapeshellarg($path);
 $vscodeResult = runControlledCommand($vscodeCommand);
 
-logAction('create_project', $name);
+logAction('create_project', "$name template=$template");
 
 echo json_encode([
     'success' => true,
