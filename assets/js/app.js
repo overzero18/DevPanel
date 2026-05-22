@@ -214,6 +214,10 @@ async function loadLogs()
 
 document.addEventListener("DOMContentLoaded", () =>
 {
+    if (!document.getElementById('logsContainer')) {
+        return;
+    }
+
     loadLogs();
 
     setInterval(loadLogs, 5000);
@@ -259,6 +263,10 @@ async function loadSystemStats()
 
 document.addEventListener("DOMContentLoaded", () =>
 {
+    if (!document.getElementById('cpuLoad')) {
+        return;
+    }
+
     loadSystemStats();
 
     setInterval(loadSystemStats, 5000);
@@ -268,24 +276,36 @@ let term;
 
 document.addEventListener("DOMContentLoaded", () =>
 {
+    if (!document.getElementById('terminal')) {
+        return;
+    }
+
     initTerminal();
 });
 
 function initTerminal()
 {
+    const terminalElement = document.getElementById('terminal');
+    const rootStyles = getComputedStyle(document.documentElement);
+    const terminalStyles = getComputedStyle(terminalElement);
+    const terminalBackground = terminalStyles.backgroundColor || rootStyles.getPropertyValue('--bg-primary').trim() || '#000000';
+    const terminalForeground = rootStyles.getPropertyValue('--text-primary').trim() || '#f8fafc';
+    const terminalCursor = rootStyles.getPropertyValue('--accent-primary').trim() || '#38bdf8';
+
     term = new Terminal({
 
         cursorBlink: true,
 
         theme:
         {
-            background: '#000000',
-            foreground: '#00ff00'
+            background: terminalBackground,
+            foreground: terminalForeground,
+            cursor: terminalCursor
         }
 
     });
 
-    term.open(document.getElementById('terminal'));
+    term.open(terminalElement);
 
     term.write('Carlos DevPanel Terminal\\r\\n');
     term.write('$ ');

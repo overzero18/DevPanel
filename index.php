@@ -20,8 +20,10 @@ $projects = getProjects();
 ?>
 
 <?php include 'layout/header.php'; ?>
-<?php include 'layout/topbar.php'; ?>
 <?php include 'layout/sidebar.php'; ?>
+<?php include 'layout/topbar.php'; ?>
+
+<div class="content flex-grow-1 p-4">
 
 <h1 class="mb-4 fw-bold">Dashboard</h1>
 
@@ -213,7 +215,7 @@ $projects = getProjects();
 </div>
 
 <!-- Accesos rápidos -->
-<div class="row mt-5">
+<div class="row mt-5" id="projects">
 
     <div class="col-12">
 
@@ -281,11 +283,11 @@ $projects = getProjects();
                             <i class="bi bi-folder-fill text-warning"></i>
 
                             <h5 class="mt-3">
-                                <?php echo $project['name']; ?>
+                                <?php echo htmlspecialchars($project['name'], ENT_QUOTES, 'UTF-8'); ?>
                             </h5>
 
-                            <p class="small text-light mb-1">
-                                <?php echo $project['path']; ?>
+                            <p class="small text-secondary mb-1">
+                                <?php echo htmlspecialchars($project['path'], ENT_QUOTES, 'UTF-8'); ?>
                             </p>
 
                             <p class="small text-info mb-1">
@@ -310,7 +312,7 @@ $projects = getProjects();
                                 <!-- Carpeta -->
                                 <button
                                     type="button"
-                                    class="btn btn-outline-light w-100"
+                                    class="btn btn-outline-secondary w-100"
                                     data-path="<?php echo htmlspecialchars($project['path']); ?>"
                                     onclick="openFolder(this.dataset.path)">
 
@@ -360,9 +362,9 @@ $projects = getProjects();
 
     <div class="modal-dialog modal-dialog-centered">
 
-        <div class="modal-content bg-dark text-white">
+        <div class="modal-content">
 
-            <div class="modal-header border-secondary">
+            <div class="modal-header">
 
                 <h5 class="modal-title">
                     Crear nuevo proyecto
@@ -370,7 +372,7 @@ $projects = getProjects();
 
                 <button
                     type="button"
-                    class="btn-close btn-close-white"
+                    class="btn-close"
                     data-bs-dismiss="modal">
                 </button>
 
@@ -394,7 +396,7 @@ $projects = getProjects();
 
             </div>
 
-            <div class="modal-footer border-secondary">
+            <div class="modal-footer">
 
                 <button
                     type="button"
@@ -444,12 +446,7 @@ $projects = getProjects();
 
             <pre
                 id="logsContainer"
-                class="bg-black text-success p-3 rounded"
-                style="
-                    height: 400px;
-                    overflow-y: auto;
-                    font-size: 13px;
-                ">
+                class="devpanel-log-panel">
 
 Cargando logs...
 
@@ -483,14 +480,7 @@ Cargando logs...
 
             </div>
 
-            <div id="terminal"
-                style="
-                    width: 100%;
-                    height: 500px;
-                    background: #000;
-                    border-radius: 10px;
-                    padding: 10px;
-                ">
+            <div id="terminal" class="devpanel-terminal-shell">
             </div>
 
         </div>
@@ -506,9 +496,9 @@ Cargando logs...
 
     <div class="modal-dialog modal-dialog-centered">
 
-        <div class="modal-content bg-dark text-white">
+        <div class="modal-content">
 
-            <div class="modal-header border-secondary">
+            <div class="modal-header">
 
                 <h5 class="modal-title">
                     Exportar / Deploy
@@ -516,7 +506,7 @@ Cargando logs...
 
                 <button
                     type="button"
-                    class="btn-close btn-close-white"
+                    class="btn-close"
                     data-bs-dismiss="modal">
                 </button>
 
@@ -612,7 +602,7 @@ Cargando logs...
 
             </div>
 
-            <div class="modal-footer border-secondary">
+            <div class="modal-footer">
 
                 <button
                     type="button"

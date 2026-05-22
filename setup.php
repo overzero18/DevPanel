@@ -2,6 +2,8 @@
 
 define('AUTH_PASSWORD_FILE', __DIR__ . '/config.php');
 
+require_once __DIR__ . '/includes/helpers/config.php';
+
 $setupComplete = false;
 $error = '';
 $success = '';
@@ -35,18 +37,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$setupComplete)
     else
     {
         $hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 10]);
+        $existingConfig = file_exists(AUTH_PASSWORD_FILE)
+            ? require AUTH_PASSWORD_FILE
+            : [];
 
-        $content = <<<'PHP'
-<?php
-
-return [
-    'DEVPANEL_PASSWORD' => '$hash',
-];
-PHP;
-
-        $content = str_replace('$hash', $hash, $content);
-
-        if (file_put_contents(AUTH_PASSWORD_FILE, $content))
+        if (devpanelWriteConfig(AUTH_PASSWORD_FILE, $hash, $existingConfig))
         {
             $success = 'Contraseña configurada correctamente. Redirigiendo...';
             $setupComplete = true;

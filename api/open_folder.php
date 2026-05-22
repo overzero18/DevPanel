@@ -37,9 +37,15 @@ if (!validatePath($path))
 }
 
 $command = 'sudo /usr/local/bin/devpanel-open-folder ' . escapeshellarg($path);
+$result = runControlledCommand($command);
 
-shell_exec($command);
+if ($result['exit_code'] !== 0)
+{
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'No se pudo abrir la carpeta', 'output' => $result['output']]);
+    exit;
+}
 
 logAction('open_folder', $path);
 
-echo json_encode(['success' => true]);
+echo json_encode(['success' => true, 'output' => $result['output']]);

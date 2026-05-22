@@ -23,14 +23,38 @@ function getProjectType($path)
 function getFolderSize($path)
 {
     $size = 0;
+    $ignoredFolders = ['node_modules', '.git', 'vendor', 'tmp', 'logs'];
 
-    foreach (
-        new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($path)
-        ) as $file
-    ) {
+    try
+    {
+        $directory = new RecursiveDirectoryIterator(
+            $path,
+            RecursiveDirectoryIterator::SKIP_DOTS
+        );
 
-        $size += $file->getSize();
+        $filter = new RecursiveCallbackFilterIterator(
+            $directory,
+            function ($current) use ($ignoredFolders) {
+                if ($current->isDir() && in_array($current->getFilename(), $ignoredFolders, true))
+                {
+                    return false;
+                }
+
+                return true;
+            }
+        );
+
+        foreach (new RecursiveIteratorIterator($filter) as $file)
+        {
+            if ($file->isFile())
+            {
+                $size += $file->getSize();
+            }
+        }
+    }
+    catch (UnexpectedValueException $exception)
+    {
+        return 0;
     }
 
     return round($size / 1024 / 1024, 2);

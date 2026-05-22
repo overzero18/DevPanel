@@ -1,13 +1,13 @@
 <!-- Top Navigation Bar -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top" style="background: rgba(15, 23, 42, 0.95) !important; backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+<nav class="navbar navbar-expand-lg sticky-top app-topbar">
     <div class="container-fluid d-flex justify-content-between align-items-center">
 
         <!-- Left side: Hamburger + Branding -->
         <div class="d-flex align-items-center gap-3">
-            <button class="btn btn-sm d-lg-none" id="sidebarToggle" style="color: #3b82f6;">
+            <button class="btn btn-sm d-lg-none btn-outline-secondary" id="sidebarToggle" type="button">
                 <i class="bi bi-list"></i>
             </button>
-            <span class="navbar-brand mb-0" style="color: #3b82f6; font-weight: 600; font-size: 1.1rem;">
+            <span class="navbar-brand app-brand mb-0">
                 <i class="bi bi-hdd-stack-fill"></i> DevPanel
             </span>
         </div>
@@ -17,28 +17,28 @@
 
             <!-- Theme Selector -->
             <div class="dropdown">
-                <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" id="themeSelector" data-bs-toggle="dropdown" aria-expanded="false" title="Cambiar tema">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="themeSelector" data-bs-toggle="dropdown" aria-expanded="false" title="Cambiar tema">
                     <i class="bi bi-palette"></i>
                 </button>
-                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="themeSelector" style="background: rgba(26, 40, 71, 0.95); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1);">
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="themeSelector">
                     <li>
                         <a class="dropdown-item theme-option" href="#" data-theme="dark">
-                            <i class="bi bi-circle-fill" style="color: #0f172a;"></i> Dark
+                            <i class="bi bi-circle-fill theme-dot" style="--theme-dot-color: #0f172a;"></i> Dark
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item theme-option" href="#" data-theme="cyber">
-                            <i class="bi bi-circle-fill" style="color: #00d9ff;"></i> Cyber
+                            <i class="bi bi-circle-fill theme-dot" style="--theme-dot-color: #00d9ff;"></i> Cyber
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item theme-option" href="#" data-theme="ubuntu">
-                            <i class="bi bi-circle-fill" style="color: #dd4814;"></i> Ubuntu
+                            <i class="bi bi-circle-fill theme-dot" style="--theme-dot-color: #dd4814;"></i> Ubuntu
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item theme-option" href="#" data-theme="glass">
-                            <i class="bi bi-circle-fill" style="color: #0ea5e9;"></i> Glass
+                            <i class="bi bi-circle-fill theme-dot" style="--theme-dot-color: #0ea5e9;"></i> Glass
                         </a>
                     </li>
                 </ul>
@@ -46,10 +46,10 @@
 
             <!-- User Menu -->
             <div class="dropdown">
-                <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false" title="Usuario">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false" title="Usuario">
                     <i class="bi bi-person-circle"></i>
                 </button>
-                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu" style="background: rgba(26, 40, 71, 0.95); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1);">
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
                     <li>
                         <a class="dropdown-item" href="/devpanel/change_password.php">
                             <i class="bi bi-key"></i> Cambiar Contraseña
@@ -66,29 +66,6 @@
         </div>
     </div>
 </nav>
-
-<style>
-.dropdown-item {
-    color: #e6eef6 !important;
-    transition: all 0.3s ease;
-    padding: 0.5rem 1rem;
-}
-
-.dropdown-item:hover {
-    background: rgba(59, 130, 246, 0.2) !important;
-    color: #3b82f6 !important;
-}
-
-.dropdown-divider {
-    border-color: rgba(255, 255, 255, 0.1);
-}
-
-@media (max-width: 991px) {
-    .navbar {
-        padding: 0.5rem 0 !important;
-    }
-}
-</style>
 
 <script>
 // Theme Selector

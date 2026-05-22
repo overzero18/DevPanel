@@ -46,6 +46,14 @@ if (!is_dir($tmpDir))
 
 $zipPath = $tmpDir . '/' . $projectName . '.zip';
 
+function hasExcludedPathSegment($relativePath)
+{
+    $excluded = ['node_modules', '.git', 'vendor', 'tmp'];
+    $segments = array_filter(explode('/', str_replace('\\', '/', $relativePath)), 'strlen');
+
+    return count(array_intersect($segments, $excluded)) > 0;
+}
+
 if (file_exists($zipPath))
 {
     unlink($zipPath);
@@ -77,11 +85,7 @@ foreach ($directories as $dir)
         $dirPath = $dir->getRealPath();
         $relativePath = substr($dirPath, strlen($path) + 1);
 
-        if (
-            str_contains($relativePath, 'node_modules') ||
-            str_contains($relativePath, '.git') ||
-            str_contains($relativePath, 'vendor')
-        ) {
+        if (hasExcludedPathSegment($relativePath)) {
             continue;
         }
 
@@ -105,12 +109,7 @@ foreach ($files as $file)
 
         $relativePath = substr($filePath, strlen($path) + 1);
 
-        if (
-            str_contains($relativePath, 'node_modules') ||
-            str_contains($relativePath, '.git') ||
-            str_contains($relativePath, 'vendor') ||
-            str_contains($relativePath, 'tmp')
-        ) {
+        if (hasExcludedPathSegment($relativePath)) {
             continue;
         }
 

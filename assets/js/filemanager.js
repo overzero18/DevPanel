@@ -54,36 +54,41 @@ function renderFileManager(data)
         row.className =
             'filemanager-row';
 
-        const icon =
-            item.type === 'folder'
-                ? '📁'
-                : '📄';
+        const rowContent =
+            document.createElement('div');
 
-        row.innerHTML = `
+        rowContent.className =
+            'd-flex justify-content-between align-items-center border-bottom py-2';
 
-            <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+        const itemButton =
+            document.createElement('button');
 
-                <div
-                    style="cursor:pointer;"
-                    onclick="handleFileManagerItemClick(
-                        '${item.path.replace(/'/g, "\\'")}',
-                        '${item.type}'
-                    )"
-                >
+        itemButton.type =
+            'button';
 
-                    ${icon} ${item.name}
+        itemButton.className =
+            'btn btn-link p-0 text-start';
 
-                </div>
+        itemButton.textContent =
+            `${item.type === 'folder' ? '📁' : '📄'} ${item.name}`;
 
-                <small class="text-muted">
+        itemButton.addEventListener('click', () =>
+        {
+            handleFileManagerItemClick(item.path, item.type);
+        });
 
-                    ${item.modified}
+        const modified =
+            document.createElement('small');
 
-                </small>
+        modified.className =
+            'text-muted';
 
-            </div>
+        modified.textContent =
+            item.modified;
 
-        `;
+        rowContent.appendChild(itemButton);
+        rowContent.appendChild(modified);
+        row.appendChild(rowContent);
 
         container.appendChild(row);
     });

@@ -37,9 +37,15 @@ if (!validatePath($path))
 }
 
 $command = 'sudo /usr/local/bin/devpanel-open-vscode ' . escapeshellarg($path);
+$result = runControlledCommand($command);
 
-shell_exec($command);
+if ($result['exit_code'] !== 0)
+{
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'No se pudo abrir VS Code', 'output' => $result['output']]);
+    exit;
+}
 
 logAction('open_vscode', $path);
 
-echo json_encode(['success' => true]);
+echo json_encode(['success' => true, 'output' => $result['output']]);

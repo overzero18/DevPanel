@@ -54,18 +54,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST')
         else
         {
             $hash = password_hash($newPassword, PASSWORD_BCRYPT, ['cost' => 10]);
+            $existingConfig = file_exists(AUTH_PASSWORD_FILE)
+                ? require AUTH_PASSWORD_FILE
+                : [];
 
-            $content = <<<'PHP'
-<?php
-
-return [
-    'DEVPANEL_PASSWORD' => '$hash',
-];
-PHP;
-
-            $content = str_replace('$hash', $hash, $content);
-
-            if (file_put_contents(AUTH_PASSWORD_FILE, $content))
+            if (devpanelWriteConfig(AUTH_PASSWORD_FILE, $hash, $existingConfig))
             {
                 $success = 'Contraseña cambiada correctamente. Por favor, inicia sesión nuevamente.';
                 logAction('change_password_success', 'Password changed successfully');
@@ -91,13 +84,6 @@ PHP;
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="/devpanel/assets/css/style.css">
-    <style>
-        body {
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-    </style>
     <?php
     @include_once __DIR__ . '/includes/helpers/theme.php';
     if (function_exists('devpanel_print_theme_link')) {
@@ -108,63 +94,7 @@ PHP;
 <body>
 
 <?php include 'layout/topbar.php'; ?>
-            max-width: 600px;
-            margin: 40px auto;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            padding: 40px;
-        }
-        .password-card h1 {
-            color: #333;
-            margin-bottom: 30px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        .form-group label {
-            font-weight: 500;
-            color: #333;
-            margin-bottom: 8px;
-        }
-        .form-control:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-        }
-        .btn-primary {
-            background: #667eea;
-            border: none;
-            padding: 10px 20px;
-            font-weight: 600;
-        }
-        .btn-primary:hover {
-            background: #764ba2;
-        }
-        .btn-secondary {
-            padding: 10px 20px;
-        }
-        .button-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 30px;
-        }
-        .alert {
-            margin-bottom: 20px;
-        }
-        .password-requirements {
-            background: #f0f4ff;
-            border-left: 4px solid #667eea;
-            padding: 15px;
-            border-radius: 5px;
-            margin-top: 30px;
-            font-size: 14px;
-        }
-    </style>
-</head>
-<body>
+<main class="password-page">
     <div class="password-card">
         <h1>
             <i class="bi bi-key"></i>
@@ -207,14 +137,14 @@ PHP;
                 <div class="form-group">
                     <label for="new_password">Nueva Contraseña</label>
                     <input type="password" class="form-control" id="new_password"
-                           name="new_password" required minlength="6"
-                           placeholder="Mínimo 6 caracteres">
+                           name="new_password" required minlength="12"
+                           placeholder="Mínimo 12 caracteres">
                 </div>
 
                 <div class="form-group">
                     <label for="confirm_password">Confirmar Nueva Contraseña</label>
                     <input type="password" class="form-control" id="confirm_password"
-                           name="confirm_password" required minlength="6"
+                           name="confirm_password" required minlength="12"
                            placeholder="Repite la nueva contraseña">
                 </div>
 
@@ -229,14 +159,17 @@ PHP;
             </form>
 
             <div class="password-requirements">
-                <strong>📋 Requisitos:</strong>
+                <strong>Requisitos:</strong>
                 <ul style="margin: 10px 0 0 0; padding-left: 20px;">
-                    <li>Mínimo 6 caracteres</li>
+                    <li>Mínimo 12 caracteres</li>
                     <li>Debe ser diferente a la contraseña actual</li>
                     <li>Se requiere confirmar la contraseña actual por seguridad</li>
                 </ul>
             </div>
         <?php endif; ?>
     </div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/devpanel/assets/js/app.js"></script>
 </body>
 </html>

@@ -28,7 +28,7 @@ if (!function_exists('esRutaPermitida')) {
 
         $rutaReal = normalizarRuta($rutaReal);
 
-        return strpos($rutaReal, $base) === 0;
+        return $rutaReal === $base || str_starts_with($rutaReal, $base . '/');
     }
 }
 

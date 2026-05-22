@@ -1,25 +1,25 @@
 :root {
-    --bg-primary: #0f172a;
-    --bg-secondary: #1a2847;
-    --bg-tertiary: #243657;
-    --text-primary: #e6eef6;
-    --text-secondary: #b0bac7;
-    --text-muted: #8892a8;
-    --border-color: rgba(255, 255, 255, 0.08);
-    --accent-primary: #3b82f6;
-    --accent-secondary: #10b981;
-    --accent-danger: #ef4444;
-    --accent-warning: #f59e0b;
-    --sidebar-bg: rgba(15, 23, 42, 0.95);
-    --card-bg: rgba(26, 40, 71, 0.6);
-    --overlay: rgba(0, 0, 0, 0.4);
+    --bg-primary: #0d1421;
+    --bg-secondary: #151e33;
+    --bg-tertiary: #1f2937;
+    --text-primary: #f0f4f8;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+    --border-color: rgba(148, 163, 184, 0.15);
+    --accent-primary: #4f9ef9;
+    --accent-secondary: #10d981;
+    --accent-danger: #ff5c73;
+    --accent-warning: #fbbf24;
+    --sidebar-bg: rgba(13, 20, 33, 0.98);
+    --card-bg: rgba(21, 30, 51, 0.7);
+    --overlay: rgba(0, 0, 0, 0.5);
     --blur: blur(12px);
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Base Styles */
 body {
-    background: var(--bg-primary);
+    background: linear-gradient(135deg, #0a0f1f 0%, #0d1421 50%, #1a1a2e 100%);
     color: var(--text-primary);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
@@ -62,7 +62,7 @@ a:hover {
 }
 
 .sidebar .nav-link:hover {
-    background: rgba(59, 130, 246, 0.1);
+    background: rgba(79, 158, 249, 0.15);
     color: var(--text-primary);
     transform: translateX(4px);
     border-left: 3px solid var(--accent-primary);
@@ -70,7 +70,7 @@ a:hover {
 }
 
 .sidebar .nav-link.active {
-    background: rgba(59, 130, 246, 0.15);
+    background: rgba(79, 158, 249, 0.2);
     color: var(--accent-primary);
     border-left: 3px solid var(--accent-primary);
     padding-left: calc(1rem - 3px);
@@ -93,9 +93,9 @@ a:hover {
 }
 
 .card:hover {
-    border-color: rgba(59, 130, 246, 0.3);
+    border-color: var(--accent-primary);
     transform: translateY(-2px);
-    box-shadow: 0 10px 30px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 12px 35px rgba(79, 158, 249, 0.2);
 }
 
 .dashboard-card h5 {
@@ -123,65 +123,77 @@ a:hover {
 .btn-primary {
     background: var(--accent-primary);
     color: white;
+    border: none;
+    box-shadow: 0 4px 15px rgba(79, 158, 249, 0.3);
 }
 
 .btn-primary:hover {
-    background: #2563eb;
+    background: #6badff;
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 6px 25px rgba(79, 158, 249, 0.5);
 }
 
 .btn-secondary {
     background: var(--bg-secondary);
     color: var(--text-primary);
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--accent-primary);
 }
 
 .btn-secondary:hover {
     background: var(--bg-tertiary);
     border-color: var(--accent-primary);
-    color: var(--text-primary);
+    color: var(--accent-primary);
+    box-shadow: 0 0 15px rgba(79, 158, 249, 0.2);
 }
 
 .btn-outline-secondary {
     background: transparent;
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
+    color: var(--accent-primary);
+    border: 1.5px solid var(--accent-primary);
 }
 
 .btn-outline-secondary:hover {
-    background: var(--bg-secondary);
-    border-color: var(--accent-primary);
-    color: var(--accent-primary);
+    background: rgba(79, 158, 249, 0.15);
+    border-color: #6badff;
+    color: #6badff;
+    box-shadow: 0 0 15px rgba(79, 158, 249, 0.2);
 }
 
 .btn-danger {
     background: var(--accent-danger);
     color: white;
+    border: none;
+    box-shadow: 0 4px 15px rgba(255, 92, 115, 0.3);
 }
 
 .btn-danger:hover {
-    background: #dc2626;
+    background: #ff7a95;
+    box-shadow: 0 6px 25px rgba(255, 92, 115, 0.5);
 }
 
 .btn-success {
     background: var(--accent-secondary);
     color: white;
+    border: none;
+    box-shadow: 0 4px 15px rgba(16, 217, 129, 0.3);
 }
 
 .btn-success:hover {
-    background: #059669;
+    background: #2dd89f;
+    box-shadow: 0 6px 25px rgba(16, 217, 129, 0.5);
 }
 
 .btn-info {
-    background: rgba(59, 130, 246, 0.2);
+    background: rgba(79, 158, 249, 0.2);
     color: var(--accent-primary);
-    border: 1px solid var(--accent-primary);
+    border: 1.5px solid var(--accent-primary);
 }
 
 .btn-info:hover {
-    background: rgba(59, 130, 246, 0.3);
-    color: #60a5fa;
+    background: rgba(79, 158, 249, 0.3);
+    border-color: #6badff;
+    color: #6badff;
+    box-shadow: 0 0 15px rgba(79, 158, 249, 0.3);
 }
 
 /* Forms */

@@ -41,11 +41,36 @@ if (strlen($command) > 500)
 if (!validateCommand($command))
 {
     http_response_code(403);
-    echo json_encode(['success' => false, 'output' => 'Comando no permitido']);
+    echo json_encode(['success' => false, 'output' => 'Comando no permitido. Usa: ' . implode(', ', array_keys(getAllowedTerminalCommands()))]);
     exit;
 }
 
-$output = shell_exec($command . ' 2>&1');
+$safeCommand = getSafeTerminalCommand($command);
+$process = proc_open(
+    $safeCommand,
+    [
+        1 => ['pipe', 'w'],
+        2 => ['pipe', 'w']
+    ],
+    $pipes,
+    obtenerRutaBase()
+);
+
+if (!is_resource($process))
+{
+    http_response_code(500);
+    echo json_encode(['success' => false, 'output' => 'No se pudo ejecutar el comando']);
+    exit;
+}
+
+$output = stream_get_contents($pipes[1]);
+$errorOutput = stream_get_contents($pipes[2]);
+
+fclose($pipes[1]);
+fclose($pipes[2]);
+
+proc_close($process);
+$output .= $errorOutput;
 
 logAction('execute_command', $command);
 

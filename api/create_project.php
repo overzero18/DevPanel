@@ -47,11 +47,28 @@ if (is_dir($path))
 }
 
 $createCommand = 'sudo /usr/local/bin/devpanel-create-project ' . escapeshellarg($name);
-shell_exec($createCommand);
+$createResult = runControlledCommand($createCommand);
+
+if ($createResult['exit_code'] !== 0 || !is_dir($path))
+{
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'message' => 'No se pudo crear el proyecto',
+        'output' => $createResult['output']
+    ]);
+    exit;
+}
 
 $vscodeCommand = 'sudo /usr/local/bin/devpanel-open-vscode ' . escapeshellarg($path);
-shell_exec($vscodeCommand);
+$vscodeResult = runControlledCommand($vscodeCommand);
 
 logAction('create_project', $name);
 
-echo json_encode(['success' => true, 'message' => 'Proyecto creado correctamente']);
+echo json_encode([
+    'success' => true,
+    'message' => $vscodeResult['exit_code'] === 0
+        ? 'Proyecto creado correctamente'
+        : 'Proyecto creado, pero no se pudo abrir VS Code',
+    'output' => $vscodeResult['output']
+]);

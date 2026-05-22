@@ -1,7 +1,7 @@
 <?php
 
 ini_set('session.httponly', 1);
-ini_set('session.secure', 1);
+ini_set('session.secure', !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 1 : 0);
 ini_set('session.samesite', 'Strict');
 
 session_start();
@@ -11,10 +11,12 @@ define('SESSION_TOKEN_KEY', '_devpanel_auth');
 define('SESSION_TIMEOUT', 3600);
 define('CSRF_TOKEN_KEY', '_csrf_token');
 define('LOGS_DIR', __DIR__ . '/../logs');
+define('RATE_LIMIT_DIR', LOGS_DIR . '/rate_limits');
 define('MAX_LOGIN_ATTEMPTS', 5);
 define('LOGIN_ATTEMPT_WINDOW', 900);
 
 require_once __DIR__ . '/helpers/filesystem.php';
+require_once __DIR__ . '/helpers/config.php';
 
 function setSecurityHeaders()
 {
@@ -75,15 +77,27 @@ function clearCsrfToken()
 
 function checkEndpointRateLimit($action, $limit = 10, $window = 60)
 {
-    $ip = $_SERVER['REMOTE_ADDR'];
-    $key = 'api_rate_' . $action . '_' . $ip;
-
-    if (!isset($_SESSION[$key]))
+    if (!is_dir(RATE_LIMIT_DIR) && !mkdir(RATE_LIMIT_DIR, 0755, true))
     {
-        $_SESSION[$key] = ['count' => 0, 'first_attempt' => time()];
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Rate limit storage unavailable']);
+        exit;
     }
 
-    $attempts = &$_SESSION[$key];
+    $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    $safeKey = preg_replace('/[^a-zA-Z0-9_.-]/', '_', $action . '_' . $ip);
+    $rateFile = RATE_LIMIT_DIR . '/' . hash('sha256', $safeKey) . '.json';
+    $attempts = ['count' => 0, 'first_attempt' => time()];
+
+    if (file_exists($rateFile))
+    {
+        $stored = json_decode(file_get_contents($rateFile), true);
+
+        if (is_array($stored))
+        {
+            $attempts = array_merge($attempts, $stored);
+        }
+    }
 
     if (time() - $attempts['first_attempt'] > $window)
     {
@@ -98,25 +112,26 @@ function checkEndpointRateLimit($action, $limit = 10, $window = 60)
     }
 
     $attempts['count']++;
+
+    if (file_put_contents($rateFile, json_encode($attempts), LOCK_EX) === false)
+    {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Rate limit storage unavailable']);
+        exit;
+    }
 }
 
 function recordLoginAttempt($success = false)
 {
-    $ip = $_SERVER['REMOTE_ADDR'];
-    $key = 'login_attempts_' . $ip;
-
-    if (!isset($_SESSION[$key]))
+    if ($success && is_dir(RATE_LIMIT_DIR))
     {
-        $_SESSION[$key] = ['count' => 0, 'first_attempt' => time()];
-    }
-
-    if (!$success)
-    {
-        $_SESSION[$key]['count']++;
-    }
-    else
-    {
-        unset($_SESSION[$key]);
+        $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        $safeKey = preg_replace('/[^a-zA-Z0-9_.-]/', '_', 'login_' . $ip);
+        $rateFile = RATE_LIMIT_DIR . '/' . hash('sha256', $safeKey) . '.json';
+        if (file_exists($rateFile))
+        {
+            unlink($rateFile);
+        }
     }
 }
 
@@ -164,13 +179,13 @@ function getConfigPassword()
 
 function logAction($action, $details = '')
 {
-    if (!is_dir(LOGS_DIR))
+    if (!is_dir(LOGS_DIR) && !mkdir(LOGS_DIR, 0755, true))
     {
-        mkdir(LOGS_DIR, 0755, true);
+        return;
     }
 
     $logFile = LOGS_DIR . '/actions.log';
-    $ip = $_SERVER['REMOTE_ADDR'];
+    $ip = $_SERVER['REMOTE_ADDR'] ?? 'cli';
     $timestamp = date('Y-m-d H:i:s');
     $user = isset($_SESSION[SESSION_TOKEN_KEY]) ? 'authenticated' : 'anonymous';
 
@@ -179,20 +194,54 @@ function logAction($action, $details = '')
     file_put_contents($logFile, $logEntry, FILE_APPEND | LOCK_EX);
 }
 
-function validateCommand($command)
+function runControlledCommand($command)
+{
+    $process = proc_open(
+        $command,
+        [
+            1 => ['pipe', 'w'],
+            2 => ['pipe', 'w']
+        ],
+        $pipes
+    );
+
+    if (!is_resource($process))
+    {
+        return ['exit_code' => 1, 'output' => 'No se pudo iniciar el comando'];
+    }
+
+    $output = stream_get_contents($pipes[1]);
+    $errorOutput = stream_get_contents($pipes[2]);
+
+    fclose($pipes[1]);
+    fclose($pipes[2]);
+
+    return [
+        'exit_code' => proc_close($process),
+        'output' => $output . $errorOutput
+    ];
+}
+
+function getAllowedTerminalCommands()
+{
+    return [
+        'pwd' => 'pwd',
+        'ls' => 'ls -la',
+        'ls -la' => 'ls -la',
+        'git status' => 'git status --short',
+        'git branch' => 'git branch',
+        'php -v' => '/opt/lampp/bin/php -v',
+        'composer --version' => 'composer --version',
+        'npm --version' => 'npm --version',
+    ];
+}
+
+function getSafeTerminalCommand($command)
 {
     $command = trim($command);
+    $allowedCommands = getAllowedTerminalCommands();
 
-    $allowedCommands = [
-        'ls', 'cd', 'pwd', 'cat', 'grep', 'find',
-        'git', 'svn',
-        'npm', 'composer', 'php', 'python'
-    ];
-
-    $baseCommand = explode(' ', $command)[0];
-    $baseCommand = trim($baseCommand);
-
-    if (!in_array($baseCommand, $allowedCommands))
+    if (!array_key_exists($command, $allowedCommands))
     {
         logAction('command_blocked', "Blocked: $command");
         return false;
@@ -204,7 +253,12 @@ function validateCommand($command)
         return false;
     }
 
-    return true;
+    return $allowedCommands[$command];
+}
+
+function validateCommand($command)
+{
+    return getSafeTerminalCommand($command) !== false;
 }
 
 function validatePath($path)

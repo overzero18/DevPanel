@@ -49,23 +49,37 @@ if (!$host || !$user || !$pass)
     exit;
 }
 
+if (
+    !preg_match('/^[a-zA-Z0-9.-]{1,253}$/', $host) ||
+    str_contains($host, '..') ||
+    str_starts_with($host, '.') ||
+    str_ends_with($host, '.')
+) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'output' => 'Host FTP inválido']);
+    exit;
+}
+
+if (!preg_match('/^[a-zA-Z0-9._@-]{1,128}$/', $user))
+{
+    http_response_code(400);
+    echo json_encode(['success' => false, 'output' => 'Usuario FTP inválido']);
+    exit;
+}
+
+if (preg_match('/[\x00-\x1F\x7F]/', $pass) || strlen($pass) > 256)
+{
+    http_response_code(400);
+    echo json_encode(['success' => false, 'output' => 'Password FTP inválido']);
+    exit;
+}
+
 if (!preg_match('#^[a-zA-Z0-9/.\_\-]+$#', $remote))
 {
     http_response_code(400);
     echo json_encode(['success' => false, 'output' => 'Ruta remota inválida']);
     exit;
 }
-
-$tmpScript = tempnam(sys_get_temp_dir(), 'devpanel_deploy_');
-
-if ($tmpScript === false)
-{
-    http_response_code(500);
-    echo json_encode(['success' => false, 'output' => 'Error creando archivo temporal']);
-    exit;
-}
-
-chmod($tmpScript, 0600);
 
 $hostSafe   = sanitizeFtpCredential($host);
 $userSafe   = sanitizeFtpCredential($user);
@@ -80,19 +94,35 @@ mirror -R --delete --verbose --exclude-glob node_modules --exclude-glob .git --e
 bye
 EOL;
 
-if (file_put_contents($tmpScript, $script, LOCK_EX) === false)
+$process = proc_open(
+    'lftp -f /dev/stdin',
+    [
+        0 => ['pipe', 'r'],
+        1 => ['pipe', 'w'],
+        2 => ['pipe', 'w']
+    ],
+    $pipes
+);
+
+if (!is_resource($process))
 {
     http_response_code(500);
-    echo json_encode(['success' => false, 'output' => 'Error escribiendo archivo temporal']);
-    @unlink($tmpScript);
+    echo json_encode(['success' => false, 'output' => 'Error iniciando lftp']);
     exit;
 }
 
-$command = 'lftp -f ' . escapeshellarg($tmpScript) . ' 2>&1';
-$output = shell_exec($command);
+fwrite($pipes[0], $script);
+fclose($pipes[0]);
 
-@unlink($tmpScript);
+$output = stream_get_contents($pipes[1]);
+$errorOutput = stream_get_contents($pipes[2]);
+
+fclose($pipes[1]);
+fclose($pipes[2]);
+
+$exitCode = proc_close($process);
+$output .= $errorOutput;
 
 logAction('deploy_ftp', "Deployed to $host");
 
-echo json_encode(['success' => true, 'output' => $output]);
+echo json_encode(['success' => $exitCode === 0, 'output' => $output]);

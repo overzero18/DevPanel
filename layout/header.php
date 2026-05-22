@@ -19,8 +19,7 @@
     <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.css">
 
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="/devpanel/assets/css/style.css">
     <?php
     // Load theme CSS if helper is available
     @include_once __DIR__ . '/../includes/helpers/theme.php';
