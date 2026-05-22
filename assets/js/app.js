@@ -772,6 +772,101 @@ async function loadDockerContainers()
     }
 }
 
+async function loadNotifications()
+{
+    const list = document.getElementById('notificationsList');
+    const globalList = document.getElementById('globalActivityList');
+    const summary = document.getElementById('notificationsSummary');
+
+    if (!list && !globalList) {
+        return;
+    }
+
+    try
+    {
+        const response = await fetch('/devpanel/api/notifications/list.php');
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+
+        if (!data.success) {
+            if (summary) summary.textContent = data.message || 'No se pudieron cargar eventos.';
+            return;
+        }
+
+        renderNotifications(data.items || []);
+
+        if (summary) {
+            const info = data.summary || {};
+            summary.textContent = `${info.total || 0} eventos · ${info.warnings || 0} avisos · ${info.errors || 0} errores`;
+        }
+    }
+    catch(error)
+    {
+        console.error(error);
+        if (summary) summary.textContent = 'Error cargando notificaciones.';
+    }
+}
+
+function renderNotifications(items)
+{
+    const list = document.getElementById('notificationsList');
+    const globalList = document.getElementById('globalActivityList');
+
+    [list, globalList].forEach((container, index) => {
+        if (!container) {
+            return;
+        }
+
+        container.innerHTML = '';
+        const visibleItems = index === 0 ? items : items.slice(0, 5);
+
+        if (!visibleItems.length) {
+            const empty = document.createElement('div');
+            empty.className = 'file-manager-empty';
+            empty.textContent = 'Sin eventos recientes.';
+            container.appendChild(empty);
+            return;
+        }
+
+        visibleItems.forEach(item => {
+            const row = document.createElement('div');
+            row.className = `notification-row is-${item.severity || 'info'}`;
+
+            const icon = document.createElement('i');
+            icon.className = getNotificationIcon(item.severity);
+
+            const body = document.createElement('div');
+            body.className = 'notification-body';
+
+            const title = document.createElement('strong');
+            title.textContent = item.title || 'Evento';
+
+            const detail = document.createElement('small');
+            detail.textContent = item.detail || '--';
+
+            const date = document.createElement('span');
+            date.textContent = item.date || '';
+
+            body.appendChild(title);
+            body.appendChild(detail);
+            body.appendChild(date);
+            row.appendChild(icon);
+            row.appendChild(body);
+            container.appendChild(row);
+        });
+    });
+}
+
+function getNotificationIcon(severity)
+{
+    if (severity === 'danger') return 'bi bi-x-octagon-fill';
+    if (severity === 'warning') return 'bi bi-exclamation-triangle-fill';
+    if (severity === 'success') return 'bi bi-check-circle-fill';
+    return 'bi bi-info-circle-fill';
+}
+
 function renderDockerContainers(containers)
 {
     const container = document.getElementById('dockerList');
@@ -807,8 +902,66 @@ function renderDockerContainers(containers)
         info.appendChild(icon);
         info.appendChild(text);
         row.appendChild(info);
+
+        const actions = document.createElement('div');
+        actions.className = 'database-actions';
+        actions.appendChild(createDockerActionButton('start', docker.name, 'Iniciar'));
+        actions.appendChild(createDockerActionButton('stop', docker.name, 'Detener'));
+        actions.appendChild(createDockerActionButton('restart', docker.name, 'Reiniciar'));
+        actions.appendChild(createDockerActionButton('logs', docker.name, 'Logs'));
+        row.appendChild(actions);
+
         container.appendChild(row);
     });
+}
+
+function createDockerActionButton(action, name, label)
+{
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'btn btn-sm btn-outline-secondary';
+    button.textContent = label;
+    button.addEventListener('click', () => runDockerAction(name, action));
+    return button;
+}
+
+async function runDockerAction(name, action)
+{
+    const formData = new URLSearchParams();
+    formData.append('name', name);
+    formData.append('action', action);
+    formData.append('csrf_token', csrfToken);
+
+    try
+    {
+        const response = await fetch('/devpanel/api/docker/action.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: formData
+        });
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+        showToast(data.message || 'Docker ejecutado', data.success ? 'success' : 'danger');
+
+        if (action === 'logs' || !data.success) {
+            await appConfirm(data.output || data.message || 'Sin salida', {
+                title: `Docker ${action}`,
+                confirmText: 'Cerrar'
+            });
+        }
+
+        loadDockerContainers();
+        loadNotifications();
+    }
+    catch(error)
+    {
+        console.error(error);
+        showToast('Error ejecutando Docker', 'danger');
+    }
 }
 
 async function runGitAction(path, action)
@@ -962,6 +1115,149 @@ function renderPermissions(items)
     });
 }
 
+async function loadProjectActivity()
+{
+    const select = document.getElementById('projectActivitySelect');
+
+    if (!select || !select.value) {
+        renderActivityEmpty('projectRecentFiles', 'No hay proyectos disponibles.');
+        renderActivityEmpty('projectActions', 'No hay proyectos disponibles.');
+        renderActivityEmpty('projectCommits', 'No hay proyectos disponibles.');
+        return;
+    }
+
+    renderActivityEmpty('projectRecentFiles', 'Cargando archivos...');
+    renderActivityEmpty('projectActions', 'Cargando acciones...');
+    renderActivityEmpty('projectCommits', 'Cargando commits...');
+
+    try
+    {
+        const params = new URLSearchParams();
+        params.set('path', select.value);
+
+        const response = await fetch(`/devpanel/api/projects/activity.php?${params.toString()}`);
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+
+        if (!data.success) {
+            showToast(data.message || 'No se pudo cargar la actividad', 'danger');
+            return;
+        }
+
+        renderRecentFiles(data.files || []);
+        renderProjectActions(data.actions || []);
+        renderProjectCommits(data.commits || []);
+    }
+    catch(error)
+    {
+        console.error(error);
+        showToast('Error cargando actividad', 'danger');
+    }
+}
+
+function renderActivityEmpty(id, message)
+{
+    const container = document.getElementById(id);
+
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML = '';
+
+    const empty = document.createElement('div');
+    empty.className = 'file-manager-empty';
+    empty.textContent = message;
+    container.appendChild(empty);
+}
+
+function renderRecentFiles(files)
+{
+    const container = document.getElementById('projectRecentFiles');
+
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML = '';
+
+    if (!files.length) {
+        renderActivityEmpty('projectRecentFiles', 'Sin archivos recientes.');
+        return;
+    }
+
+    files.forEach(file => {
+        const item = document.createElement('div');
+        item.className = 'activity-item';
+
+        const title = document.createElement('strong');
+        title.textContent = file.path || file.name;
+
+        const detail = document.createElement('small');
+        detail.textContent = `${file.modified_label || '--'} · ${file.size || '--'}`;
+
+        item.appendChild(title);
+        item.appendChild(detail);
+        container.appendChild(item);
+    });
+}
+
+function renderProjectActions(actions)
+{
+    const container = document.getElementById('projectActions');
+
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML = '';
+
+    if (!actions.length) {
+        renderActivityEmpty('projectActions', 'Sin acciones recientes.');
+        return;
+    }
+
+    actions.forEach(action => {
+        const item = document.createElement('div');
+        item.className = 'activity-item';
+        item.textContent = action;
+        container.appendChild(item);
+    });
+}
+
+function renderProjectCommits(commits)
+{
+    const container = document.getElementById('projectCommits');
+
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML = '';
+
+    if (!commits.length) {
+        renderActivityEmpty('projectCommits', 'Sin repositorio Git o sin commits.');
+        return;
+    }
+
+    commits.forEach(commit => {
+        const item = document.createElement('div');
+        item.className = 'activity-item';
+
+        const title = document.createElement('strong');
+        title.textContent = commit.message || 'Commit sin mensaje';
+
+        const detail = document.createElement('small');
+        detail.textContent = `${commit.hash || '--'} · ${commit.date || '--'}`;
+
+        item.appendChild(title);
+        item.appendChild(detail);
+        container.appendChild(item);
+    });
+}
+
 async function runGitActionWithData(formData, title)
 {
     formData.append('csrf_token', csrfToken);
@@ -1098,6 +1394,13 @@ document.addEventListener("DOMContentLoaded", () =>
     loadDatabaseUsers();
     loadDockerContainers();
     loadPermissions();
+    loadProjectActivity();
+    loadNotifications();
+
+    const projectActivitySelect = document.getElementById('projectActivitySelect');
+    if (projectActivitySelect) {
+        projectActivitySelect.addEventListener('change', loadProjectActivity);
+    }
 });
 
 async function loadLogs()
@@ -1107,12 +1410,17 @@ async function loadLogs()
         const params = new URLSearchParams();
         const searchInput = document.getElementById('logSearch');
         const linesSelect = document.getElementById('logLines');
+        const projectSelect = document.getElementById('logProject');
 
         params.set('type', activeLogType);
         params.set('lines', linesSelect ? linesSelect.value : '120');
 
         if (searchInput && searchInput.value.trim() !== '') {
             params.set('q', searchInput.value.trim());
+        }
+
+        if (projectSelect && projectSelect.value !== '') {
+            params.set('project', projectSelect.value);
         }
 
         const response = await fetch(`/devpanel/api/logs.php?${params.toString()}`);
@@ -1212,6 +1520,11 @@ document.addEventListener("DOMContentLoaded", () =>
     const linesSelect = document.getElementById('logLines');
     if (linesSelect) {
         linesSelect.addEventListener('change', loadLogs);
+    }
+
+    const projectSelect = document.getElementById('logProject');
+    if (projectSelect) {
+        projectSelect.addEventListener('change', loadLogs);
     }
 
     const autoRefresh = document.getElementById('logsAutoRefresh');

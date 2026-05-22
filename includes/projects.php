@@ -19,12 +19,33 @@ function getProjectType($path)
         return 'PHP';
     }
 
+    if (file_exists($path . '/package.json'))
+    {
+        return 'Node';
+    }
+
+    if (file_exists($path . '/composer.json'))
+    {
+        return 'Composer';
+    }
+
+    if (file_exists($path . '/index.html'))
+    {
+        return 'Static';
+    }
+
     return 'Desconocido';
 }
 
-function getFolderSize($path)
+function getProjectModifiedAt($path)
+{
+    return getProjectFilesystemStats($path)['modified_at'];
+}
+
+function getProjectFilesystemStats($path)
 {
     $size = 0;
+    $modifiedAt = filemtime($path) ?: 0;
     $ignoredFolders = ['node_modules', '.git', 'vendor', 'tmp', 'logs'];
 
     try
@@ -48,6 +69,8 @@ function getFolderSize($path)
 
         foreach (new RecursiveIteratorIterator($filter) as $file)
         {
+            $modifiedAt = max($modifiedAt, $file->getMTime());
+
             if ($file->isFile())
             {
                 $size += $file->getSize();
@@ -56,10 +79,31 @@ function getFolderSize($path)
     }
     catch (UnexpectedValueException $exception)
     {
-        return 0;
+        return [
+            'size' => 0,
+            'modified_at' => $modifiedAt
+        ];
     }
 
-    return round($size / 1024 / 1024, 2);
+    return [
+        'size' => round($size / 1024 / 1024, 2),
+        'modified_at' => $modifiedAt
+    ];
+}
+
+function formatProjectModifiedAt($timestamp)
+{
+    if (!$timestamp)
+    {
+        return 'Sin fecha';
+    }
+
+    return date('d/m/Y H:i', $timestamp);
+}
+
+function getFolderSize($path)
+{
+    return getProjectFilesystemStats($path)['size'];
 }
 
 function runProjectGitCommand($path, $args)
@@ -141,6 +185,9 @@ function getProjects()
 
         if (is_dir($fullPath))
         {
+            $stats = getProjectFilesystemStats($fullPath);
+            $modifiedAt = $stats['modified_at'];
+
             $projects[] = [
 
                 'name' => $folder,
@@ -151,13 +198,23 @@ function getProjects()
 
                 'type' => getProjectType($fullPath),
 
-                'size' => getFolderSize($fullPath),
+                'size' => $stats['size'],
+
+                'modified_at' => $modifiedAt,
+
+                'modified_label' => formatProjectModifiedAt($modifiedAt),
+
+                'writable' => is_writable($fullPath),
 
                 'git' => getProjectGitInfo($fullPath)
 
             ];
         }
     }
+
+    usort($projects, function ($a, $b) {
+        return $b['modified_at'] <=> $a['modified_at'];
+    });
 
     return $projects;
 }

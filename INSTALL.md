@@ -29,11 +29,13 @@ http://localhost/devpanel/setup.php
 ```
 
 **En la página de setup:**
-- ✅ Ingresa tu contraseña (mínimo 6 caracteres)
+- ✅ Ingresa tu contraseña (mínimo 12 caracteres)
 - ✅ Confirma la contraseña
 - ✅ Haz clic en "Configurar Contraseña"
 
 Se auto-elimina después de la primera configuración por seguridad.
+
+Para repositorios públicos, no subas tu `config.php`. Usa `config.example.php` como plantilla y deja que cada usuario configure sus propias rutas, contraseña y datos de GitHub.
 
 ### 3. **Inicia Sesión**
 
@@ -77,7 +79,8 @@ devpanel/
 ├── login.html             # 🔑 Página de login
 ├── index.php              # 📊 Dashboard
 ├── change_password.php    # 🔐 Cambiar contraseña
-├── config.php             # ⚙️ Configuración (contraseña hasheada)
+├── config.example.php     # ⚙️ Plantilla pública de configuración
+├── config.php             # 🔒 Configuración local privada, ignorada por Git
 ├── api/                   # 🔌 Endpoints
 │   ├── login.php
 │   ├── logout.php
@@ -108,6 +111,39 @@ devpanel/
 ✅ **Audit Logging** - Todos los eventos se registran
 ✅ **File Protection** - .htaccess protege archivos sensibles
 
+## ✅ Permisos Locales
+
+Después de instalar, entra al dashboard y revisa **Permisos del sistema**.
+
+Rutas importantes:
+
+- `config.php`: escritura necesaria para guardar configuración desde la UI
+- `logs/`: escritura necesaria para auditoría y notificaciones
+- `tmp/`: escritura necesaria para generar ZIP
+- `/opt/lampp/htdocs`: escritura necesaria para crear o clonar proyectos
+- logs de XAMPP: lectura necesaria para el visor de logs
+
+Ejemplo orientativo para un entorno local:
+
+```bash
+sudo chown -R "$USER":www-data /opt/lampp/htdocs/devpanel
+chmod 775 /opt/lampp/htdocs/devpanel/logs /opt/lampp/htdocs/devpanel/tmp
+chmod 664 /opt/lampp/htdocs/devpanel/config.php
+```
+
+Adapta el grupo según el usuario con el que ejecute Apache/XAMPP en tu equipo.
+
+## 🌍 Publicar en GitHub
+
+Antes de subir:
+
+- No subas `config.php`
+- No subas `.env`
+- No subas ZIP generados
+- No subas tokens, contraseñas, usuarios privados ni remotes personales
+- Usa `config.example.php` como plantilla pública
+- Deja que cada usuario configure GitHub desde la interfaz
+
 ### Logs de Auditoría
 
 Todos los accesos se registran en:
@@ -127,6 +163,10 @@ Formato:
 - 📊 **Dashboard** - Estado de servicios y stats del sistema
 - 🖥️ **Terminal** - Ejecuta comandos seguros desde el navegador
 - 📁 **Gestor de Proyectos** - Crea, abre y despliega proyectos
+- 🧭 **Actividad de Proyectos** - Archivos recientes, acciones y commits
+- 🗄️ **MariaDB Manager** - Crear, importar, exportar y eliminar bases de datos
+- 🎨 **Temas** - Dark, Cyber, Ubuntu y Glass
+- ✅ **Diagnóstico de Permisos** - Detecta rutas sin escritura/lectura
 - 📦 **Descargar ZIP** - Comprime proyectos (excluye node_modules, .git)
 - 🚀 **Deploy FTP** - Sube proyectos a servidores remotos
 - 🔧 **Control de Servicios** - Start/Stop/Restart Apache y MySQL

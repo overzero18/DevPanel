@@ -37,6 +37,7 @@ async function loadFileManager(path = currentFileManagerPath)
         fileManagerParentPath = data.parentPath;
         currentFileManagerItems = data.items || [];
         renderFileManager(data);
+        loadFileManagerTree(data.currentPath);
     }
     catch(error)
     {
@@ -59,6 +60,70 @@ function renderFileManager(data)
 
     renderFileManagerBreadcrumbs(data.breadcrumbs || []);
     renderFileManagerItems(data.items || []);
+}
+
+async function loadFileManagerTree(path = currentFileManagerPath)
+{
+    const container = document.getElementById('fileManagerTree');
+
+    if (!container) {
+        return;
+    }
+
+    try
+    {
+        const response = await fetch(
+            '/devpanel/api/filemanager/tree.php?path=' + encodeURIComponent(path)
+        );
+
+        if (typeof checkAuth === 'function' && !checkAuth(response)) return;
+
+        const data = await response.json();
+
+        if (!data.success) {
+            container.innerHTML = '';
+            const empty = document.createElement('div');
+            empty.className = 'file-manager-empty';
+            empty.textContent = data.message || 'No se pudo cargar el árbol';
+            container.appendChild(empty);
+            return;
+        }
+
+        container.innerHTML = '';
+        container.appendChild(createFileManagerTreeNode(data.root, 0));
+    }
+    catch(error)
+    {
+        console.error(error);
+    }
+}
+
+function createFileManagerTreeNode(node, level)
+{
+    const wrapper = document.createElement('div');
+    wrapper.className = 'file-tree-node';
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.style.paddingLeft = `${8 + level * 12}px`;
+    button.classList.toggle('active', node.path === currentFileManagerPath);
+
+    const icon = document.createElement('i');
+    icon.className = 'bi bi-folder-fill';
+
+    const label = document.createElement('span');
+    label.textContent = node.name;
+
+    button.appendChild(icon);
+    button.appendChild(label);
+    button.addEventListener('click', () => loadFileManager(node.path));
+    wrapper.appendChild(button);
+
+    (node.children || []).forEach(child => {
+        wrapper.appendChild(createFileManagerTreeNode(child, level + 1));
+    });
+
+    return wrapper;
 }
 
 function renderFileManagerItems(items)

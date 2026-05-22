@@ -17,6 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET')
 $type = $_GET['type'] ?? 'apache_error';
 $lineLimit = (int) ($_GET['lines'] ?? 120);
 $query = trim((string) ($_GET['q'] ?? ''));
+$project = trim((string) ($_GET['project'] ?? ''));
 
 $lineLimit = max(25, min(500, $lineLimit));
 
@@ -110,6 +111,13 @@ if ($query !== '')
     }));
 }
 
+if ($project !== '')
+{
+    $lines = array_values(array_filter($lines, static function ($line) use ($project) {
+        return stripos($line, $project) !== false;
+    }));
+}
+
 $content = implode("\n", $lines);
 $modifiedAt = filemtime($file);
 
@@ -122,7 +130,8 @@ echo json_encode([
     'path' => $file,
     'lines' => count($lines),
     'limit' => $lineLimit,
-    'filtered' => $query !== '',
+    'filtered' => $query !== '' || $project !== '',
+    'project' => $project,
     'updated_at' => $modifiedAt ? date('Y-m-d H:i:s', $modifiedAt) : null,
     'size' => filesize($file),
     'content' => $content

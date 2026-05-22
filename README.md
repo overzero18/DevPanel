@@ -28,6 +28,9 @@ The project provides a modern interface to manage services, projects, deployment
 ## 📁 Project Management
 
 * Automatic project detection
+* Project type detection (Laravel, WordPress, PHP, Node, Composer, Static)
+* Recent project activity
+* Recent files, panel actions and Git commits per project
 * Open projects in browser
 * Open folders directly in Linux
 * Open projects in VS Code
@@ -79,9 +82,11 @@ devpanel/
 │   └── js/
 ├── includes/                # PHP utilities
 ├── layout/                  # Header, Sidebar
+├── themes/                  # Theme files
 ├── logs/                    # Audit logs
 ├── tmp/                     # Temporary files
-├── config.php               # Configuration
+├── config.example.php       # Public configuration template
+├── config.php               # Local private configuration, ignored by Git
 ├── setup.php                # Initial setup
 ├── login.html               # Login page
 ├── change_password.php      # Password change
@@ -116,7 +121,7 @@ sudo mv DevPanel /opt/lampp/htdocs/devpanel
 http://localhost/devpanel/setup.php
 ```
 
-Enter your password (minimum 6 characters) and confirm. This page will auto-delete after first use.
+Enter your password (minimum 12 characters) and confirm. This page will auto-delete after first use.
 
 For public repositories, do not commit your local `config.php`. Use `config.example.php` as the template and let each user generate their own configuration.
 
@@ -138,7 +143,7 @@ http://localhost/devpanel/login.html
 
 ### Initial Setup
 1. Visit `http://localhost/devpanel/setup.php`
-2. Enter your password (6+ characters)
+2. Enter your password (12+ characters)
 3. The setup page auto-deletes for security
 
 ### Change Password
@@ -208,6 +213,11 @@ Then update `/config.php` with the generated hash.
 * ✅ Logs viewer
 * ✅ Terminal integration
 * ✅ Project detection
+* ✅ Project activity viewer
+* ✅ Theme system
+* ✅ MariaDB manager
+* ✅ Docker detection
+* ✅ Permissions diagnostics
 * ✅ System monitor
 * ✅ Password authentication
 * ✅ Change password functionality
@@ -228,11 +238,45 @@ DevPanel is intended for:
 
 ### Security Best Practices
 
-1. **Use Strong Passwords** - Minimum 6 characters recommended
+1. **Use Strong Passwords** - Minimum 12 characters recommended
 2. **Don't Expose Publicly** - This is not designed for internet-facing deployments without additional security
 3. **Regular Backups** - Backup your projects regularly
 4. **Keep Updated** - Pull latest security updates
 5. **Review Logs** - Check `/logs/actions.log` regularly
+6. **Keep Local Config Private** - Never commit `config.php`, real passwords, database credentials or personal remotes
+
+### Public Repository Notes
+
+- `config.php` is intentionally ignored.
+- `config.example.php` is the safe template for other users.
+- GitHub settings are entered from the UI by each user.
+- Screenshots and docs should avoid showing private paths, tokens, usernames or repository URLs.
+
+### Local Permissions Checklist
+
+DevPanel needs the web server user to read/write a few local paths. Check the dashboard section **Permisos del sistema** after installation.
+
+Typical local paths:
+
+- `config.php`: writable if the UI should save GitHub and runtime settings.
+- `logs/`: writable for audit logs and notifications.
+- `tmp/`: writable for ZIP generation.
+- `HTDOCS_PATH`: writable if the panel should create or clone projects.
+- XAMPP logs: readable for the logs viewer.
+
+Keep these permissions local to your development machine. Do not expose DevPanel directly to the public internet.
+
+### Powerful Endpoints
+
+The following features intentionally control local developer tools and should stay behind login on localhost/private networks:
+
+- Terminal commands
+- Service control
+- Git actions
+- Docker actions
+- File Manager writes/uploads
+- MariaDB import/export/delete
+- FTP deploy
 
 ### Default Restrictions
 
@@ -255,11 +299,10 @@ For security, only these commands are allowed:
 
 # 📈 Future Improvements
 
-* Visual File Manager
-* Git integration
-* Multi PHP support
+* Advanced File Manager
+* Project logs and diagnostics
+* Notification center
 * Local domains
-* Docker integration
 * Two-factor authentication
 * API tokens
 * User roles
