@@ -79,6 +79,8 @@ echo json_encode([
 
     'parentPath' => $currentPath !== $basePath ? dirname($currentPath) : null,
 
+    'writable' => is_writable($currentPath),
+
     'breadcrumbs' => $breadcrumbs,
 
     'items' => $items

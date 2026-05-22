@@ -3,7 +3,9 @@
 if (!function_exists('obtenerRutaBase')) {
     function obtenerRutaBase()
     {
-        return '/opt/lampp/htdocs';
+        require_once __DIR__ . '/config.php';
+
+        return devpanelConfig('HTDOCS_PATH', '/opt/lampp/htdocs');
     }
 }
 
@@ -78,7 +80,11 @@ if (!function_exists('listarArchivosDirectorio')) {
                     date(
                         'Y-m-d H:i:s',
                         filemtime($rutaCompleta)
-                    )
+                    ),
+
+                'writable' => is_writable($rutaCompleta),
+
+                'parentWritable' => is_writable($ruta)
 
             ];
         }

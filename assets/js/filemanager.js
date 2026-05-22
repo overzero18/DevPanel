@@ -1,6 +1,7 @@
-let currentFileManagerPath = '/opt/lampp/htdocs';
+let currentFileManagerPath = document.getElementById('fileManagerPath')?.textContent?.trim() || '/opt/lampp/htdocs';
 let fileManagerParentPath = null;
 let activePreviewPath = null;
+let currentFileManagerItems = [];
 
 function getFileManagerCsrfToken()
 {
@@ -34,6 +35,7 @@ async function loadFileManager(path = currentFileManagerPath)
 
         currentFileManagerPath = data.currentPath;
         fileManagerParentPath = data.parentPath;
+        currentFileManagerItems = data.items || [];
         renderFileManager(data);
     }
     catch(error)
@@ -47,20 +49,38 @@ function renderFileManager(data)
 {
     const container = document.getElementById('fileManagerContent');
     const currentPath = document.getElementById('fileManagerPath');
+    const permission = document.getElementById('fileManagerPermission');
 
     currentPath.textContent = data.currentPath;
+    if (permission) {
+        permission.textContent = data.writable ? 'Escritura activa' : 'Solo lectura';
+        permission.classList.toggle('is-writable', Boolean(data.writable));
+    }
+
     renderFileManagerBreadcrumbs(data.breadcrumbs || []);
+    renderFileManagerItems(data.items || []);
+}
+
+function renderFileManagerItems(items)
+{
+    const container = document.getElementById('fileManagerContent');
+    const searchInput = document.getElementById('fileManagerSearch');
+    const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+    const filteredItems = query === ''
+        ? items
+        : items.filter(item => item.name.toLowerCase().includes(query));
+
     container.innerHTML = '';
 
-    if (!data.items.length) {
+    if (!filteredItems.length) {
         const empty = document.createElement('div');
         empty.className = 'file-manager-empty';
-        empty.textContent = 'Esta carpeta está vacía';
+        empty.textContent = query === '' ? 'Esta carpeta está vacía' : 'Sin resultados';
         container.appendChild(empty);
         return;
     }
 
-    data.items.forEach(item => {
+    filteredItems.forEach(item => {
         container.appendChild(createFileManagerRow(item));
     });
 }
@@ -125,6 +145,7 @@ function createFileManagerRow(item)
         actions.appendChild(createFileActionButton('bi-download', 'Descargar', () => downloadFileManagerItem(item.path)));
     }
 
+    actions.appendChild(createFileActionButton('bi-file-zip', 'Generar ZIP', () => zipFileManagerItem(item.path)));
     actions.appendChild(createFileActionButton('bi-pencil', 'Renombrar', () => renameFileManagerItem(item.path, item.name)));
     actions.appendChild(createFileActionButton('bi-trash', 'Borrar', () => deleteFileManagerItem(item.path, item.name)));
 
@@ -250,7 +271,12 @@ function downloadFileManagerItem(path)
 
 async function createFileManagerFolder()
 {
-    const name = prompt('Nombre de la carpeta');
+    const name = typeof appPrompt === 'function'
+        ? await appPrompt('Nombre de la carpeta', {
+            title: 'Crear carpeta',
+            placeholder: 'ejemplo: assets'
+        })
+        : '';
 
     if (!name) {
         return;
@@ -264,9 +290,35 @@ async function createFileManagerFolder()
     await postFileManagerAction('/devpanel/api/filemanager/mkdir.php', formData);
 }
 
+async function createFileManagerFile()
+{
+    const name = typeof appPrompt === 'function'
+        ? await appPrompt('Nombre del archivo', {
+            title: 'Crear archivo',
+            placeholder: 'ejemplo: index.html'
+        })
+        : '';
+
+    if (!name) {
+        return;
+    }
+
+    const formData = new URLSearchParams();
+    formData.append('path', currentFileManagerPath);
+    formData.append('name', name);
+    formData.append('csrf_token', getFileManagerCsrfToken());
+
+    await postFileManagerAction('/devpanel/api/filemanager/create_file.php', formData);
+}
+
 async function renameFileManagerItem(path, currentName)
 {
-    const name = prompt('Nuevo nombre', currentName);
+    const name = typeof appPrompt === 'function'
+        ? await appPrompt('Nuevo nombre', {
+            title: 'Renombrar',
+            defaultValue: currentName
+        })
+        : '';
 
     if (!name || name === currentName) {
         return;
@@ -282,7 +334,14 @@ async function renameFileManagerItem(path, currentName)
 
 async function deleteFileManagerItem(path, name)
 {
-    if (!confirm(`¿Borrar "${name}"?`)) {
+    const confirmed = typeof appConfirm === 'function'
+        ? await appConfirm(`¿Borrar "${name}"?`, {
+            title: 'Borrar elemento',
+            confirmText: 'Borrar'
+        })
+        : false;
+
+    if (!confirmed) {
         return;
     }
 
@@ -291,6 +350,19 @@ async function deleteFileManagerItem(path, name)
     formData.append('csrf_token', getFileManagerCsrfToken());
 
     await postFileManagerAction('/devpanel/api/filemanager/delete.php', formData);
+}
+
+async function zipFileManagerItem(path)
+{
+    const formData = new URLSearchParams();
+    formData.append('path', path);
+    formData.append('csrf_token', getFileManagerCsrfToken());
+
+    await postFileManagerAction('/devpanel/api/filemanager/zip.php', formData, false, data => {
+        if (data.download) {
+            window.location.href = data.download;
+        }
+    });
 }
 
 async function uploadFileManagerFile(file)
@@ -303,7 +375,7 @@ async function uploadFileManagerFile(file)
     await postFileManagerAction('/devpanel/api/filemanager/upload.php', formData);
 }
 
-async function postFileManagerAction(url, body, reload = true)
+async function postFileManagerAction(url, body, reload = true, onSuccess = null)
 {
     try
     {
@@ -317,9 +389,15 @@ async function postFileManagerAction(url, body, reload = true)
         const data = await response.json();
 
         if (!data.success) {
-            alert(data.message || 'No se pudo completar la acción');
+            notifyFileManager(data.message || 'No se pudo completar la acción', 'danger');
             return;
         }
+
+        if (onSuccess) {
+            onSuccess(data);
+        }
+
+        notifyFileManager(data.message || 'Acción completada', 'success');
 
         if (reload) {
             loadFileManager(currentFileManagerPath);
@@ -328,8 +406,18 @@ async function postFileManagerAction(url, body, reload = true)
     catch(error)
     {
         console.error(error);
-        alert('Error ejecutando acción');
+        notifyFileManager('Error ejecutando acción', 'danger');
     }
+}
+
+function notifyFileManager(message, type = 'info')
+{
+    if (typeof showToast === 'function') {
+        showToast(message, type);
+        return;
+    }
+
+    console.log(message);
 }
 
 function showFileManagerMessage(message)
@@ -376,6 +464,13 @@ document.addEventListener('DOMContentLoaded', () =>
     }
 
     const uploadInput = document.getElementById('fileManagerUpload');
+    const searchInput = document.getElementById('fileManagerSearch');
+
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            renderFileManagerItems(currentFileManagerItems);
+        });
+    }
 
     if (uploadInput) {
         uploadInput.addEventListener('change', () => {

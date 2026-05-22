@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../includes/security.php';
+require_once __DIR__ . '/../includes/helpers/config.php';
 
 header('Content-Type: application/json');
 
@@ -20,22 +21,23 @@ $query = trim((string) ($_GET['q'] ?? ''));
 $lineLimit = max(25, min(500, $lineLimit));
 
 $hostname = gethostname() ?: '';
+$mysqlDataDir = rtrim(devpanelConfig('MYSQL_DATA_DIR'), DIRECTORY_SEPARATOR);
 $logs = [
     'apache_error' => [
         'label' => 'Apache error',
-        'path' => '/opt/lampp/logs/error_log'
+        'path' => devpanelConfig('APACHE_ERROR_LOG')
     ],
     'apache_access' => [
         'label' => 'Apache access',
-        'path' => '/opt/lampp/logs/access_log'
+        'path' => devpanelConfig('APACHE_ACCESS_LOG')
     ],
     'php' => [
         'label' => 'PHP',
-        'path' => '/opt/lampp/logs/php_error_log'
+        'path' => devpanelConfig('PHP_ERROR_LOG')
     ],
     'mariadb' => [
         'label' => 'MariaDB',
-        'path' => "/opt/lampp/var/mysql/$hostname.err"
+        'path' => "$mysqlDataDir/$hostname.err"
     ],
     'devpanel' => [
         'label' => 'DevPanel',

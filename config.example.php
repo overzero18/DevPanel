@@ -1,0 +1,25 @@
+<?php
+
+return [
+    'BASE_URL' => '/devpanel',
+    'LOCALHOST_URL' => 'http://localhost',
+    'PHPMYADMIN_URL' => 'http://localhost/phpmyadmin',
+    'LAMPP_PATH' => '/opt/lampp',
+    'HTDOCS_PATH' => '/opt/lampp/htdocs',
+    'PHP_BINARY' => '/opt/lampp/bin/php',
+    'APACHE_ERROR_LOG' => '/opt/lampp/logs/error_log',
+    'APACHE_ACCESS_LOG' => '/opt/lampp/logs/access_log',
+    'PHP_ERROR_LOG' => '/opt/lampp/logs/php_error_log',
+    'MYSQL_DATA_DIR' => '/opt/lampp/var/mysql',
+    'MYSQL_HOST' => '127.0.0.1',
+    'MYSQL_PORT' => 3306,
+    'MYSQL_USER' => 'root',
+    'MYSQL_PASSWORD' => '',
+    'GITHUB_USER' => '',
+    'GITHUB_REPO' => '',
+    'GITHUB_REMOTE_URL' => '',
+    'EXCLUDED_PROJECT_FOLDERS' => ['dashboard', 'webalizer', 'xampp', 'phpmyadmin', 'devpanel'],
+    'DEVPANEL_PASSWORD' => 'CHANGE_ME_WITH_BCRYPT_HASH',
+    'THEME' => 'dark',
+    'AVAILABLE_THEMES' => ['dark', 'cyber', 'ubuntu', 'glass'],
+];

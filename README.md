@@ -101,7 +101,7 @@ https://www.apachefriends.org/
 ## 2. Clone repository
 
 ```bash
-git clone https://github.com/overzero18/DevPanel.git
+git clone https://github.com/YOUR_USER/YOUR_REPOSITORY.git
 ```
 
 ## 3. Move project to htdocs
@@ -117,6 +117,8 @@ http://localhost/devpanel/setup.php
 ```
 
 Enter your password (minimum 6 characters) and confirm. This page will auto-delete after first use.
+
+For public repositories, do not commit your local `config.php`. Use `config.example.php` as the template and let each user generate their own configuration.
 
 ## 5. Start XAMPP
 
@@ -284,6 +286,6 @@ focused on:
 
 # 👨‍💻 Author
 
-Carlos
+Project maintainer
 
-GitHub: https://github.com/overzero18
+GitHub: configure your own repository in DevPanel settings.

@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../includes/security.php';
+require_once __DIR__ . '/../includes/helpers/config.php';
 
 header('Content-Type: application/json');
 
@@ -32,16 +33,18 @@ if (!validateService($service) || !validateAction($action))
     exit;
 }
 
+$lamppBinary = rtrim(devpanelConfig('LAMPP_PATH'), DIRECTORY_SEPARATOR) . '/lampp';
+
 $commands = [
     'apache' => [
-        'start'   => 'sudo /opt/lampp/lampp startapache',
-        'stop'    => 'sudo /opt/lampp/lampp stopapache',
-        'restart' => 'sudo /opt/lampp/lampp restartapache'
+        'start'   => 'sudo ' . $lamppBinary . ' startapache',
+        'stop'    => 'sudo ' . $lamppBinary . ' stopapache',
+        'restart' => 'sudo ' . $lamppBinary . ' restartapache'
     ],
     'mysql' => [
-        'start'   => 'sudo /opt/lampp/lampp startmysql',
-        'stop'    => 'sudo /opt/lampp/lampp stopmysql',
-        'restart' => 'sudo /opt/lampp/lampp restartmysql'
+        'start'   => 'sudo ' . $lamppBinary . ' startmysql',
+        'stop'    => 'sudo ' . $lamppBinary . ' stopmysql',
+        'restart' => 'sudo ' . $lamppBinary . ' restartmysql'
     ]
 ];
 

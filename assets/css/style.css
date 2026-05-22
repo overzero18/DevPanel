@@ -509,6 +509,189 @@ body {
     color: var(--accent-danger);
 }
 
+.project-git-status {
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    padding: 8px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--overlay);
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+}
+
+.project-git-status i {
+    margin: 0;
+    color: var(--accent-primary);
+    font-size: 16px;
+}
+
+.project-git-status span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 700;
+}
+
+.project-git-status strong {
+    color: var(--accent-secondary);
+}
+
+.project-git-status.is-dirty strong {
+    color: var(--accent-warning);
+}
+
+.project-git-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.database-manager-card {
+    display: grid;
+    gap: 16px;
+}
+
+.database-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.database-list {
+    display: grid;
+    gap: 10px;
+}
+
+.database-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 58px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--bg-primary) 34%, transparent);
+}
+
+.database-info {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.database-info i {
+    margin: 0;
+    color: var(--accent-primary);
+    font-size: 18px;
+}
+
+.database-info div {
+    min-width: 0;
+    display: grid;
+    gap: 2px;
+}
+
+.database-info strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.database-info small {
+    color: var(--text-muted);
+}
+
+.database-actions {
+    flex: 0 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.github-settings-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 0.8fr) minmax(0, 1.3fr) 180px;
+    align-items: end;
+    gap: 14px;
+}
+
+.github-settings-action {
+    min-width: 0;
+}
+
+.runtime-settings-card {
+    display: grid;
+    gap: 16px;
+}
+
+.runtime-settings-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.permissions-card {
+    display: grid;
+    gap: 16px;
+}
+
+.permissions-list {
+    display: grid;
+    gap: 10px;
+}
+
+.permission-row {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr);
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--bg-primary) 34%, transparent);
+}
+
+.permission-row > i {
+    margin: 2px 0 0;
+    font-size: 17px;
+}
+
+.permission-row.is-ok > i {
+    color: var(--accent-secondary);
+}
+
+.permission-row.is-warning > i {
+    color: var(--accent-warning);
+}
+
+.permission-body {
+    min-width: 0;
+    display: grid;
+    gap: 3px;
+}
+
+.permission-body code {
+    min-width: 0;
+    overflow: hidden;
+    padding: 0;
+    background: transparent;
+    color: var(--accent-primary);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.permission-body small {
+    color: var(--text-muted);
+}
+
 .text-muted,
 .text-secondary {
     color: var(--text-muted) !important;
@@ -646,6 +829,27 @@ body {
     flex: 0 0 auto;
     flex-wrap: wrap;
     justify-content: flex-end;
+}
+
+.file-manager-search {
+    width: 180px;
+}
+
+.file-permission-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 38px;
+    padding: 7px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--overlay);
+    color: var(--accent-danger);
+    font-size: 0.82rem;
+    font-weight: 800;
+}
+
+.file-permission-pill.is-writable {
+    color: var(--accent-secondary);
 }
 
 .file-manager-breadcrumbs {
@@ -808,6 +1012,105 @@ body {
     padding: 10px;
 }
 
+.terminal-card {
+    display: grid;
+    gap: 14px;
+}
+
+.terminal-header,
+.terminal-actions,
+.terminal-history-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.terminal-header {
+    justify-content: space-between;
+}
+
+.terminal-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.terminal-favorites {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.terminal-favorite {
+    min-height: 34px;
+    padding: 6px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--overlay);
+    color: var(--text-secondary);
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.terminal-favorite:hover {
+    border-color: color-mix(in srgb, var(--accent-primary) 45%, transparent);
+    color: var(--accent-primary);
+}
+
+.terminal-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 260px;
+    gap: 14px;
+    min-width: 0;
+}
+
+.terminal-history-panel {
+    min-width: 0;
+    max-height: 500px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--bg-primary) 34%, transparent);
+}
+
+.terminal-history-header {
+    justify-content: space-between;
+    padding: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.terminal-history-list {
+    display: grid;
+    gap: 6px;
+    max-height: 440px;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.terminal-history-list button,
+.terminal-history-empty {
+    min-width: 0;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--overlay);
+    color: var(--text-secondary);
+    padding: 8px 10px;
+    text-align: left;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    font-size: 0.8rem;
+}
+
+.terminal-history-list button {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.terminal-history-list button:hover {
+    color: var(--accent-primary);
+    border-color: color-mix(in srgb, var(--accent-primary) 45%, transparent);
+}
+
 .xterm,
 .xterm-screen,
 .xterm-viewport {
@@ -885,6 +1188,92 @@ body {
     color: var(--text-muted);
 }
 
+.toast-container {
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    z-index: 2000;
+    display: grid;
+    gap: 10px;
+    width: min(360px, calc(100vw - 36px));
+}
+
+.app-toast {
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr) 32px;
+    align-items: center;
+    gap: 10px;
+    min-height: 52px;
+    padding: 10px 10px 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.24);
+    animation: toastIn 0.18s ease-out;
+}
+
+.app-toast span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-size: 0.9rem;
+    font-weight: 650;
+}
+
+.app-toast button {
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-muted);
+}
+
+.app-toast button:hover {
+    background: var(--overlay);
+    color: var(--text-primary);
+}
+
+.app-toast-success > i {
+    color: var(--accent-secondary);
+}
+
+.app-toast-danger > i {
+    color: var(--accent-danger);
+}
+
+.app-toast-info > i {
+    color: var(--accent-primary);
+}
+
+.app-toast.is-hiding {
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.app-dialog .modal-body p {
+    color: var(--text-secondary);
+}
+
+.app-dialog .btn-close {
+    filter: invert(1) grayscale(1);
+}
+
+@keyframes toastIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 @media (max-width: 991px) {
     .sidebar {
         position: fixed;
@@ -907,6 +1296,44 @@ body {
     .app-main {
         max-width: 100%;
         width: 100%;
+    }
+
+    .terminal-layout,
+    .file-manager-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .terminal-history-panel {
+        max-height: 320px;
+    }
+}
+
+@media (max-width: 575px) {
+    h1 {
+        font-size: 1.55rem;
+    }
+
+    .dashboard-card,
+    .card {
+        padding: 14px;
+    }
+
+    .metric-card {
+        min-height: 160px;
+    }
+
+    .project-git-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .toast-container {
+        right: 10px;
+        bottom: 10px;
+        width: calc(100vw - 20px);
+    }
+
+    .app-toast {
+        grid-template-columns: 20px minmax(0, 1fr) 30px;
     }
 }
 
@@ -950,11 +1377,53 @@ body {
     }
 
     .file-manager-actions .btn,
-    .file-manager-actions label {
+    .file-manager-actions label,
+    .file-manager-search,
+    .file-permission-pill {
         width: 100%;
     }
 
     .file-preview-panel {
         min-height: 360px;
+    }
+
+    .github-settings-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .runtime-settings-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .project-git-actions,
+    .database-row {
+        grid-template-columns: 1fr;
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .database-actions,
+    .database-actions .btn {
+        width: 100%;
+    }
+
+    .database-toolbar .btn {
+        width: 100%;
+    }
+
+    .terminal-header,
+    .terminal-actions,
+    .terminal-layout {
+        align-items: stretch;
+        grid-template-columns: 1fr;
+        flex-direction: column;
+    }
+
+    .terminal-actions .btn {
+        width: 100%;
+    }
+
+    .terminal-history-panel {
+        max-height: 320px;
     }
 }

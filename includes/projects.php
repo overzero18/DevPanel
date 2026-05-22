@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/helpers/config.php';
+
 function getProjectType($path)
 {
     if (file_exists($path . '/artisan'))
@@ -60,24 +62,71 @@ function getFolderSize($path)
     return round($size / 1024 / 1024, 2);
 }
 
+function runProjectGitCommand($path, $args)
+{
+    if (!is_dir($path . '/.git'))
+    {
+        return null;
+    }
+
+    $command = array_merge(['git', '-c', 'safe.directory=' . $path, '-C', $path], $args);
+    $process = proc_open(
+        $command,
+        [
+            1 => ['pipe', 'w'],
+            2 => ['pipe', 'w']
+        ],
+        $pipes,
+        null,
+        ['HOME' => sys_get_temp_dir()]
+    );
+
+    if (!is_resource($process))
+    {
+        return null;
+    }
+
+    $output = trim(stream_get_contents($pipes[1]));
+    fclose($pipes[1]);
+    fclose($pipes[2]);
+
+    return proc_close($process) === 0 ? $output : null;
+}
+
+function getProjectGitInfo($path)
+{
+    if (!is_dir($path . '/.git'))
+    {
+        return [
+            'enabled' => false,
+            'branch' => null,
+            'dirty' => false,
+            'changes' => 0
+        ];
+    }
+
+    $branch = runProjectGitCommand($path, ['branch', '--show-current']);
+    $status = runProjectGitCommand($path, ['status', '--short']);
+    $changes = $status === null || $status === ''
+        ? 0
+        : count(preg_split('/\R/', $status));
+
+    return [
+        'enabled' => true,
+        'branch' => $branch ?: 'detached',
+        'dirty' => $changes > 0,
+        'changes' => $changes
+    ];
+}
+
 function getProjects()
 {
-    $projectsPath = '/opt/lampp/htdocs';
+    $projectsPath = devpanelConfig('HTDOCS_PATH', '/opt/lampp/htdocs');
+    $localhostUrl = rtrim(devpanelConfig('LOCALHOST_URL', 'http://localhost'), '/');
 
     $folders = scandir($projectsPath);
 
-    $ignoredFolders = [
-
-        '.',
-        '..',
-
-        'img',
-        'webalizer',
-        'dashboard',
-        'xampp',
-        'phpmyadmin'
-
-    ];
+    $ignoredFolders = array_merge(['.', '..', 'img'], devpanelConfig('EXCLUDED_PROJECT_FOLDERS', []));
 
     $projects = [];
 
@@ -98,11 +147,13 @@ function getProjects()
 
                 'path' => $fullPath,
 
-                'url' => 'http://localhost/' . $folder,
+                'url' => $localhostUrl . '/' . rawurlencode($folder),
 
                 'type' => getProjectType($fullPath),
 
-                'size' => getFolderSize($fullPath)
+                'size' => getFolderSize($fullPath),
+
+                'git' => getProjectGitInfo($fullPath)
 
             ];
         }

@@ -235,13 +235,17 @@ function runControlledCommand($command)
 
 function getAllowedTerminalCommands()
 {
+    require_once __DIR__ . '/helpers/config.php';
+
+    $phpBinary = devpanelConfig('PHP_BINARY', '/opt/lampp/bin/php');
+
     return [
         'pwd' => 'pwd',
         'ls' => 'ls -la',
         'ls -la' => 'ls -la',
         'git status' => 'git status --short',
         'git branch' => 'git branch',
-        'php -v' => '/opt/lampp/bin/php -v',
+        'php -v' => $phpBinary . ' -v',
         'composer --version' => 'composer --version',
         'npm --version' => 'npm --version',
     ];

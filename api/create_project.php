@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../includes/security.php';
+require_once __DIR__ . '/../includes/helpers/config.php';
 
 header('Content-Type: application/json');
 
@@ -37,7 +38,7 @@ if (!preg_match('/^[a-zA-Z0-9_-]+$/', $name))
     exit;
 }
 
-$path = '/opt/lampp/htdocs/' . $name;
+$path = rtrim(devpanelConfig('HTDOCS_PATH', '/opt/lampp/htdocs'), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $name;
 
 if (is_dir($path))
 {

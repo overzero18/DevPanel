@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../includes/security.php';
+require_once __DIR__ . '/../includes/helpers/config.php';
 
 header('Content-Type: application/json');
 
@@ -134,6 +135,8 @@ if (!file_exists($zipPath))
     exit;
 }
 
+$baseUrl = rtrim(devpanelConfig('BASE_URL', '/devpanel'), '/');
+
 logAction('generate_zip', "Generated ZIP for: $projectName");
 
-echo json_encode(['success' => true, 'download' => 'http://localhost/devpanel/tmp/' . rawurlencode($projectName) . '.zip']);
+echo json_encode(['success' => true, 'download' => $baseUrl . '/tmp/' . rawurlencode($projectName) . '.zip']);

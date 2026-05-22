@@ -1,6 +1,10 @@
 <?php
 
+require_once __DIR__ . '/../includes/helpers/config.php';
+
 $currentPage = basename($_SERVER['PHP_SELF']);
+$localhostUrl = devpanelConfig('LOCALHOST_URL', 'http://localhost');
+$phpMyAdminUrl = devpanelConfig('PHPMYADMIN_URL', 'http://localhost/phpmyadmin');
 
 $primaryLinks = [
     [
@@ -31,13 +35,13 @@ $primaryLinks = [
 
 $toolLinks = [
     [
-        'url' => 'http://localhost/phpmyadmin',
+        'url' => $phpMyAdminUrl,
         'icon' => 'database-fill',
         'label' => 'phpMyAdmin',
         'external' => true,
     ],
     [
-        'url' => 'http://localhost',
+        'url' => $localhostUrl,
         'icon' => 'globe',
         'label' => 'localhost',
         'external' => true,

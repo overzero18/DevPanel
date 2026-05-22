@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/includes/security.php';
+require_once __DIR__ . '/includes/helpers/config.php';
 require_once __DIR__ . '/includes/services.php';
 require_once __DIR__ . '/includes/projects.php';
 
@@ -14,6 +15,13 @@ $csrfToken = generateCsrfToken();
 
 $apacheRunning = isApacheRunning();
 $mariadbRunning = isMariaDBRunning();
+$localhostUrl = devpanelConfig('LOCALHOST_URL', 'http://localhost');
+$phpMyAdminUrl = devpanelConfig('PHPMYADMIN_URL', 'http://localhost/phpmyadmin');
+$htdocsPath = devpanelConfig('HTDOCS_PATH', '/opt/lampp/htdocs');
+$githubUser = devpanelConfig('GITHUB_USER', '');
+$githubRepo = devpanelConfig('GITHUB_REPO', '');
+$githubRemoteUrl = devpanelConfig('GITHUB_REMOTE_URL', '');
+$runtimeSettings = devpanelConfig();
 
 $projects = getProjects();
 
@@ -283,7 +291,7 @@ $projects = getProjects();
                 localhost activo
             </p>
 
-            <a href="http://localhost"
+            <a href="<?php echo htmlspecialchars($localhostUrl, ENT_QUOTES, 'UTF-8'); ?>"
                 target="_blank"
                 class="btn btn-devpanel w-100">
 
@@ -309,7 +317,7 @@ $projects = getProjects();
 
             <div class="d-flex flex-wrap gap-3">
 
-                <a href="http://localhost/phpmyadmin"
+                <a href="<?php echo htmlspecialchars($phpMyAdminUrl, ENT_QUOTES, 'UTF-8'); ?>"
                     target="_blank"
                     class="btn btn-devpanel">
 
@@ -317,7 +325,7 @@ $projects = getProjects();
                     phpMyAdmin
                 </a>
 
-                <a href="http://localhost"
+                <a href="<?php echo htmlspecialchars($localhostUrl, ENT_QUOTES, 'UTF-8'); ?>"
                     target="_blank"
                     class="btn btn-devpanel">
 
@@ -380,6 +388,77 @@ $projects = getProjects();
                                 Tamaño: <?php echo $project['size']; ?> MB
                             </p>
 
+                            <?php if ($project['git']['enabled']): ?>
+                                <div class="project-git-status <?php echo $project['git']['dirty'] ? 'is-dirty' : 'is-clean'; ?>">
+                                    <i class="bi bi-git"></i>
+                                    <span><?php echo htmlspecialchars($project['git']['branch'], ENT_QUOTES, 'UTF-8'); ?></span>
+                                    <strong>
+                                        <?php echo $project['git']['dirty']
+                                            ? $project['git']['changes'] . ' cambios'
+                                            : 'limpio'; ?>
+                                    </strong>
+                                </div>
+
+                                <div class="project-git-actions">
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-secondary btn-sm"
+                                        data-path="<?php echo htmlspecialchars($project['path'], ENT_QUOTES, 'UTF-8'); ?>"
+                                        onclick="runGitAction(this.dataset.path, 'status')">
+                                        Status
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-info btn-sm"
+                                        data-path="<?php echo htmlspecialchars($project['path'], ENT_QUOTES, 'UTF-8'); ?>"
+                                        onclick="runGitAction(this.dataset.path, 'log')">
+                                        Commits
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-warning btn-sm"
+                                        data-path="<?php echo htmlspecialchars($project['path'], ENT_QUOTES, 'UTF-8'); ?>"
+                                        onclick="runGitAction(this.dataset.path, 'pull')">
+                                        Pull
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-success btn-sm"
+                                        data-path="<?php echo htmlspecialchars($project['path'], ENT_QUOTES, 'UTF-8'); ?>"
+                                        onclick="runGitAction(this.dataset.path, 'push')">
+                                        Push
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-light btn-sm"
+                                        data-path="<?php echo htmlspecialchars($project['path'], ENT_QUOTES, 'UTF-8'); ?>"
+                                        onclick="runGitAction(this.dataset.path, 'branches')">
+                                        Ramas
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-primary btn-sm"
+                                        data-path="<?php echo htmlspecialchars($project['path'], ENT_QUOTES, 'UTF-8'); ?>"
+                                        onclick="setGitRemote(this.dataset.path)">
+                                        Remote
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-secondary btn-sm"
+                                        data-path="<?php echo htmlspecialchars($project['path'], ENT_QUOTES, 'UTF-8'); ?>"
+                                        onclick="checkoutGitBranch(this.dataset.path)">
+                                        Cambiar
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-secondary btn-sm"
+                                        data-path="<?php echo htmlspecialchars($project['path'], ENT_QUOTES, 'UTF-8'); ?>"
+                                        onclick="createGitBranch(this.dataset.path)">
+                                        Nueva rama
+                                    </button>
+                                </div>
+                            <?php endif; ?>
+
                             <!-- Botones -->
                             <div class="d-grid gap-2 mt-auto">
 
@@ -439,6 +518,231 @@ $projects = getProjects();
 
 </div>
 
+<!-- MariaDB Manager -->
+<div class="row mt-5" id="mariadb-manager">
+
+    <div class="col-12">
+
+        <div class="dashboard-card database-manager-card">
+
+            <div class="section-title-row">
+                <div>
+                    <h4 class="mb-1">MariaDB</h4>
+                    <p class="text-secondary mb-0">Bases de datos locales, creación y backups SQL.</p>
+                </div>
+                <button type="button" class="btn btn-devpanel" onclick="createDatabase()">
+                    <i class="bi bi-database-add"></i>
+                    Crear DB
+                </button>
+            </div>
+
+            <div class="database-toolbar">
+                <button type="button" class="btn btn-outline-info" onclick="loadDatabases()">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    Recargar
+                </button>
+
+                <button type="button" class="btn btn-outline-warning" onclick="createDatabaseUser()">
+                    <i class="bi bi-person-plus"></i>
+                    Crear usuario
+                </button>
+            </div>
+
+            <div class="database-list" id="databaseList">
+                <div class="file-manager-empty">Cargando bases de datos...</div>
+            </div>
+
+            <div class="database-users">
+                <h5 class="mb-3">Usuarios</h5>
+                <div class="database-list" id="databaseUsersList">
+                    <div class="file-manager-empty">Cargando usuarios...</div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Permisos -->
+<div class="row mt-5" id="permissions-panel">
+
+    <div class="col-12">
+
+        <div class="dashboard-card permissions-card">
+
+            <div class="section-title-row">
+                <div>
+                    <h4 class="mb-1">Permisos del sistema</h4>
+                    <p class="text-secondary mb-0" id="permissionsSummary">Comprobando rutas críticas.</p>
+                </div>
+                <button type="button" class="btn btn-outline-info" onclick="loadPermissions()">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    Revisar
+                </button>
+            </div>
+
+            <div class="permissions-list" id="permissionsList">
+                <div class="file-manager-empty">Cargando permisos...</div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Configuración -->
+<div class="row mt-5" id="runtime-settings">
+
+    <div class="col-12">
+
+        <div class="dashboard-card runtime-settings-card">
+
+            <div class="section-title-row">
+                <div>
+                    <h4 class="mb-1">Configuración</h4>
+                    <p class="text-secondary mb-0">Rutas y servicios locales usados por DevPanel.</p>
+                </div>
+                <button type="button" class="btn btn-devpanel" onclick="saveRuntimeSettings()">
+                    <i class="bi bi-save"></i>
+                    Guardar configuración
+                </button>
+            </div>
+
+            <div class="runtime-settings-grid">
+                <?php
+                $runtimeFields = [
+                    'BASE_URL' => 'Base URL',
+                    'LOCALHOST_URL' => 'Localhost URL',
+                    'PHPMYADMIN_URL' => 'phpMyAdmin URL',
+                    'LAMPP_PATH' => 'XAMPP path',
+                    'HTDOCS_PATH' => 'htdocs path',
+                    'PHP_BINARY' => 'PHP binary',
+                    'APACHE_ERROR_LOG' => 'Apache error log',
+                    'APACHE_ACCESS_LOG' => 'Apache access log',
+                    'PHP_ERROR_LOG' => 'PHP error log',
+                    'MYSQL_DATA_DIR' => 'MySQL data dir',
+                    'MYSQL_HOST' => 'MySQL host',
+                    'MYSQL_PORT' => 'MySQL port',
+                    'MYSQL_USER' => 'MySQL user',
+                    'MYSQL_PASSWORD' => 'MySQL password'
+                ];
+                ?>
+
+                <?php foreach ($runtimeFields as $field => $label): ?>
+                    <div>
+                        <label class="form-label"><?php echo htmlspecialchars($label, ENT_QUOTES, 'UTF-8'); ?></label>
+                        <input
+                            type="<?php echo $field === 'MYSQL_PASSWORD' ? 'password' : 'text'; ?>"
+                            class="form-control runtime-setting-input"
+                            data-setting="<?php echo strtolower($field); ?>"
+                            value="<?php echo htmlspecialchars((string) ($runtimeSettings[$field] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+                    </div>
+                <?php endforeach; ?>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Docker -->
+<div class="row mt-5" id="docker-manager">
+
+    <div class="col-12">
+
+        <div class="dashboard-card docker-manager-card">
+
+            <div class="section-title-row">
+                <div>
+                    <h4 class="mb-1">Docker</h4>
+                    <p class="text-secondary mb-0">Detección y listado básico de contenedores.</p>
+                </div>
+                <button type="button" class="btn btn-outline-info" onclick="loadDockerContainers()">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    Recargar
+                </button>
+            </div>
+
+            <div class="database-list" id="dockerList">
+                <div class="file-manager-empty">Cargando Docker...</div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- GitHub -->
+<div class="row mt-5">
+
+    <div class="col-12">
+
+        <div class="dashboard-card github-settings-card">
+
+            <div class="section-title-row">
+                <div>
+                    <h4 class="mb-1">GitHub</h4>
+                    <p class="text-secondary mb-0">Configura tu propio usuario y repositorio para este panel.</p>
+                </div>
+            </div>
+
+            <div class="github-settings-grid">
+                <div>
+                    <label class="form-label">Usuario</label>
+                    <input
+                        type="text"
+                        id="githubUser"
+                        class="form-control"
+                        value="<?php echo htmlspecialchars($githubUser, ENT_QUOTES, 'UTF-8'); ?>"
+                        placeholder="tu-usuario">
+                </div>
+
+                <div>
+                    <label class="form-label">Repositorio</label>
+                    <input
+                        type="text"
+                        id="githubRepo"
+                        class="form-control"
+                        value="<?php echo htmlspecialchars($githubRepo, ENT_QUOTES, 'UTF-8'); ?>"
+                        placeholder="tu-repo">
+                </div>
+
+                <div>
+                    <label class="form-label">Remote URL</label>
+                    <input
+                        type="text"
+                        id="githubRemoteUrl"
+                        class="form-control"
+                        value="<?php echo htmlspecialchars($githubRemoteUrl, ENT_QUOTES, 'UTF-8'); ?>"
+                        placeholder="https://github.com/usuario/repo.git">
+                </div>
+
+                <div class="github-settings-action">
+                    <button type="button" class="btn btn-devpanel w-100" onclick="saveGithubSettings()">
+                        <i class="bi bi-save"></i>
+                        Guardar GitHub
+                    </button>
+                </div>
+
+                <div class="github-settings-action">
+                    <button type="button" class="btn btn-outline-info w-100" onclick="cloneGithubRepository()">
+                        <i class="bi bi-cloud-download"></i>
+                        Clonar
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
 <!-- File Manager -->
 <div class="row mt-5" id="file-manager">
 
@@ -449,10 +753,18 @@ $projects = getProjects();
             <div class="file-manager-header">
                 <div>
                     <h4 class="mb-1">File Manager</h4>
-                    <p class="text-secondary mb-0" id="fileManagerPath">/opt/lampp/htdocs</p>
+                    <p class="text-secondary mb-0" id="fileManagerPath"><?php echo htmlspecialchars($htdocsPath, ENT_QUOTES, 'UTF-8'); ?></p>
                 </div>
 
                 <div class="file-manager-actions">
+                    <span class="file-permission-pill" id="fileManagerPermission">--</span>
+
+                    <input
+                        type="search"
+                        id="fileManagerSearch"
+                        class="form-control file-manager-search"
+                        placeholder="Buscar">
+
                     <button type="button" class="btn btn-outline-secondary" onclick="fileManagerGoUp()">
                         <i class="bi bi-arrow-up"></i>
                     </button>
@@ -464,6 +776,11 @@ $projects = getProjects();
                     <button type="button" class="btn btn-devpanel" onclick="createFileManagerFolder()">
                         <i class="bi bi-folder-plus"></i>
                         Carpeta
+                    </button>
+
+                    <button type="button" class="btn btn-devpanel" onclick="createFileManagerFile()">
+                        <i class="bi bi-file-earmark-plus"></i>
+                        Archivo
                     </button>
 
                     <label class="btn btn-devpanel mb-0">
@@ -651,25 +968,41 @@ Cargando logs...
 
     <div class="col-12">
 
-        <div class="dashboard-card">
+        <div class="dashboard-card terminal-card">
 
-            <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="terminal-header">
 
-                <h4 class="mb-0">
-                    Terminal Linux
-                </h4>
+                <div>
+                    <h4 class="mb-1">Terminal Linux</h4>
+                    <p class="text-secondary mb-0">Comandos seguros, historial y favoritos.</p>
+                </div>
 
-                <button
-                    type="button"
-                    class="btn btn-outline-danger"
-                    onclick="clearTerminal()">
-
-                    Limpiar
-                </button>
+                <div class="terminal-actions">
+                    <button type="button" class="btn btn-outline-secondary" onclick="runQuickCommand('pwd')">pwd</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="runQuickCommand('ls')">ls</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="runQuickCommand('git status')">git</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="runQuickCommand('php -v')">php</button>
+                    <button type="button" class="btn btn-outline-danger" onclick="clearTerminal()">
+                        Limpiar
+                    </button>
+                </div>
 
             </div>
 
-            <div id="terminal" class="devpanel-terminal-shell">
+            <div class="terminal-favorites" id="terminalFavorites"></div>
+
+            <div class="terminal-layout">
+                <div id="terminal" class="devpanel-terminal-shell"></div>
+
+                <aside class="terminal-history-panel">
+                    <div class="terminal-history-header">
+                        <h5 class="mb-0">Historial</h5>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearTerminalHistory()">
+                            Limpiar
+                        </button>
+                    </div>
+                    <div id="terminalHistory" class="terminal-history-list"></div>
+                </aside>
             </div>
 
         </div>

@@ -51,6 +51,149 @@ function checkAuth(response) {
     return true;
 }
 
+function showToast(message, type = 'info')
+{
+    let container = document.getElementById('toastContainer');
+
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `app-toast app-toast-${type}`;
+
+    const icon = document.createElement('i');
+    icon.className = type === 'success'
+        ? 'bi bi-check-circle-fill'
+        : type === 'danger'
+            ? 'bi bi-exclamation-triangle-fill'
+            : 'bi bi-info-circle-fill';
+
+    const text = document.createElement('span');
+    text.textContent = message;
+
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.innerHTML = '<i class="bi bi-x"></i>';
+    close.addEventListener('click', () => toast.remove());
+
+    toast.appendChild(icon);
+    toast.appendChild(text);
+    toast.appendChild(close);
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.classList.add('is-hiding');
+        setTimeout(() => toast.remove(), 180);
+    }, 4200);
+}
+
+function openAppDialog(options)
+{
+    return new Promise(resolve => {
+        let modalElement = document.getElementById('appDialogModal');
+
+        if (!modalElement) {
+            modalElement = document.createElement('div');
+            modalElement.className = 'modal fade';
+            modalElement.id = 'appDialogModal';
+            modalElement.tabIndex = -1;
+            modalElement.innerHTML = `
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content app-dialog">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="appDialogTitle"></h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p id="appDialogMessage" class="mb-3"></p>
+                            <input type="text" id="appDialogInput" class="form-control">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="appDialogCancel">Cancelar</button>
+                            <button type="button" class="btn btn-devpanel" id="appDialogConfirm">Aceptar</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modalElement);
+        }
+
+        const title = modalElement.querySelector('#appDialogTitle');
+        const message = modalElement.querySelector('#appDialogMessage');
+        const input = modalElement.querySelector('#appDialogInput');
+        const confirm = modalElement.querySelector('#appDialogConfirm');
+        const cancel = modalElement.querySelector('#appDialogCancel');
+        const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+        let settled = false;
+
+        title.textContent = options.title || 'Confirmar';
+        message.textContent = options.message || '';
+        confirm.textContent = options.confirmText || 'Aceptar';
+        cancel.textContent = options.cancelText || 'Cancelar';
+        input.hidden = options.type !== 'prompt';
+        input.value = options.defaultValue || '';
+        input.placeholder = options.placeholder || '';
+
+        const cleanup = () => {
+            confirm.onclick = null;
+            modalElement.removeEventListener('hidden.bs.modal', onHidden);
+        };
+
+        const finish = value => {
+            settled = true;
+            cleanup();
+            modal.hide();
+            resolve(value);
+        };
+
+        const onHidden = () => {
+            if (!settled) {
+                cleanup();
+                resolve(options.type === 'prompt' ? null : false);
+            }
+        };
+
+        confirm.onclick = () => {
+            finish(options.type === 'prompt' ? input.value.trim() : true);
+        };
+
+        modalElement.addEventListener('hidden.bs.modal', onHidden);
+        modal.show();
+
+        if (options.type === 'prompt') {
+            setTimeout(() => input.focus(), 180);
+        }
+    });
+}
+
+function appConfirm(message, options = {})
+{
+    return openAppDialog({
+        type: 'confirm',
+        title: options.title || 'Confirmar acción',
+        message,
+        confirmText: options.confirmText || 'Aceptar',
+        cancelText: options.cancelText || 'Cancelar'
+    });
+}
+
+function appPrompt(message, options = {})
+{
+    return openAppDialog({
+        type: 'prompt',
+        title: options.title || 'Nuevo valor',
+        message,
+        defaultValue: options.defaultValue || '',
+        placeholder: options.placeholder || '',
+        confirmText: options.confirmText || 'Guardar',
+        cancelText: options.cancelText || 'Cancelar'
+    });
+}
+
 function addCsrfToken(formData) {
     if (csrfToken && formData instanceof URLSearchParams) {
         formData.append('csrf_token', csrfToken);
@@ -125,7 +268,7 @@ function controlService(service, action)
     .then(data =>
     {
         if (data) {
-            alert(data.output);
+            showToast(data.output || 'Acción completada', data.success === false ? 'danger' : 'success');
             location.reload();
         }
     });
@@ -139,7 +282,7 @@ function createProject()
 
     if (!name)
     {
-        alert('Introduce un nombre de proyecto');
+        showToast('Introduce un nombre de proyecto', 'danger');
         return;
     }
 
@@ -164,11 +307,11 @@ function createProject()
     {
         if (!data.success)
         {
-            alert(data.message);
+            showToast(data.message, 'danger');
             return;
         }
 
-        alert(data.message);
+        showToast(data.message, 'success');
 
         location.reload();
     })
@@ -176,9 +319,786 @@ function createProject()
     {
         console.error(error);
 
-        alert('Error creando proyecto');
+        showToast('Error creando proyecto', 'danger');
     });
 }
+
+async function saveGithubSettings()
+{
+    const formData = new URLSearchParams();
+    formData.append('github_user', document.getElementById('githubUser')?.value.trim() || '');
+    formData.append('github_repo', document.getElementById('githubRepo')?.value.trim() || '');
+    formData.append('github_remote_url', document.getElementById('githubRemoteUrl')?.value.trim() || '');
+    formData.append('csrf_token', csrfToken);
+
+    try
+    {
+        const response = await fetch('/devpanel/api/save_github_settings.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: formData
+        });
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+
+        if (!data.success)
+        {
+            showToast(data.message || 'No se pudo guardar GitHub', 'danger');
+            return;
+        }
+
+        showToast(data.message, 'success');
+    }
+    catch(error)
+    {
+        console.error(error);
+        showToast('Error guardando GitHub', 'danger');
+    }
+}
+
+async function loadDatabases()
+{
+    const container = document.getElementById('databaseList');
+
+    if (!container) {
+        return;
+    }
+
+    try
+    {
+        const response = await fetch('/devpanel/api/database/list.php');
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+
+        if (!data.success)
+        {
+            container.textContent = data.message || 'No se pudieron cargar las bases de datos';
+            return;
+        }
+
+        renderDatabases(data.databases || []);
+    }
+    catch(error)
+    {
+        console.error(error);
+        container.textContent = 'Error cargando bases de datos';
+    }
+}
+
+function renderDatabases(databases)
+{
+    const container = document.getElementById('databaseList');
+    container.innerHTML = '';
+
+    if (!databases.length)
+    {
+        const empty = document.createElement('div');
+        empty.className = 'file-manager-empty';
+        empty.textContent = 'No hay bases de datos';
+        container.appendChild(empty);
+        return;
+    }
+
+    databases.forEach(database => {
+        const row = document.createElement('div');
+        row.className = 'database-row';
+
+        const info = document.createElement('div');
+        info.className = 'database-info';
+
+        const icon = document.createElement('i');
+        icon.className = 'bi bi-database-fill';
+
+        const text = document.createElement('div');
+        const name = document.createElement('strong');
+        name.textContent = database.name;
+        const meta = document.createElement('small');
+        meta.textContent = `${database.tables} tablas${database.system ? ' · sistema' : ''}`;
+
+        text.appendChild(name);
+        text.appendChild(meta);
+        info.appendChild(icon);
+        info.appendChild(text);
+
+        const actions = document.createElement('div');
+        actions.className = 'database-actions';
+
+        if (!database.system) {
+            const exportButton = document.createElement('button');
+            exportButton.type = 'button';
+            exportButton.className = 'btn btn-sm btn-outline-info';
+            exportButton.innerHTML = '<i class="bi bi-download"></i> Exportar';
+            exportButton.addEventListener('click', () => {
+                window.location.href = `/devpanel/api/database/export.php?name=${encodeURIComponent(database.name)}`;
+            });
+            actions.appendChild(exportButton);
+
+            const importButton = document.createElement('button');
+            importButton.type = 'button';
+            importButton.className = 'btn btn-sm btn-outline-warning';
+            importButton.innerHTML = '<i class="bi bi-upload"></i> Importar';
+            importButton.addEventListener('click', () => importDatabase(database.name));
+            actions.appendChild(importButton);
+
+            const deleteButton = document.createElement('button');
+            deleteButton.type = 'button';
+            deleteButton.className = 'btn btn-sm btn-outline-danger';
+            deleteButton.innerHTML = '<i class="bi bi-trash"></i> Borrar';
+            deleteButton.addEventListener('click', () => deleteDatabase(database.name));
+            actions.appendChild(deleteButton);
+        }
+
+        row.appendChild(info);
+        row.appendChild(actions);
+        container.appendChild(row);
+    });
+}
+
+async function loadDatabaseUsers()
+{
+    const container = document.getElementById('databaseUsersList');
+
+    if (!container) {
+        return;
+    }
+
+    try
+    {
+        const response = await fetch('/devpanel/api/database/users.php');
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+
+        if (!data.success)
+        {
+            container.textContent = data.message || 'No se pudieron cargar usuarios';
+            return;
+        }
+
+        renderDatabaseUsers(data.users || []);
+    }
+    catch(error)
+    {
+        console.error(error);
+        container.textContent = 'Error cargando usuarios';
+    }
+}
+
+function renderDatabaseUsers(users)
+{
+    const container = document.getElementById('databaseUsersList');
+    container.innerHTML = '';
+
+    if (!users.length)
+    {
+        const empty = document.createElement('div');
+        empty.className = 'file-manager-empty';
+        empty.textContent = 'No hay usuarios';
+        container.appendChild(empty);
+        return;
+    }
+
+    users.forEach(user => {
+        const row = document.createElement('div');
+        row.className = 'database-row';
+
+        const info = document.createElement('div');
+        info.className = 'database-info';
+
+        const icon = document.createElement('i');
+        icon.className = 'bi bi-person-fill';
+
+        const text = document.createElement('div');
+        const name = document.createElement('strong');
+        name.textContent = `${user.user || '(sin nombre)'}@${user.host}`;
+        const meta = document.createElement('small');
+        meta.textContent = user.system ? 'usuario del sistema' : 'usuario local';
+
+        text.appendChild(name);
+        text.appendChild(meta);
+        info.appendChild(icon);
+        info.appendChild(text);
+        row.appendChild(info);
+        container.appendChild(row);
+    });
+}
+
+async function createDatabase()
+{
+    const name = await appPrompt('Nombre de la base de datos', {
+        title: 'Crear base de datos',
+        placeholder: 'mi_proyecto_db'
+    });
+
+    if (!name) {
+        return;
+    }
+
+    const formData = new URLSearchParams();
+    formData.append('name', name);
+    formData.append('csrf_token', csrfToken);
+
+    try
+    {
+        const response = await fetch('/devpanel/api/database/create.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: formData
+        });
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+
+        if (!data.success)
+        {
+            showToast(data.message || 'No se pudo crear la base de datos', 'danger');
+            return;
+        }
+
+        showToast(data.message, 'success');
+        loadDatabases();
+        loadDatabaseUsers();
+    }
+    catch(error)
+    {
+        console.error(error);
+        showToast('Error creando base de datos', 'danger');
+    }
+}
+
+async function deleteDatabase(name)
+{
+    const confirmation = await appPrompt(`Escribe "${name}" para borrar esta base de datos`, {
+        title: 'Borrar base de datos',
+        placeholder: name,
+        confirmText: 'Borrar'
+    });
+
+    if (!confirmation) {
+        return;
+    }
+
+    const formData = new URLSearchParams();
+    formData.append('name', name);
+    formData.append('confirmation', confirmation);
+    formData.append('csrf_token', csrfToken);
+
+    try
+    {
+        const response = await fetch('/devpanel/api/database/delete.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: formData
+        });
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+
+        if (!data.success)
+        {
+            showToast(data.message || 'No se pudo borrar la base de datos', 'danger');
+            return;
+        }
+
+        showToast(data.message, 'success');
+        loadDatabases();
+    }
+    catch(error)
+    {
+        console.error(error);
+        showToast('Error borrando base de datos', 'danger');
+    }
+}
+
+function importDatabase(name)
+{
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.sql';
+    input.addEventListener('change', () => {
+        if (!input.files.length) {
+            return;
+        }
+
+        uploadDatabaseImport(name, input.files[0]);
+    });
+    input.click();
+}
+
+async function uploadDatabaseImport(name, file)
+{
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('sql_file', file);
+    formData.append('csrf_token', csrfToken);
+
+    try
+    {
+        const response = await fetch('/devpanel/api/database/import.php', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+
+        if (!data.success)
+        {
+            showToast(data.output || data.message || 'No se pudo importar SQL', 'danger');
+            return;
+        }
+
+        showToast(data.message, 'success');
+        loadDatabases();
+    }
+    catch(error)
+    {
+        console.error(error);
+        showToast('Error importando SQL', 'danger');
+    }
+}
+
+async function createDatabaseUser()
+{
+    const username = await appPrompt('Nombre del usuario MariaDB', {
+        title: 'Crear usuario',
+        placeholder: 'mi_usuario'
+    });
+
+    if (!username) {
+        return;
+    }
+
+    const password = await appPrompt('Contraseña del usuario', {
+        title: 'Crear usuario',
+        placeholder: 'mínimo 8 caracteres'
+    });
+
+    if (!password) {
+        return;
+    }
+
+    const database = await appPrompt('Base de datos donde tendrá permisos', {
+        title: 'Asignar permisos',
+        placeholder: 'mi_base_de_datos'
+    });
+
+    if (!database) {
+        return;
+    }
+
+    const formData = new URLSearchParams();
+    formData.append('username', username);
+    formData.append('password', password);
+    formData.append('database', database);
+    formData.append('csrf_token', csrfToken);
+
+    try
+    {
+        const response = await fetch('/devpanel/api/database/create_user.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: formData
+        });
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+
+        if (!data.success)
+        {
+            showToast(data.message || 'No se pudo crear usuario', 'danger');
+            return;
+        }
+
+        showToast(data.message, 'success');
+        loadDatabaseUsers();
+    }
+    catch(error)
+    {
+        console.error(error);
+        showToast('Error creando usuario', 'danger');
+    }
+}
+
+async function loadDockerContainers()
+{
+    const container = document.getElementById('dockerList');
+
+    if (!container) {
+        return;
+    }
+
+    try
+    {
+        const response = await fetch('/devpanel/api/docker/list.php');
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+
+        if (!data.success || !data.available)
+        {
+            container.innerHTML = '';
+            const empty = document.createElement('div');
+            empty.className = 'file-manager-empty';
+            empty.textContent = data.message || 'Docker no está disponible';
+            container.appendChild(empty);
+            return;
+        }
+
+        renderDockerContainers(data.containers || []);
+    }
+    catch(error)
+    {
+        console.error(error);
+        container.textContent = 'Error cargando Docker';
+    }
+}
+
+function renderDockerContainers(containers)
+{
+    const container = document.getElementById('dockerList');
+    container.innerHTML = '';
+
+    if (!containers.length)
+    {
+        const empty = document.createElement('div');
+        empty.className = 'file-manager-empty';
+        empty.textContent = 'No hay contenedores';
+        container.appendChild(empty);
+        return;
+    }
+
+    containers.forEach(docker => {
+        const row = document.createElement('div');
+        row.className = 'database-row';
+
+        const info = document.createElement('div');
+        info.className = 'database-info';
+
+        const icon = document.createElement('i');
+        icon.className = 'bi bi-box-seam-fill';
+
+        const text = document.createElement('div');
+        const name = document.createElement('strong');
+        name.textContent = docker.name;
+        const meta = document.createElement('small');
+        meta.textContent = `${docker.image} · ${docker.status}`;
+
+        text.appendChild(name);
+        text.appendChild(meta);
+        info.appendChild(icon);
+        info.appendChild(text);
+        row.appendChild(info);
+        container.appendChild(row);
+    });
+}
+
+async function runGitAction(path, action)
+{
+    const formData = new URLSearchParams();
+    formData.append('path', path);
+    formData.append('action', action);
+    formData.append('csrf_token', csrfToken);
+
+    try
+    {
+        const response = await fetch('/devpanel/api/git/action.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: formData
+        });
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+        const output = data.output || data.message || 'Sin salida';
+
+        showToast(data.success ? 'Git ejecutado' : 'Git devolvió error', data.success ? 'success' : 'danger');
+        await appConfirm(output, {
+            title: `Git ${action}`,
+            confirmText: 'Cerrar'
+        });
+    }
+    catch(error)
+    {
+        console.error(error);
+        showToast('Error ejecutando Git', 'danger');
+    }
+}
+
+async function saveRuntimeSettings()
+{
+    const formData = new URLSearchParams();
+
+    document.querySelectorAll('.runtime-setting-input').forEach(input => {
+        formData.append(input.dataset.setting, input.value.trim());
+    });
+
+    formData.append('csrf_token', csrfToken);
+
+    try
+    {
+        const response = await fetch('/devpanel/api/save_runtime_settings.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: formData
+        });
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+
+        if (!data.success)
+        {
+            showToast(data.message || 'No se pudo guardar configuración', 'danger');
+            return;
+        }
+
+        showToast(data.message, 'success');
+    }
+    catch(error)
+    {
+        console.error(error);
+        showToast('Error guardando configuración', 'danger');
+    }
+}
+
+async function loadPermissions()
+{
+    const container = document.getElementById('permissionsList');
+    const summary = document.getElementById('permissionsSummary');
+
+    if (!container) {
+        return;
+    }
+
+    try
+    {
+        const response = await fetch('/devpanel/api/permissions.php');
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+
+        if (!data.success)
+        {
+            container.textContent = data.message || 'No se pudieron revisar permisos';
+            return;
+        }
+
+        if (summary) {
+            summary.textContent = `${data.summary.ok}/${data.summary.total} comprobaciones correctas`;
+        }
+
+        renderPermissions(data.items || []);
+    }
+    catch(error)
+    {
+        console.error(error);
+        container.textContent = 'Error revisando permisos';
+    }
+}
+
+function renderPermissions(items)
+{
+    const container = document.getElementById('permissionsList');
+    container.innerHTML = '';
+
+    items.forEach(item => {
+        const row = document.createElement('div');
+        row.className = `permission-row ${item.ok ? 'is-ok' : 'is-warning'}`;
+
+        const status = document.createElement('i');
+        status.className = item.ok ? 'bi bi-check-circle-fill' : 'bi bi-exclamation-triangle-fill';
+
+        const body = document.createElement('div');
+        body.className = 'permission-body';
+
+        const title = document.createElement('strong');
+        title.textContent = item.label;
+
+        const path = document.createElement('code');
+        path.textContent = item.path;
+
+        const detail = document.createElement('small');
+        const writeText = item.needs_write ? ` · escritura ${item.writable ? 'OK' : 'NO'}` : '';
+        detail.textContent = `${item.exists ? 'existe' : 'no existe'} · lectura ${item.readable ? 'OK' : 'NO'}${writeText}`;
+
+        body.appendChild(title);
+        body.appendChild(path);
+        body.appendChild(detail);
+
+        if (item.hint) {
+            const hint = document.createElement('small');
+            hint.textContent = item.hint;
+            body.appendChild(hint);
+        }
+
+        row.appendChild(status);
+        row.appendChild(body);
+        container.appendChild(row);
+    });
+}
+
+async function runGitActionWithData(formData, title)
+{
+    formData.append('csrf_token', csrfToken);
+
+    try
+    {
+        const response = await fetch('/devpanel/api/git/action.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: formData
+        });
+
+        if (!checkAuth(response)) return null;
+
+        const data = await response.json();
+        const output = data.output || data.message || 'Sin salida';
+
+        showToast(data.success ? 'Git ejecutado' : 'Git devolvió error', data.success ? 'success' : 'danger');
+        await appConfirm(output, {
+            title,
+            confirmText: 'Cerrar'
+        });
+
+        return data;
+    }
+    catch(error)
+    {
+        console.error(error);
+        showToast('Error ejecutando Git', 'danger');
+        return null;
+    }
+}
+
+async function setGitRemote(path)
+{
+    const remote = await appPrompt('Remote de GitHub para origin', {
+        title: 'Set remote',
+        defaultValue: document.getElementById('githubRemoteUrl')?.value.trim() || '',
+        placeholder: 'https://github.com/usuario/repo.git'
+    });
+
+    if (!remote) {
+        return;
+    }
+
+    const formData = new URLSearchParams();
+    formData.append('path', path);
+    formData.append('action', 'set_remote');
+    formData.append('remote_url', remote);
+
+    await runGitActionWithData(formData, 'Git remote');
+}
+
+async function checkoutGitBranch(path)
+{
+    const branch = await appPrompt('Nombre de la rama a cambiar', {
+        title: 'Cambiar rama',
+        placeholder: 'main'
+    });
+
+    if (!branch) {
+        return;
+    }
+
+    const formData = new URLSearchParams();
+    formData.append('path', path);
+    formData.append('action', 'checkout');
+    formData.append('branch', branch);
+
+    await runGitActionWithData(formData, 'Git checkout');
+}
+
+async function createGitBranch(path)
+{
+    const branch = await appPrompt('Nombre de la nueva rama', {
+        title: 'Nueva rama',
+        placeholder: 'feature/nueva-funcion'
+    });
+
+    if (!branch) {
+        return;
+    }
+
+    const formData = new URLSearchParams();
+    formData.append('path', path);
+    formData.append('action', 'create_branch');
+    formData.append('branch', branch);
+
+    await runGitActionWithData(formData, 'Git branch');
+}
+
+async function cloneGithubRepository()
+{
+    const remote = await appPrompt('Remote de GitHub a clonar', {
+        title: 'Clonar repositorio',
+        defaultValue: document.getElementById('githubRemoteUrl')?.value.trim() || '',
+        placeholder: 'https://github.com/usuario/repo.git'
+    });
+
+    if (!remote) {
+        return;
+    }
+
+    const target = await appPrompt('Nombre de carpeta destino', {
+        title: 'Clonar repositorio',
+        placeholder: 'mi-proyecto'
+    });
+
+    if (!target) {
+        return;
+    }
+
+    const formData = new URLSearchParams();
+    formData.append('action', 'clone');
+    formData.append('remote_url', remote);
+    formData.append('target', target);
+
+    const data = await runGitActionWithData(formData, 'Git clone');
+
+    if (data && data.success) {
+        setTimeout(() => location.reload(), 900);
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () =>
+{
+    if (!document.getElementById('databaseList')) {
+        return;
+    }
+
+    loadDatabases();
+    loadDatabaseUsers();
+    loadDockerContainers();
+    loadPermissions();
+});
 
 async function loadLogs()
 {
@@ -440,6 +1360,10 @@ document.addEventListener("DOMContentLoaded", () =>
 });
 
 let term;
+let terminalCurrentCommand = '';
+let terminalHistory = [];
+let terminalHistoryIndex = -1;
+const terminalFavoriteCommands = ['pwd', 'ls', 'git status', 'git branch', 'php -v'];
 
 document.addEventListener("DOMContentLoaded", () =>
 {
@@ -474,22 +1398,35 @@ function initTerminal()
 
     term.open(terminalElement);
 
-    term.write('Carlos DevPanel Terminal\\r\\n');
+    term.write('DevPanel Terminal\\r\\n');
     term.write('$ ');
 
-    let currentCommand = '';
+    terminalHistory = loadTerminalHistory();
+    renderTerminalHistory();
+    renderTerminalFavorites();
 
     term.onData(async (data) =>
     {
+        if (data === '\u001b[A') {
+            navigateTerminalHistory(-1);
+            return;
+        }
+
+        if (data === '\u001b[B') {
+            navigateTerminalHistory(1);
+            return;
+        }
+
         const charCode = data.charCodeAt(0);
 
         if (charCode === 13)
         {
             term.write('\\r\\n');
 
-            await executeCommand(currentCommand);
+            await executeCommand(terminalCurrentCommand);
 
-            currentCommand = '';
+            terminalCurrentCommand = '';
+            terminalHistoryIndex = -1;
 
             term.write('\\r\\n$ ');
 
@@ -498,10 +1435,10 @@ function initTerminal()
 
         if (charCode === 127)
         {
-            if (currentCommand.length > 0)
+            if (terminalCurrentCommand.length > 0)
             {
-                currentCommand =
-                    currentCommand.slice(0, -1);
+                terminalCurrentCommand =
+                    terminalCurrentCommand.slice(0, -1);
 
                 term.write('\\b \\b');
             }
@@ -509,7 +1446,7 @@ function initTerminal()
             return;
         }
 
-        currentCommand += data;
+        terminalCurrentCommand += data;
 
         term.write(data);
     });
@@ -517,6 +1454,14 @@ function initTerminal()
 
 async function executeCommand(command)
 {
+    command = command.trim();
+
+    if (command === '') {
+        return;
+    }
+
+    addTerminalHistory(command);
+
     try
     {
         const formData = new URLSearchParams();
@@ -547,10 +1492,127 @@ async function executeCommand(command)
     }
 }
 
+function runQuickCommand(command)
+{
+    if (!term) {
+        return;
+    }
+
+    term.write(`\\r\\n$ ${command}\\r\\n`);
+    executeCommand(command).then(() => {
+        term.write('\\r\\n$ ');
+    });
+}
+
+function loadTerminalHistory()
+{
+    try
+    {
+        return JSON.parse(localStorage.getItem('devpanel_terminal_history') || '[]');
+    }
+    catch(error)
+    {
+        return [];
+    }
+}
+
+function addTerminalHistory(command)
+{
+    terminalHistory = terminalHistory.filter(item => item !== command);
+    terminalHistory.unshift(command);
+    terminalHistory = terminalHistory.slice(0, 20);
+    localStorage.setItem('devpanel_terminal_history', JSON.stringify(terminalHistory));
+    renderTerminalHistory();
+}
+
+function renderTerminalHistory()
+{
+    const container = document.getElementById('terminalHistory');
+
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML = '';
+
+    if (!terminalHistory.length) {
+        const empty = document.createElement('div');
+        empty.className = 'terminal-history-empty';
+        empty.textContent = 'Sin comandos todavía';
+        container.appendChild(empty);
+        return;
+    }
+
+    terminalHistory.forEach(command => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = command;
+        button.addEventListener('click', () => runQuickCommand(command));
+        container.appendChild(button);
+    });
+}
+
+function renderTerminalFavorites()
+{
+    const container = document.getElementById('terminalFavorites');
+
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML = '';
+
+    terminalFavoriteCommands.forEach(command => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'terminal-favorite';
+        button.textContent = command;
+        button.addEventListener('click', () => runQuickCommand(command));
+        container.appendChild(button);
+    });
+}
+
+function navigateTerminalHistory(direction)
+{
+    if (!terminalHistory.length) {
+        return;
+    }
+
+    if (terminalHistoryIndex === -1) {
+        terminalHistoryIndex = direction < 0 ? 0 : -1;
+    }
+    else {
+        terminalHistoryIndex += direction;
+    }
+
+    terminalHistoryIndex = Math.max(0, Math.min(terminalHistory.length - 1, terminalHistoryIndex));
+    replaceTerminalCommand(terminalHistory[terminalHistoryIndex]);
+}
+
+function replaceTerminalCommand(command)
+{
+    while (terminalCurrentCommand.length > 0) {
+        terminalCurrentCommand = terminalCurrentCommand.slice(0, -1);
+        term.write('\\b \\b');
+    }
+
+    terminalCurrentCommand = command;
+    term.write(command);
+}
+
+function clearTerminalHistory()
+{
+    terminalHistory = [];
+    terminalHistoryIndex = -1;
+    localStorage.removeItem('devpanel_terminal_history');
+    renderTerminalHistory();
+}
+
 function clearTerminal()
 {
     term.clear();
 
+    terminalCurrentCommand = '';
     term.write('$ ');
 }
 
@@ -580,18 +1642,19 @@ async function generateZip(path)
 
         if (!data.success)
         {
-            alert(data.message);
+            showToast(data.message, 'danger');
 
             return;
         }
 
+       showToast('ZIP generado', 'success');
        window.location.href = data.download;
     }
     catch(error)
     {
         console.error(error);
 
-        alert('Error generando ZIP');
+        showToast('Error generando ZIP', 'danger');
     }
 }
 
@@ -682,36 +1745,43 @@ async function executeDeploy()
 
         if (!data.success)
         {
-            alert(data.output || data.message);
+            showToast(data.output || data.message, 'danger');
 
             return;
         }
 
-        alert(data.output || 'Deploy completado');
+        showToast(data.output || 'Deploy completado', 'success');
     }
     catch(error)
     {
         console.error(error);
 
-        alert('Error deploy');
+        showToast('Error deploy', 'danger');
     }
 }
 
-function logout()
+async function logout()
 {
-    if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
-        const formData = new URLSearchParams();
-        formData.append('csrf_token', csrfToken);
+    const confirmed = await appConfirm('¿Cerrar la sesión actual?', {
+        title: 'Cerrar sesión',
+        confirmText: 'Cerrar sesión'
+    });
 
-        fetch('/devpanel/api/logout.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: formData
-        })
-            .then(() => {
-                window.location.href = '/devpanel/login.html';
-            });
+    if (!confirmed) {
+        return;
     }
+
+    const formData = new URLSearchParams();
+    formData.append('csrf_token', csrfToken);
+
+    fetch('/devpanel/api/logout.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: formData
+    })
+        .then(() => {
+            window.location.href = '/devpanel/login.html';
+        });
 }
