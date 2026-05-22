@@ -1677,6 +1677,7 @@ let terminalCurrentCommand = '';
 let terminalHistory = [];
 let terminalHistoryIndex = -1;
 const terminalFavoriteCommands = ['pwd', 'ls', 'git status', 'git branch', 'php -v'];
+const terminalPrompt = '$ ';
 
 document.addEventListener("DOMContentLoaded", () =>
 {
@@ -1699,6 +1700,8 @@ function initTerminal()
     term = new Terminal({
 
         cursorBlink: true,
+        convertEol: true,
+        scrollback: 1000,
 
         theme:
         {
@@ -1711,8 +1714,8 @@ function initTerminal()
 
     term.open(terminalElement);
 
-    term.write('DevPanel Terminal\\r\\n');
-    term.write('$ ');
+    writeTerminalLine('DevPanel Terminal');
+    writeTerminalPrompt();
 
     terminalHistory = loadTerminalHistory();
     renderTerminalHistory();
@@ -1734,14 +1737,15 @@ function initTerminal()
 
         if (charCode === 13)
         {
-            term.write('\\r\\n');
+            term.write('\r\n');
 
             await executeCommand(terminalCurrentCommand);
 
             terminalCurrentCommand = '';
             terminalHistoryIndex = -1;
 
-            term.write('\\r\\n$ ');
+            term.write('\r\n');
+            writeTerminalPrompt();
 
             return;
         }
@@ -1797,11 +1801,11 @@ async function executeCommand(command)
 
         const data = await response.json();
 
-        term.write(data.output || '');
+        writeTerminalOutput(data.output || '');
     }
     catch(error)
     {
-        term.write('\\r\\nError ejecutando comando');
+        writeTerminalOutput('Error ejecutando comando');
     }
 }
 
@@ -1811,10 +1815,36 @@ function runQuickCommand(command)
         return;
     }
 
-    term.write(`\\r\\n$ ${command}\\r\\n`);
+    terminalCurrentCommand = '';
+    term.write(`\r\n${terminalPrompt}${command}\r\n`);
     executeCommand(command).then(() => {
-        term.write('\\r\\n$ ');
+        term.write('\r\n');
+        writeTerminalPrompt();
     });
+}
+
+function writeTerminalPrompt()
+{
+    term.write(terminalPrompt);
+}
+
+function writeTerminalLine(text)
+{
+    term.write(`${text}\r\n`);
+}
+
+function writeTerminalOutput(output)
+{
+    if (!output) {
+        return;
+    }
+
+    const normalized = String(output)
+        .replace(/\r\n/g, '\n')
+        .replace(/\r/g, '\n')
+        .replace(/\n/g, '\r\n');
+
+    term.write(normalized);
 }
 
 function loadTerminalHistory()
@@ -1926,7 +1956,7 @@ function clearTerminal()
     term.clear();
 
     terminalCurrentCommand = '';
-    term.write('$ ');
+    writeTerminalPrompt();
 }
 
 async function generateZip(path)
