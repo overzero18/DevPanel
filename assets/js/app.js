@@ -11,6 +11,36 @@ document.addEventListener("DOMContentLoaded", () => {
 
 });
 
+// ===== THEME SWITCHER =====
+function changeTheme(themeName) {
+    const formData = new URLSearchParams();
+    formData.append('theme', themeName);
+    formData.append('csrf_token', csrfToken);
+
+    fetch('/devpanel/api/set_theme.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: formData
+    })
+    .then(response => {
+        if (!checkAuth(response)) return;
+        return response.json();
+    })
+    .then(data => {
+        if (data && data.success) {
+            // Reload page to apply theme
+            location.reload();
+        } else {
+            console.error('Error changing theme:', data);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
 function checkAuth(response) {
     if (response.status === 401) {
         window.location.href = '/devpanel/login.html';

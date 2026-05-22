@@ -93,9 +93,21 @@ PHP;
     <link rel="stylesheet" href="/devpanel/assets/css/style.css">
     <style>
         body {
-            background: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
-        .password-card {
+    </style>
+    <?php
+    @include_once __DIR__ . '/includes/helpers/theme.php';
+    if (function_exists('devpanel_print_theme_link')) {
+        devpanel_print_theme_link();
+    }
+    ?>
+</head>
+<body>
+
+<?php include 'layout/topbar.php'; ?>
             max-width: 600px;
             margin: 40px auto;
             background: white;

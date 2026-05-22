@@ -20,6 +20,7 @@ $projects = getProjects();
 ?>
 
 <?php include 'layout/header.php'; ?>
+<?php include 'layout/topbar.php'; ?>
 <?php include 'layout/sidebar.php'; ?>
 
 <h1 class="mb-4 fw-bold">Dashboard</h1>
