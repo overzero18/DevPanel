@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../includes/security.php';
 require_once __DIR__ . '/../includes/helpers/config.php';
+require_once __DIR__ . '/../includes/projects.php';
 
 header('Content-Type: application/json');
 
@@ -111,10 +112,50 @@ if ($query !== '')
     }));
 }
 
+function getProjectLogNeedles(string $project): array
+{
+    $projects = getProjects();
+
+    foreach ($projects as $item)
+    {
+        if ($item['name'] !== $project)
+        {
+            continue;
+        }
+
+        return array_values(array_unique(array_filter([
+            $item['name'],
+            '/' . $item['name'] . '/',
+            rawurlencode($item['name']),
+            $item['path'],
+            $item['url'] ?? null,
+        ])));
+    }
+
+    return [];
+}
+
 if ($project !== '')
 {
-    $lines = array_values(array_filter($lines, static function ($line) use ($project) {
-        return stripos($line, $project) !== false;
+    $needles = getProjectLogNeedles($project);
+
+    if (!$needles)
+    {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Proyecto inválido']);
+        exit;
+    }
+
+    $lines = array_values(array_filter($lines, static function ($line) use ($needles) {
+        foreach ($needles as $needle)
+        {
+            if (stripos($line, $needle) !== false)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }));
 }
 

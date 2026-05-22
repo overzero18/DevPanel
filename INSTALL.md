@@ -133,6 +133,15 @@ chmod 664 /opt/lampp/htdocs/devpanel/config.php
 
 Adapta el grupo según el usuario con el que ejecute Apache/XAMPP en tu equipo.
 
+También puedes usar el helper local:
+
+```bash
+./scripts/fix-local-permissions.sh
+FIX_HTDOCS=1 ./scripts/fix-local-permissions.sh
+```
+
+La segunda línea pide `sudo` y permite crear/clonar proyectos directamente en `/opt/lampp/htdocs`.
+
 ## 🌍 Publicar en GitHub
 
 Antes de subir:
@@ -143,6 +152,24 @@ Antes de subir:
 - No subas tokens, contraseñas, usuarios privados ni remotes personales
 - Usa `config.example.php` como plantilla pública
 - Deja que cada usuario configure GitHub desde la interfaz
+
+Checklist rápido antes de publicar:
+
+```bash
+git status --short
+find . -name '*.php' -print0 | xargs -0 -n1 /opt/lampp/bin/php -l
+git diff --check
+```
+
+También revisa en el navegador:
+
+- Login
+- Dashboard
+- Permisos del sistema
+- File Manager
+- Logs
+- MariaDB
+- GitHub configurado por el usuario
 
 ### Logs de Auditoría
 

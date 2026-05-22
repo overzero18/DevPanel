@@ -266,6 +266,15 @@ Typical local paths:
 
 Keep these permissions local to your development machine. Do not expose DevPanel directly to the public internet.
 
+Permission helper:
+
+```bash
+./scripts/fix-local-permissions.sh
+FIX_HTDOCS=1 ./scripts/fix-local-permissions.sh
+```
+
+Use `FIX_HTDOCS=1` only when you want DevPanel to create or clone projects directly under `/opt/lampp/htdocs`.
+
 ### Powerful Endpoints
 
 The following features intentionally control local developer tools and should stay behind login on localhost/private networks:
@@ -277,6 +286,18 @@ The following features intentionally control local developer tools and should st
 - File Manager writes/uploads
 - MariaDB import/export/delete
 - FTP deploy
+
+### Release Checklist
+
+Before publishing a public release:
+
+- Confirm `config.php` is ignored and not staged.
+- Confirm `.env`, ZIP files, logs and temporary files are ignored.
+- Search for private usernames, tokens, passwords and personal repository URLs.
+- Run PHP lint across the project.
+- Open the dashboard and check **Permisos del sistema**.
+- Test login, project listing, File Manager, logs and MariaDB on a fresh local setup.
+- Update screenshots separately when the UI is final.
 
 ### Default Restrictions
 
