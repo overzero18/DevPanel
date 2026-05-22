@@ -17,6 +17,12 @@ if (file_exists(AUTH_PASSWORD_FILE))
     }
 }
 
+if ($setupComplete && $_SERVER['REQUEST_METHOD'] !== 'POST')
+{
+    header('Location: /devpanel/login.html');
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$setupComplete)
 {
     $password = $_POST['password'] ?? '';

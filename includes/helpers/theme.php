@@ -5,7 +5,15 @@ if (session_status() === PHP_SESSION_NONE) {
 
 function devpanel_get_theme()
 {
-    return isset($_SESSION['theme']) ? $_SESSION['theme'] : 'dark';
+    if (isset($_SESSION['theme'])) {
+        return $_SESSION['theme'];
+    }
+
+    $config = file_exists(__DIR__ . '/../../config.php')
+        ? require __DIR__ . '/../../config.php'
+        : [];
+
+    return $config['THEME'] ?? 'dark';
 }
 
 function devpanel_list_available_themes()

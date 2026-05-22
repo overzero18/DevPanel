@@ -190,13 +190,19 @@ function logAction($action, $details = '')
     }
 
     $logFile = LOGS_DIR . '/actions.log';
+
+    if ((file_exists($logFile) && !is_writable($logFile)) || (!file_exists($logFile) && !is_writable(LOGS_DIR)))
+    {
+        return;
+    }
+
     $ip = $_SERVER['REMOTE_ADDR'] ?? 'cli';
     $timestamp = date('Y-m-d H:i:s');
     $user = isset($_SESSION[SESSION_TOKEN_KEY]) ? 'authenticated' : 'anonymous';
 
     $logEntry = "[$timestamp] [$ip] [$user] [$action] $details\n";
 
-    file_put_contents($logFile, $logEntry, FILE_APPEND | LOCK_EX);
+    @file_put_contents($logFile, $logEntry, FILE_APPEND | LOCK_EX);
 }
 
 function runControlledCommand($command)

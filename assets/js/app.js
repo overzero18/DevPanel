@@ -1,4 +1,6 @@
 let csrfToken = '';
+let activeLogType = 'apache_error';
+let logsRefreshTimer = null;
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -182,9 +184,18 @@ async function loadLogs()
 {
     try
     {
-        const response = await fetch(
-            '/devpanel/api/logs.php?type=apache'
-        );
+        const params = new URLSearchParams();
+        const searchInput = document.getElementById('logSearch');
+        const linesSelect = document.getElementById('logLines');
+
+        params.set('type', activeLogType);
+        params.set('lines', linesSelect ? linesSelect.value : '120');
+
+        if (searchInput && searchInput.value.trim() !== '') {
+            params.set('q', searchInput.value.trim());
+        }
+
+        const response = await fetch(`/devpanel/api/logs.php?${params.toString()}`);
 
         if (!checkAuth(response)) return;
 
@@ -192,7 +203,7 @@ async function loadLogs()
 
         if (!data.success)
         {
-            alert(data.message);
+            showLogMessage(data.message || 'No se pudo cargar el log');
             return;
         }
 
@@ -203,12 +214,60 @@ async function loadLogs()
 
         container.scrollTop =
             container.scrollHeight;
+
+        updateLogMeta(data);
     }
     catch(error)
     {
         console.error(error);
 
-        alert('Error cargando logs');
+        showLogMessage('Error cargando logs');
+    }
+}
+
+function showLogMessage(message)
+{
+    const container = document.getElementById('logsContainer');
+
+    if (container) {
+        container.textContent = message;
+    }
+}
+
+function updateLogMeta(data)
+{
+    const meta = document.getElementById('logMeta');
+
+    if (!meta) {
+        return;
+    }
+
+    const filterLabel = data.filtered ? ' · filtrado' : '';
+    meta.textContent = `${data.label} · ${data.lines} líneas · actualizado ${data.updated_at || '--'}${filterLabel}`;
+}
+
+function setActiveLogType(type)
+{
+    activeLogType = type;
+
+    document.querySelectorAll('.log-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.logType === type);
+    });
+
+    loadLogs();
+}
+
+function resetLogsTimer()
+{
+    if (logsRefreshTimer) {
+        clearInterval(logsRefreshTimer);
+        logsRefreshTimer = null;
+    }
+
+    const autoRefresh = document.getElementById('logsAutoRefresh');
+
+    if (autoRefresh && autoRefresh.checked) {
+        logsRefreshTimer = setInterval(loadLogs, 5000);
     }
 }
 
@@ -218,9 +277,30 @@ document.addEventListener("DOMContentLoaded", () =>
         return;
     }
 
-    loadLogs();
+    document.querySelectorAll('.log-tab').forEach(tab => {
+        tab.addEventListener('click', () => setActiveLogType(tab.dataset.logType));
+    });
 
-    setInterval(loadLogs, 5000);
+    const searchInput = document.getElementById('logSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchInput.searchTimer);
+            searchInput.searchTimer = setTimeout(loadLogs, 250);
+        });
+    }
+
+    const linesSelect = document.getElementById('logLines');
+    if (linesSelect) {
+        linesSelect.addEventListener('change', loadLogs);
+    }
+
+    const autoRefresh = document.getElementById('logsAutoRefresh');
+    if (autoRefresh) {
+        autoRefresh.addEventListener('change', resetLogsTimer);
+    }
+
+    loadLogs();
+    resetLogsTimer();
 });
 
 async function loadSystemStats()
@@ -240,25 +320,112 @@ async function loadSystemStats()
             return;
         }
 
-        document.getElementById('cpuLoad').textContent =
-            data.cpu;
+        const cpu = data.cpu_metrics || {};
+        const ram = data.ram || {};
+        const disk = data.disk || {};
 
-        document.getElementById('ramUsage').textContent =
-            `${data.ram.used} MB`;
+        setText('cpuLoad', `${cpu.percent ?? data.cpu ?? '--'}%`);
+        setText(
+            'cpuDetail',
+            `Carga ${cpu.load_1 ?? data.cpu ?? '--'} · ${cpu.cores ?? '--'} cores`
+        );
+        setProgress('cpuBar', cpu.percent);
 
-        document.getElementById('diskUsage').textContent =
-            `${data.disk.free} GB libres`;
+        setText('ramUsage', `${ram.percent ?? '--'}%`);
+        setText(
+            'ramDetail',
+            `${ram.used ?? '--'} MB usados de ${ram.total ?? '--'} MB`
+        );
+        setProgress('ramBar', ram.percent);
 
-        document.getElementById('hostname').textContent =
-            data.hostname;
+        setText('diskUsage', `${disk.percent ?? '--'}%`);
+        setText(
+            'diskDetail',
+            `${disk.free ?? '--'} GB libres de ${disk.total ?? '--'} GB`
+        );
+        setProgress('diskBar', disk.percent);
 
-        document.getElementById('uptime').textContent =
-            data.uptime;
+        setText('hostname', data.hostname || '--');
+        setText('uptime', data.uptime || '--');
+        renderProcesses(data.processes || []);
     }
     catch(error)
     {
         console.error(error);
     }
+}
+
+function setText(id, value)
+{
+    const element = document.getElementById(id);
+
+    if (element) {
+        element.textContent = value;
+    }
+}
+
+function setProgress(id, value)
+{
+    const element = document.getElementById(id);
+
+    if (!element) {
+        return;
+    }
+
+    const percent = Number(value);
+    element.style.width = `${Number.isFinite(percent) ? Math.max(0, Math.min(100, percent)) : 0}%`;
+}
+
+function renderProcesses(processes)
+{
+    const container = document.getElementById('processList');
+
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML = '';
+
+    if (!processes.length) {
+        const empty = document.createElement('div');
+        empty.className = 'process-row process-row-empty';
+        empty.textContent = 'Sin datos de procesos';
+        container.appendChild(empty);
+        return;
+    }
+
+    processes.forEach(process => {
+        const row = document.createElement('div');
+        row.className = 'process-row';
+
+        const identity = document.createElement('div');
+        identity.className = 'process-identity';
+
+        const name = document.createElement('strong');
+        name.textContent = process.name || 'proceso';
+
+        const pid = document.createElement('span');
+        pid.textContent = `PID ${process.pid || '--'}`;
+
+        identity.appendChild(name);
+        identity.appendChild(pid);
+
+        const metrics = document.createElement('div');
+        metrics.className = 'process-metrics';
+
+        const cpu = document.createElement('span');
+        cpu.textContent = `CPU ${process.cpu ?? 0}%`;
+
+        const memory = document.createElement('span');
+        memory.textContent = `RAM ${process.memory ?? 0}%`;
+
+        metrics.appendChild(cpu);
+        metrics.appendChild(memory);
+
+        row.appendChild(identity);
+        row.appendChild(metrics);
+        container.appendChild(row);
+    });
 }
 
 document.addEventListener("DOMContentLoaded", () =>

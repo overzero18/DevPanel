@@ -12,18 +12,9 @@ if (!function_exists('devpanelBuildConfigContent')) {
         return <<<PHP
 <?php
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-\$defaultTheme = $defaultThemeExport;
-if (!isset(\$_SESSION['theme'])) {
-    \$_SESSION['theme'] = \$defaultTheme;
-}
-
 return [
     'DEVPANEL_PASSWORD' => $hashExport,
-    'THEME' => \$_SESSION['theme'],
+    'THEME' => $defaultThemeExport,
     'AVAILABLE_THEMES' => $themesExport,
 ];
 PHP;

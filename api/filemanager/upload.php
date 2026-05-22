@@ -38,11 +38,20 @@ if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK)
 }
 
 $originalName = basename($_FILES['file']['name']);
+$extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+$blockedExtensions = ['php', 'php3', 'php4', 'php5', 'phtml', 'phar', 'cgi', 'pl', 'py', 'sh'];
 
 if (!preg_match('/^[a-zA-Z0-9._ -]{1,160}$/', $originalName) || $originalName === '.' || $originalName === '..')
 {
     http_response_code(400);
     echo json_encode(['success' => false, 'message' => 'Nombre de archivo inválido']);
+    exit;
+}
+
+if (in_array($extension, $blockedExtensions, true))
+{
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'Tipo de archivo no permitido']);
     exit;
 }
 

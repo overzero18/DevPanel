@@ -127,9 +127,14 @@
             }
         });
 
-        if (document.cookie.includes('_devpanel_auth')) {
-            window.location.href = '/devpanel/';
-        }
+        fetch('/devpanel/api/session_status.php')
+            .then(response => response.json())
+            .then(data => {
+                if (data.authenticated) {
+                    window.location.href = '/devpanel/';
+                }
+            })
+            .catch(() => {});
     </script>
 </body>
 </html>

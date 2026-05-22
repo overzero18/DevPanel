@@ -34,15 +34,21 @@ $projects = getProjects();
     <!-- CPU -->
     <div class="col-md-6 col-xl-3">
 
-        <div class="dashboard-card">
+        <div class="dashboard-card metric-card">
 
-            <i class="bi bi-cpu-fill text-info"></i>
+            <div class="metric-card-header">
+                <span class="metric-icon metric-icon-info">
+                    <i class="bi bi-cpu-fill"></i>
+                </span>
+                <span class="metric-label">CPU</span>
+            </div>
 
-            <h5>CPU Load</h5>
+            <h3 id="cpuLoad">--</h3>
+            <p id="cpuDetail" class="metric-detail">Esperando datos</p>
 
-            <h3 id="cpuLoad">
-                --
-            </h3>
+            <div class="metric-progress" aria-hidden="true">
+                <span id="cpuBar"></span>
+            </div>
 
         </div>
 
@@ -51,15 +57,21 @@ $projects = getProjects();
     <!-- RAM -->
     <div class="col-md-6 col-xl-3">
 
-        <div class="dashboard-card">
+        <div class="dashboard-card metric-card">
 
-            <i class="bi bi-memory text-warning"></i>
+            <div class="metric-card-header">
+                <span class="metric-icon metric-icon-warning">
+                    <i class="bi bi-memory"></i>
+                </span>
+                <span class="metric-label">RAM</span>
+            </div>
 
-            <h5>RAM</h5>
+            <h3 id="ramUsage">--</h3>
+            <p id="ramDetail" class="metric-detail">Esperando datos</p>
 
-            <h3 id="ramUsage">
-                --
-            </h3>
+            <div class="metric-progress" aria-hidden="true">
+                <span id="ramBar"></span>
+            </div>
 
         </div>
 
@@ -68,15 +80,21 @@ $projects = getProjects();
     <!-- Disco -->
     <div class="col-md-6 col-xl-3">
 
-        <div class="dashboard-card">
+        <div class="dashboard-card metric-card">
 
-            <i class="bi bi-hdd-fill text-success"></i>
+            <div class="metric-card-header">
+                <span class="metric-icon metric-icon-success">
+                    <i class="bi bi-hdd-fill"></i>
+                </span>
+                <span class="metric-label">Disco</span>
+            </div>
 
-            <h5>Disco</h5>
+            <h3 id="diskUsage">--</h3>
+            <p id="diskDetail" class="metric-detail">Esperando datos</p>
 
-            <h3 id="diskUsage">
-                --
-            </h3>
+            <div class="metric-progress" aria-hidden="true">
+                <span id="diskBar"></span>
+            </div>
 
         </div>
 
@@ -85,19 +103,83 @@ $projects = getProjects();
     <!-- Host -->
     <div class="col-md-6 col-xl-3">
 
-        <div class="dashboard-card">
+        <div class="dashboard-card metric-card">
 
-            <i class="bi bi-pc-display text-primary"></i>
+            <div class="metric-card-header">
+                <span class="metric-icon metric-icon-primary">
+                    <i class="bi bi-pc-display"></i>
+                </span>
+                <span class="metric-label">Host</span>
+            </div>
 
-            <h5>Host</h5>
+            <h3 id="hostname" class="hostname-value">--</h3>
+            <p class="metric-detail">
+                Uptime: <span id="uptime">--</span>
+            </p>
 
-            <h6 id="hostname">
-                --
-            </h6>
+        </div>
 
-            <small id="uptime">
-                --
-            </small>
+    </div>
+
+</div>
+
+<div class="row g-4 mb-4">
+
+    <div class="col-xl-8">
+
+        <div class="dashboard-card monitor-card">
+
+            <div class="section-title-row">
+                <div>
+                    <h4 class="mb-1">Monitor Linux</h4>
+                    <p class="text-secondary mb-0">Procesos con mayor uso de CPU</p>
+                </div>
+                <span class="live-pill">
+                    <span class="status-dot"></span>
+                    Tiempo real
+                </span>
+            </div>
+
+            <div class="process-list" id="processList">
+                <div class="process-row process-row-empty">
+                    Esperando datos del sistema
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-xl-4">
+
+        <div class="dashboard-card monitor-card">
+
+            <div class="section-title-row">
+                <div>
+                    <h4 class="mb-1">Servicios</h4>
+                    <p class="text-secondary mb-0">Estado rápido del entorno local</p>
+                </div>
+            </div>
+
+            <div class="service-summary">
+                <div class="service-state <?php echo $apacheRunning ? 'is-online' : 'is-offline'; ?>">
+                    <i class="bi bi-server"></i>
+                    <span>Apache</span>
+                    <strong><?php echo $apacheRunning ? 'Activo' : 'Detenido'; ?></strong>
+                </div>
+
+                <div class="service-state <?php echo $mariadbRunning ? 'is-online' : 'is-offline'; ?>">
+                    <i class="bi bi-database-fill"></i>
+                    <span>MariaDB</span>
+                    <strong><?php echo $mariadbRunning ? 'Activo' : 'Detenido'; ?></strong>
+                </div>
+
+                <div class="service-state is-online">
+                    <i class="bi bi-code-slash"></i>
+                    <span>PHP</span>
+                    <strong><?php echo htmlspecialchars(phpversion(), ENT_QUOTES, 'UTF-8'); ?></strong>
+                </div>
+            </div>
 
         </div>
 
@@ -426,22 +508,62 @@ $projects = getProjects();
 
     <div class="col-12">
 
-        <div class="dashboard-card">
+        <div class="dashboard-card log-viewer-card">
 
-            <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="log-viewer-header">
 
-                <h4 class="mb-0">
-                    Logs Apache
-                </h4>
+                <div>
+                    <h4 class="mb-1">Logs reales</h4>
+                    <p class="text-secondary mb-0" id="logMeta">
+                        Selecciona un log para inspeccionar el entorno.
+                    </p>
+                </div>
 
-                <button
-                    type="button"
-                    class="btn btn-outline-info"
-                    onclick="loadLogs()">
+                <div class="log-actions">
+                    <label class="form-check form-switch mb-0">
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            id="logsAutoRefresh"
+                            checked>
+                        <span class="form-check-label">Auto</span>
+                    </label>
 
-                    Recargar
-                </button>
+                    <button
+                        type="button"
+                        class="btn btn-outline-info"
+                        onclick="loadLogs()">
 
+                        <i class="bi bi-arrow-clockwise"></i>
+                        Recargar
+                    </button>
+                </div>
+
+            </div>
+
+            <div class="log-toolbar">
+                <div class="log-tabs" role="tablist" aria-label="Tipos de log">
+                    <button type="button" class="log-tab active" data-log-type="apache_error">Apache error</button>
+                    <button type="button" class="log-tab" data-log-type="apache_access">Apache access</button>
+                    <button type="button" class="log-tab" data-log-type="php">PHP</button>
+                    <button type="button" class="log-tab" data-log-type="mariadb">MariaDB</button>
+                    <button type="button" class="log-tab" data-log-type="devpanel">DevPanel</button>
+                </div>
+
+                <div class="log-controls">
+                    <input
+                        type="search"
+                        id="logSearch"
+                        class="form-control"
+                        placeholder="Filtrar texto">
+
+                    <select id="logLines" class="form-select">
+                        <option value="50">50 líneas</option>
+                        <option value="120" selected>120 líneas</option>
+                        <option value="250">250 líneas</option>
+                        <option value="500">500 líneas</option>
+                    </select>
+                </div>
             </div>
 
             <pre
