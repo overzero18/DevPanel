@@ -31,6 +31,12 @@ $primaryLinks = [
         'label' => 'Logs',
         'match' => [],
     ],
+    [
+        'url' => '/devpanel/doctor.php',
+        'icon' => 'activity',
+        'label' => 'Doctor',
+        'match' => ['doctor.php'],
+    ],
 ];
 
 $toolLinks = [

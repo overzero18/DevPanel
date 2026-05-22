@@ -1,0 +1,89 @@
+<?php
+
+require_once __DIR__ . '/config.php';
+
+function devpanelDoctorCommand(array $command): array
+{
+    $process = proc_open(
+        $command,
+        [
+            1 => ['pipe', 'w'],
+            2 => ['pipe', 'w']
+        ],
+        $pipes,
+        null,
+        ['HOME' => sys_get_temp_dir()]
+    );
+
+    if (!is_resource($process))
+    {
+        return ['ok' => false, 'output' => 'No se pudo ejecutar'];
+    }
+
+    $output = trim(stream_get_contents($pipes[1]) . stream_get_contents($pipes[2]));
+    fclose($pipes[1]);
+    fclose($pipes[2]);
+
+    return [
+        'ok' => proc_close($process) === 0,
+        'output' => $output
+    ];
+}
+
+function devpanelDoctorItem(string $label, bool $ok, string $detail = '', string $severity = null): array
+{
+    return [
+        'label' => $label,
+        'ok' => $ok,
+        'detail' => $detail,
+        'severity' => $severity ?: ($ok ? 'ok' : 'warning')
+    ];
+}
+
+function devpanelDoctorChecks(): array
+{
+    $projectDir = dirname(__DIR__, 2);
+    $configFile = $projectDir . '/config.php';
+    $htdocsPath = devpanelConfig('HTDOCS_PATH', '/opt/lampp/htdocs');
+    $lamppPath = rtrim(devpanelConfig('LAMPP_PATH', '/opt/lampp'), DIRECTORY_SEPARATOR);
+    $phpBinary = devpanelConfig('PHP_BINARY', '/opt/lampp/bin/php');
+    $docker = devpanelDoctorCommand(['sh', '-lc', 'command -v docker']);
+    $gitVersion = devpanelDoctorCommand(['git', '--version']);
+    $fileMode = devpanelDoctorCommand(['git', '-C', $projectDir, 'config', '--get', 'core.fileMode']);
+
+    $items = [
+        devpanelDoctorItem('Proyecto', is_dir($projectDir), $projectDir),
+        devpanelDoctorItem('config.php', is_file($configFile), $configFile),
+        devpanelDoctorItem('config.php escribible', is_writable($configFile), 'Permite guardar configuración desde UI'),
+        devpanelDoctorItem('htdocs', is_dir($htdocsPath), $htdocsPath),
+        devpanelDoctorItem('htdocs escribible', is_writable($htdocsPath), 'Permite crear/clonar proyectos desde UI'),
+        devpanelDoctorItem('logs escribible', is_writable($projectDir . '/logs'), $projectDir . '/logs'),
+        devpanelDoctorItem('tmp escribible', is_writable($projectDir . '/tmp'), $projectDir . '/tmp'),
+        devpanelDoctorItem('LAMPP', is_file($lamppPath . '/lampp'), $lamppPath . '/lampp'),
+        devpanelDoctorItem('PHP XAMPP', is_file($phpBinary), $phpBinary),
+        devpanelDoctorItem('Git', $gitVersion['ok'], $gitVersion['output']),
+        devpanelDoctorItem('Git fileMode', trim($fileMode['output']) === 'false', 'core.fileMode=' . ($fileMode['output'] ?: 'sin configurar')),
+        devpanelDoctorItem('Docker', $docker['ok'], $docker['ok'] ? $docker['output'] : 'No instalado o fuera de PATH', $docker['ok'] ? 'ok' : 'info'),
+        devpanelDoctorItem('Apache error log', is_readable(devpanelConfig('APACHE_ERROR_LOG')), devpanelConfig('APACHE_ERROR_LOG')),
+        devpanelDoctorItem('Apache access log', is_readable(devpanelConfig('APACHE_ACCESS_LOG')), devpanelConfig('APACHE_ACCESS_LOG')),
+        devpanelDoctorItem('PHP error log', is_readable(devpanelConfig('PHP_ERROR_LOG')), devpanelConfig('PHP_ERROR_LOG')),
+        devpanelDoctorItem('MySQL data dir', is_readable(devpanelConfig('MYSQL_DATA_DIR')), devpanelConfig('MYSQL_DATA_DIR')),
+    ];
+
+    $warnings = array_values(array_filter($items, static fn ($item) => $item['severity'] !== 'ok'));
+
+    return [
+        'items' => $items,
+        'summary' => [
+            'total' => count($items),
+            'ok' => count($items) - count($warnings),
+            'warnings' => count($warnings),
+        ],
+        'commands' => [
+            'Permisos base' => 'APACHE_USER=daemon ./scripts/fix-local-permissions.sh',
+            'Permisos htdocs' => 'FIX_HTDOCS=1 APACHE_USER=daemon ./scripts/fix-local-permissions.sh',
+            'Doctor CLI' => './scripts/devpanel-doctor.sh',
+            'Lint PHP' => "find . -name '*.php' -print0 | xargs -0 -n1 /opt/lampp/bin/php -l",
+        ]
+    ];
+}

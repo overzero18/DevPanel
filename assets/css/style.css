@@ -962,6 +962,105 @@ body {
     border-color: color-mix(in srgb, var(--accent-danger) 45%, transparent);
 }
 
+.doctor-page {
+    display: grid;
+    gap: 18px;
+}
+
+.doctor-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.doctor-summary-card {
+    display: grid;
+    gap: 4px;
+    min-height: 110px;
+}
+
+.doctor-summary-card span {
+    color: var(--text-muted);
+    font-weight: 800;
+}
+
+.doctor-summary-card strong {
+    color: var(--text-primary);
+    font-size: 2rem;
+}
+
+.doctor-summary-card.is-ok strong {
+    color: var(--accent-secondary);
+}
+
+.doctor-summary-card.is-warning strong {
+    color: var(--accent-warning);
+}
+
+.doctor-card {
+    display: grid;
+    gap: 16px;
+}
+
+.doctor-check-list,
+.doctor-command-list {
+    display: grid;
+    gap: 10px;
+}
+
+.doctor-check {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr);
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--bg-primary) 34%, transparent);
+}
+
+.doctor-check i {
+    margin-top: 2px;
+    color: var(--accent-warning);
+}
+
+.doctor-check.is-ok i {
+    color: var(--accent-secondary);
+}
+
+.doctor-check strong,
+.doctor-check small {
+    display: block;
+    min-width: 0;
+}
+
+.doctor-check small {
+    overflow-wrap: anywhere;
+    color: var(--text-muted);
+}
+
+.doctor-command {
+    display: grid;
+    grid-template-columns: 180px minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--bg-primary) 34%, transparent);
+}
+
+.doctor-command span {
+    color: var(--text-secondary);
+    font-weight: 800;
+}
+
+.doctor-command code {
+    min-width: 0;
+    overflow-x: auto;
+    color: var(--accent-primary);
+    white-space: nowrap;
+}
+
 .text-muted,
 .text-secondary {
     color: var(--text-muted) !important;
@@ -1693,6 +1792,11 @@ body {
     }
 
     .project-activity-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .doctor-summary-grid,
+    .doctor-command {
         grid-template-columns: 1fr;
     }
 
