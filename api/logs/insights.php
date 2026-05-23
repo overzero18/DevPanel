@@ -44,6 +44,61 @@ function devpanelShouldIgnoreInsight(string $line): bool
         return true;
     }
 
+    if (devpanelIsResolvedPermissionNoise($lower))
+    {
+        return true;
+    }
+
+    return false;
+}
+
+function devpanelIsResolvedPermissionNoise(string $lower): bool
+{
+    if (str_contains($lower, 'devpanel_template_check') || str_contains($lower, 'devpanel_check_db'))
+    {
+        return true;
+    }
+
+    $isPermissionNoise = str_contains($lower, 'permiso denegado')
+        || str_contains($lower, 'permission denied')
+        || str_contains($lower, 'failed to open stream');
+
+    if (!$isPermissionNoise)
+    {
+        return false;
+    }
+
+    $root = dirname(__DIR__, 2);
+    $configFile = $root . '/config.php';
+    $logsDir = $root . '/logs';
+    $tmpDir = $root . '/tmp';
+    $htdocsPath = devpanelConfig('HTDOCS_PATH');
+
+    if (str_contains($lower, '/config.php') && is_writable($configFile))
+    {
+        return true;
+    }
+
+    if (str_contains($lower, '/logs/actions.log') && is_writable($logsDir))
+    {
+        return true;
+    }
+
+    if (str_contains($lower, '/includes/security.php') && is_writable($logsDir))
+    {
+        return true;
+    }
+
+    if (str_contains($lower, '/api/filemanager/zip.php') && is_writable($tmpDir))
+    {
+        return true;
+    }
+
+    if (str_contains($lower, '/api/filemanager/mkdir.php') && is_writable($htdocsPath))
+    {
+        return true;
+    }
+
     return false;
 }
 
