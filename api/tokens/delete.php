@@ -23,14 +23,15 @@ if (!validateCsrfToken())
 }
 
 $id = trim((string) ($_POST['id'] ?? ''));
+$token = $id !== '' ? devpanelFindApiToken($id) : null;
 
-if ($id === '' || !devpanelDeleteApiToken($id))
+if ($id === '' || !$token || !devpanelDeleteApiToken($id))
 {
     http_response_code(400);
     echo json_encode(['success' => false, 'message' => 'No se pudo borrar el token']);
     exit;
 }
 
-logAction('api_token_delete', $id);
+logAction('api_token_delete', ($token['name'] ?? 'token') . ':' . ($token['role'] ?? 'viewer'));
 
 echo json_encode(['success' => true, 'message' => 'Token borrado']);

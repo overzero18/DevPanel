@@ -157,6 +157,22 @@ function devpanelCreateApiToken(string $name, string $role): ?array
     ];
 }
 
+function devpanelFindApiToken(string $id): ?array
+{
+    $tokens = devpanelConfig('DEVPANEL_API_TOKENS', []);
+    $tokens = is_array($tokens) ? $tokens : [];
+
+    foreach ($tokens as $token)
+    {
+        if (($token['id'] ?? '') === $id)
+        {
+            return $token;
+        }
+    }
+
+    return null;
+}
+
 function devpanelDeleteApiToken(string $id): bool
 {
     $tokens = devpanelConfig('DEVPANEL_API_TOKENS', []);

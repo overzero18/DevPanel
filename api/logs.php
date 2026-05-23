@@ -280,6 +280,8 @@ function isDevpanelRoutineActionLine(string $line): bool
         '[git_action] status ',
         '[execute_command] pwd',
         '[execute_command] git status',
+        '[api_token_create] smoke-token:',
+        '[api_token_delete] smoke-token:',
     ]);
 }
 
