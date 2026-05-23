@@ -37,6 +37,12 @@ $primaryLinks = [
         'label' => 'Doctor',
         'match' => ['doctor.php'],
     ],
+    [
+        'url' => '/devpanel/users.php',
+        'icon' => 'people-fill',
+        'label' => 'Usuarios',
+        'match' => ['users.php'],
+    ],
 ];
 
 $toolLinks = [

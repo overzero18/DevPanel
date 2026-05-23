@@ -253,6 +253,7 @@ Then update `/config.php` with the generated hash.
 * ✅ Permissions diagnostics
 * ✅ System monitor
 * ✅ Password authentication
+* ✅ Local users and role management
 * ✅ Change password functionality
 * ✅ Audit logging
 * ✅ CSRF protection
