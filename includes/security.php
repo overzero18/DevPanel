@@ -147,6 +147,30 @@ function generateAuthToken()
 
 function login($password)
 {
+    $username = trim((string) ($_POST['username'] ?? 'admin'));
+    $user = getConfigUser($username);
+
+    if ($user)
+    {
+        $configPassword = $user['password'] ?? '';
+
+        if (!$configPassword || !password_verify($password, $configPassword))
+        {
+            recordLoginAttempt(false);
+            logAction('login_failed', 'Invalid credentials');
+            return false;
+        }
+
+        $_SESSION[SESSION_TOKEN_KEY] = generateAuthToken();
+        $_SESSION['auth_time'] = time();
+        $_SESSION['user_name'] = $username;
+        $_SESSION['user_role'] = $user['role'] ?? 'admin';
+        generateCsrfToken();
+        recordLoginAttempt(true);
+        logAction('login_success', 'User logged in');
+        return true;
+    }
+
     $configPassword = getConfigPassword();
 
     if (!$configPassword || !password_verify($password, $configPassword))
@@ -158,6 +182,8 @@ function login($password)
 
     $_SESSION[SESSION_TOKEN_KEY] = generateAuthToken();
     $_SESSION['auth_time'] = time();
+    $_SESSION['user_name'] = 'admin';
+    $_SESSION['user_role'] = 'admin';
     generateCsrfToken();
     recordLoginAttempt(true);
     logAction('login_success', 'User logged in');
@@ -182,6 +208,48 @@ function getConfigPassword()
     return null;
 }
 
+function getConfigUser($username)
+{
+    if (!file_exists(AUTH_PASSWORD_FILE))
+    {
+        return null;
+    }
+
+    $config = require AUTH_PASSWORD_FILE;
+    $users = $config['DEVPANEL_USERS'] ?? [];
+
+    if (!is_array($users) || !isset($users[$username]) || !is_array($users[$username]))
+    {
+        return null;
+    }
+
+    return $users[$username];
+}
+
+function getCurrentUserName()
+{
+    return $_SESSION['user_name'] ?? 'admin';
+}
+
+function getCurrentUserRole()
+{
+    return $_SESSION['user_role'] ?? 'admin';
+}
+
+function currentUserCan($permission)
+{
+    if (!file_exists(AUTH_PASSWORD_FILE))
+    {
+        return true;
+    }
+
+    $config = require AUTH_PASSWORD_FILE;
+    $roles = $config['DEVPANEL_ROLES'] ?? ['admin' => ['*']];
+    $permissions = $roles[getCurrentUserRole()] ?? ['*'];
+
+    return in_array('*', $permissions, true) || in_array($permission, $permissions, true);
+}
+
 function logAction($action, $details = '')
 {
     if (!is_dir(LOGS_DIR) && !mkdir(LOGS_DIR, 0755, true))
@@ -198,7 +266,7 @@ function logAction($action, $details = '')
 
     $ip = $_SERVER['REMOTE_ADDR'] ?? 'cli';
     $timestamp = date('Y-m-d H:i:s');
-    $user = isset($_SESSION[SESSION_TOKEN_KEY]) ? 'authenticated' : 'anonymous';
+    $user = isset($_SESSION[SESSION_TOKEN_KEY]) ? getCurrentUserName() . ':' . getCurrentUserRole() : 'anonymous';
 
     $logEntry = "[$timestamp] [$ip] [$user] [$action] $details\n";
 

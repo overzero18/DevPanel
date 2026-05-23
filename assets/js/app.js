@@ -765,12 +765,385 @@ async function loadDockerContainers()
         }
 
         renderDockerContainers(data.containers || []);
+        loadDockerCompose();
     }
     catch(error)
     {
         console.error(error);
         container.textContent = 'Error cargando Docker';
     }
+}
+
+async function loadDockerCompose()
+{
+    const container = document.getElementById('dockerComposeList');
+
+    if (!container) return;
+
+    try
+    {
+        const response = await fetch('/devpanel/api/docker/compose.php');
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+
+        if (!data.available) {
+            container.innerHTML = `<div class="file-manager-empty">${data.message || 'Docker no disponible'}</div>`;
+            return;
+        }
+
+        renderDockerCompose(data.files || []);
+    }
+    catch(error)
+    {
+        console.error(error);
+        container.textContent = 'Error cargando Docker Compose';
+    }
+}
+
+function renderDockerCompose(files)
+{
+    const container = document.getElementById('dockerComposeList');
+    container.innerHTML = '';
+
+    if (!files.length) {
+        const empty = document.createElement('div');
+        empty.className = 'file-manager-empty';
+        empty.textContent = 'No se detectaron archivos compose';
+        container.appendChild(empty);
+        return;
+    }
+
+    files.forEach(file => {
+        const row = document.createElement('div');
+        row.className = 'database-row';
+
+        const info = document.createElement('div');
+        info.className = 'database-info';
+        const icon = document.createElement('i');
+        icon.className = 'bi bi-diagram-3-fill';
+        const text = document.createElement('div');
+        const name = document.createElement('strong');
+        name.textContent = file.project;
+        const meta = document.createElement('small');
+        meta.textContent = file.path;
+        text.appendChild(name);
+        text.appendChild(meta);
+        info.appendChild(icon);
+        info.appendChild(text);
+
+        const actions = document.createElement('div');
+        actions.className = 'database-actions';
+        ['up', 'down', 'ps', 'logs'].forEach(action => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'btn btn-sm btn-outline-secondary';
+            button.textContent = action;
+            button.addEventListener('click', () => runDockerCompose(file.path, action));
+            actions.appendChild(button);
+        });
+
+        row.appendChild(info);
+        row.appendChild(actions);
+        container.appendChild(row);
+    });
+}
+
+async function runDockerCompose(path, action)
+{
+    const formData = new URLSearchParams();
+    formData.append('path', path);
+    formData.append('action', action);
+    formData.append('csrf_token', csrfToken);
+
+    try
+    {
+        const response = await fetch('/devpanel/api/docker/compose.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: formData
+        });
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+        showToast(data.message || 'Compose ejecutado', data.success ? 'success' : 'danger');
+        await appConfirm(data.output || data.message || 'Sin salida', {
+            title: `Docker Compose ${action}`,
+            confirmText: 'Cerrar'
+        });
+        loadDockerCompose();
+    }
+    catch(error)
+    {
+        console.error(error);
+        showToast('Error ejecutando Compose', 'danger');
+    }
+}
+
+async function loadLocalDomains()
+{
+    const container = document.getElementById('localDomainList');
+
+    if (!container) {
+        return;
+    }
+
+    try
+    {
+        const response = await fetch('/devpanel/api/domains/list.php');
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+
+        if (!data.success) {
+            container.textContent = data.message || 'No se pudieron cargar dominios';
+            return;
+        }
+
+        renderLocalDomains(data.domains || []);
+    }
+    catch(error)
+    {
+        console.error(error);
+        container.textContent = 'Error cargando dominios';
+    }
+}
+
+function renderLocalDomains(domains)
+{
+    const container = document.getElementById('localDomainList');
+    container.innerHTML = '';
+
+    if (!domains.length) {
+        const empty = document.createElement('div');
+        empty.className = 'file-manager-empty';
+        empty.textContent = 'Sin dominios locales preparados';
+        container.appendChild(empty);
+        return;
+    }
+
+    domains.forEach(domain => {
+        const row = document.createElement('div');
+        row.className = 'database-row';
+
+        const info = document.createElement('div');
+        info.className = 'database-info';
+
+        const icon = document.createElement('i');
+        icon.className = 'bi bi-globe2';
+
+        const text = document.createElement('div');
+        const name = document.createElement('strong');
+        name.textContent = domain.domain;
+        const meta = document.createElement('small');
+        meta.textContent = domain.path;
+
+        text.appendChild(name);
+        text.appendChild(meta);
+        info.appendChild(icon);
+        info.appendChild(text);
+
+        const actions = document.createElement('div');
+        actions.className = 'database-actions';
+
+        const open = document.createElement('a');
+        open.className = 'btn btn-sm btn-outline-info';
+        open.href = domain.url;
+        open.target = '_blank';
+        open.rel = 'noopener noreferrer';
+        open.textContent = 'Abrir';
+
+        const commands = document.createElement('button');
+        commands.type = 'button';
+        commands.className = 'btn btn-sm btn-outline-secondary';
+        commands.textContent = 'Comandos';
+        commands.addEventListener('click', () => showLocalDomainCommands(domain));
+
+        actions.appendChild(open);
+        actions.appendChild(commands);
+        row.appendChild(info);
+        row.appendChild(actions);
+        container.appendChild(row);
+    });
+}
+
+async function createLocalDomain()
+{
+    const path = document.getElementById('localDomainProject')?.value || '';
+    const domain = document.getElementById('localDomainName')?.value.trim().toLowerCase() || '';
+
+    if (!path || !domain) {
+        showToast('Selecciona proyecto e introduce dominio .test', 'danger');
+        return;
+    }
+
+    const formData = new URLSearchParams();
+    formData.append('path', path);
+    formData.append('domain', domain);
+    formData.append('csrf_token', csrfToken);
+
+    try
+    {
+        const response = await fetch('/devpanel/api/domains/create.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: formData
+        });
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+
+        if (!data.success) {
+            showToast(data.message || 'No se pudo crear dominio', 'danger');
+            return;
+        }
+
+        showToast(data.message, 'success');
+        loadLocalDomains();
+        showLocalDomainCommands(data.domain);
+    }
+    catch(error)
+    {
+        console.error(error);
+        showToast('Error creando dominio local', 'danger');
+    }
+}
+
+async function showLocalDomainCommands(domain)
+{
+    const commands = domain.commands || {};
+    const output = Object.entries(commands)
+        .map(([label, command]) => `${label}: ${command}`)
+        .join('\n');
+
+    await appConfirm(output || 'Sin comandos', {
+        title: `Activar ${domain.domain}`,
+        confirmText: 'Cerrar'
+    });
+}
+
+async function loadBackups()
+{
+    const container = document.getElementById('backupList');
+
+    if (!container) return;
+
+    try
+    {
+        const response = await fetch('/devpanel/api/backups/list.php');
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+        renderBackups(data.backups || []);
+    }
+    catch(error)
+    {
+        console.error(error);
+        container.textContent = 'Error cargando backups';
+    }
+}
+
+function renderBackups(backups)
+{
+    const container = document.getElementById('backupList');
+    container.innerHTML = '';
+
+    if (!backups.length) {
+        const empty = document.createElement('div');
+        empty.className = 'file-manager-empty';
+        empty.textContent = 'Sin backups todavía';
+        container.appendChild(empty);
+        return;
+    }
+
+    backups.forEach(backup => {
+        const row = document.createElement('div');
+        row.className = 'database-row';
+
+        const info = document.createElement('div');
+        info.className = 'database-info';
+
+        const icon = document.createElement('i');
+        icon.className = 'bi bi-archive-fill';
+
+        const text = document.createElement('div');
+        const name = document.createElement('strong');
+        name.textContent = backup.project;
+        const meta = document.createElement('small');
+        meta.textContent = `${backup.created_at} · ${formatBackupSize(backup.size)}`;
+
+        text.appendChild(name);
+        text.appendChild(meta);
+        info.appendChild(icon);
+        info.appendChild(text);
+
+        const actions = document.createElement('div');
+        actions.className = 'database-actions';
+
+        const download = document.createElement('a');
+        download.href = backup.download;
+        download.className = 'btn btn-sm btn-outline-info';
+        download.textContent = 'Descargar';
+
+        actions.appendChild(download);
+        row.appendChild(info);
+        row.appendChild(actions);
+        container.appendChild(row);
+    });
+}
+
+async function createProjectBackup()
+{
+    const path = document.getElementById('backupProject')?.value || '';
+
+    if (!path) {
+        showToast('Selecciona un proyecto', 'danger');
+        return;
+    }
+
+    const formData = new URLSearchParams();
+    formData.append('path', path);
+    formData.append('csrf_token', csrfToken);
+
+    try
+    {
+        const response = await fetch('/devpanel/api/backups/create.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: formData
+        });
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+        showToast(data.message || 'Backup procesado', data.success ? 'success' : 'danger');
+
+        if (data.success) loadBackups();
+    }
+    catch(error)
+    {
+        console.error(error);
+        showToast('Error creando backup', 'danger');
+    }
+}
+
+function formatBackupSize(bytes)
+{
+    const value = Number(bytes) || 0;
+    if (value > 1024 * 1024) return `${(value / 1024 / 1024).toFixed(1)} MB`;
+    if (value > 1024) return `${(value / 1024).toFixed(1)} KB`;
+    return `${value} B`;
 }
 
 async function loadNotifications()
@@ -1456,6 +1829,8 @@ document.addEventListener("DOMContentLoaded", () =>
 
     loadDatabases();
     loadDatabaseUsers();
+    loadLocalDomains();
+    loadBackups();
     loadDockerContainers();
     loadPermissions();
     loadProjectActivity();
@@ -1508,6 +1883,7 @@ async function loadLogs()
             container.scrollHeight;
 
         updateLogMeta(data);
+        loadLogInsights();
     }
     catch(error)
     {
@@ -1515,6 +1891,59 @@ async function loadLogs()
 
         showLogMessage('Error cargando logs');
     }
+}
+
+async function loadLogInsights()
+{
+    const container = document.getElementById('logInsightsList');
+    const summary = document.getElementById('logInsightsSummary');
+
+    if (!container) return;
+
+    try
+    {
+        const response = await fetch('/devpanel/api/logs/insights.php');
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+        const info = data.summary || {};
+        if (summary) {
+            summary.textContent = `${info.danger || 0} errores · ${info.warning || 0} avisos`;
+        }
+        renderLogInsights(data.items || []);
+    }
+    catch(error)
+    {
+        console.error(error);
+        container.textContent = 'Error analizando logs';
+    }
+}
+
+function renderLogInsights(items)
+{
+    const container = document.getElementById('logInsightsList');
+    container.innerHTML = '';
+
+    if (!items.length) {
+        const empty = document.createElement('div');
+        empty.className = 'file-manager-empty';
+        empty.textContent = 'Sin errores o avisos recientes.';
+        container.appendChild(empty);
+        return;
+    }
+
+    items.forEach(item => {
+        const row = document.createElement('div');
+        row.className = `activity-item is-${item.severity || 'info'}`;
+        const title = document.createElement('strong');
+        title.textContent = `${item.source} · ${item.severity}`;
+        const detail = document.createElement('small');
+        detail.textContent = item.line;
+        row.appendChild(title);
+        row.appendChild(detail);
+        container.appendChild(row);
+    });
 }
 
 function showLogMessage(message)

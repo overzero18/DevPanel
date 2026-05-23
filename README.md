@@ -55,6 +55,9 @@ The project provides a modern interface to manage services, projects, deployment
 * CPU / RAM / Disk usage
 * Persistent notification center
 * Docker detection and container actions
+* Docker Compose detection and basic actions
+* Local domains helper for `.test` Apache vhosts
+* Log insights for recent errors and warnings
 
 ## 🎨 UI
 
@@ -63,6 +66,7 @@ The project provides a modern interface to manage services, projects, deployment
 * Sidebar navigation
 * Dashboard cards
 * Dark, Cyber, Ubuntu and Glass themes
+* Optional users and roles configuration
 
 ---
 
@@ -239,6 +243,12 @@ Then update `/config.php` with the generated hash.
 * ✅ Theme system
 * ✅ MariaDB manager
 * ✅ Docker detection
+* ✅ Docker Compose UI
+* ✅ Local domains helper
+* ✅ Project backups with downloadable history
+* ✅ Cron-ready backup runner
+* ✅ Log insights
+* ✅ API smoke test script
 * ✅ Permissions diagnostics
 * ✅ System monitor
 * ✅ Password authentication
@@ -273,6 +283,21 @@ DevPanel is intended for:
 - `config.example.php` is the safe template for other users.
 - GitHub settings are entered from the UI by each user.
 - Screenshots and docs should avoid showing private paths, tokens, usernames or repository URLs.
+
+### Users and Roles
+
+DevPanel still supports the original single-password login. For public/community setups, each user can define local users in `config.php` without committing private hashes:
+
+```php
+'DEVPANEL_USERS' => [
+    'admin' => [
+        'password' => 'BCRYPT_HASH_HERE',
+        'role' => 'admin',
+    ],
+],
+```
+
+Keep `config.php` private. Commit only `config.example.php`.
 
 ### Local Permissions Checklist
 
@@ -317,6 +342,7 @@ Before publishing a public release:
 - Confirm `.env`, ZIP files, logs and temporary files are ignored.
 - Search for private usernames, tokens, passwords and personal repository URLs.
 - Run PHP lint across the project.
+- Run `scripts/devpanel-api-smoke.sh` with `DEVPANEL_TEST_PASSWORD` locally.
 - Open the dashboard and check **Permisos del sistema**.
 - Test login, project listing, File Manager, logs and MariaDB on a fresh local setup.
 - Update screenshots separately when the UI is final.

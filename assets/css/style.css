@@ -730,6 +730,20 @@ body {
     color: var(--text-muted);
 }
 
+.activity-item.is-danger {
+    border-color: color-mix(in srgb, var(--accent-danger) 50%, var(--border-color));
+}
+
+.activity-item.is-warning {
+    border-color: color-mix(in srgb, var(--accent-warning) 55%, var(--border-color));
+}
+
+.log-insights-panel {
+    display: grid;
+    gap: 12px;
+    margin-top: 16px;
+}
+
 .project-git-status {
     display: grid;
     grid-template-columns: 22px minmax(0, 1fr) auto;

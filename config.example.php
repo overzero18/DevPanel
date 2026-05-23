@@ -20,6 +20,12 @@ return [
     'GITHUB_REMOTE_URL' => '',
     'EXCLUDED_PROJECT_FOLDERS' => ['dashboard', 'webalizer', 'xampp', 'phpmyadmin', 'devpanel'],
     'DEVPANEL_PASSWORD' => 'CHANGE_ME_WITH_BCRYPT_HASH',
+    'DEVPANEL_USERS' => [],
+    'DEVPANEL_ROLES' => [
+        'admin' => ['*'],
+        'developer' => ['projects', 'files', 'git', 'terminal', 'logs'],
+        'viewer' => ['dashboard', 'logs'],
+    ],
     'THEME' => 'dark',
     'AVAILABLE_THEMES' => ['dark', 'cyber', 'ubuntu', 'glass'],
 ];
