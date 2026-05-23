@@ -15,3 +15,4 @@ Primer bloque extraído:
 - `dashboard/local_domains.php`
 - `dashboard/backups.php`
 - `dashboard/docker.php`
+- `dashboard/terminal.php`

@@ -123,6 +123,7 @@ Entra en **Ajustes → Seguridad avanzada** para activar 2FA o crear tokens.
 - Los API tokens se muestran una sola vez al crearlos.
 - Cada token tiene rol y fecha de expiración.
 - DevPanel registra `last_used_at` cuando un token se usa correctamente.
+- Puedes rotar tokens desde la UI si quieres renovar el valor sin recrear permisos.
 
 Ejemplo de uso:
 
@@ -130,6 +131,10 @@ Ejemplo de uso:
 curl -H "X-DevPanel-Token: dp_tu_token_local" \
   http://localhost/devpanel/api/logs/summary.php
 ```
+
+### Configuración portable
+
+En **Ajustes → Seguridad avanzada → Configuración portable** puedes exportar/importar un JSON sin secretos. No incluye contraseña, tokens, datos privados de GitHub ni contraseña de MariaDB.
 
 ## ✅ Permisos Locales
 

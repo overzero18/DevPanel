@@ -80,6 +80,11 @@ token_summary="$(curl -s -H "X-DevPanel-Token: $api_token" "$BASE_URL/api/logs/s
 expect_json_success "$token_summary"
 token_settings="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/api/security/settings.php")"
 printf '%s' "$token_settings" | grep -q '"last_used_at":"'
+rotate_token_response="$(curl -s -b "$COOKIE_FILE" \
+    -d "id=$api_token_id&csrf_token=$csrf" \
+    "$BASE_URL/api/tokens/rotate.php")"
+expect_json_success "$rotate_token_response"
+api_token_id="$(printf '%s' "$rotate_token_response" | /opt/lampp/bin/php -r '$data=json_decode(stream_get_contents(STDIN), true); echo $data["item"]["id"] ?? "";')"
 delete_token_response="$(curl -s -b "$COOKIE_FILE" \
     -d "id=$api_token_id&csrf_token=$csrf" \
     "$BASE_URL/api/tokens/delete.php")"
@@ -115,9 +120,11 @@ echo "[5/15] Logs"
 logs_response="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/api/logs.php?type=devpanel&lines=25")"
 insights_response="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/api/logs/insights.php")"
 summary_response="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/api/logs/summary.php")"
+audit_response="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/api/audit/list.php?limit=25")"
 expect_json_success "$logs_response"
 expect_json_success "$insights_response"
 expect_json_success "$summary_response"
+expect_json_success "$audit_response"
 
 echo "[6/15] Notificaciones"
 notifications_response="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/api/notifications/list.php")"

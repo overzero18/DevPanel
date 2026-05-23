@@ -48,6 +48,7 @@ function devpanelDoctorChecks(): array
     $lamppPath = rtrim(devpanelConfig('LAMPP_PATH', '/opt/lampp'), DIRECTORY_SEPARATOR);
     $phpBinary = devpanelConfig('PHP_BINARY', '/opt/lampp/bin/php');
     $docker = devpanelDoctorCommand(['sh', '-lc', 'command -v docker']);
+    $qrencode = devpanelDoctorCommand(['sh', '-lc', 'command -v qrencode']);
     $gitVersion = devpanelDoctorCommand(['git', '--version']);
     $fileMode = devpanelDoctorCommand(['git', '-C', $projectDir, 'config', '--get', 'core.fileMode']);
 
@@ -64,6 +65,7 @@ function devpanelDoctorChecks(): array
         devpanelDoctorItem('Git', $gitVersion['ok'], $gitVersion['output']),
         devpanelDoctorItem('Git fileMode', trim($fileMode['output']) === 'false', 'core.fileMode=' . ($fileMode['output'] ?: 'sin configurar')),
         devpanelDoctorItem('Docker', $docker['ok'], $docker['ok'] ? $docker['output'] : 'No instalado o fuera de PATH', $docker['ok'] ? 'ok' : 'info'),
+        devpanelDoctorItem('qrencode', $qrencode['ok'], $qrencode['ok'] ? $qrencode['output'] : 'Opcional para mostrar QR 2FA real', $qrencode['ok'] ? 'ok' : 'info'),
         devpanelDoctorItem('Apache error log', is_readable(devpanelConfig('APACHE_ERROR_LOG')), devpanelConfig('APACHE_ERROR_LOG')),
         devpanelDoctorItem('Apache access log', is_readable(devpanelConfig('APACHE_ACCESS_LOG')), devpanelConfig('APACHE_ACCESS_LOG')),
         devpanelDoctorItem('PHP error log', is_readable(devpanelConfig('PHP_ERROR_LOG')), devpanelConfig('PHP_ERROR_LOG')),
@@ -83,6 +85,7 @@ function devpanelDoctorChecks(): array
             'Permisos base' => 'APACHE_USER=daemon ./scripts/fix-local-permissions.sh',
             'Permisos htdocs' => 'FIX_HTDOCS=1 APACHE_USER=daemon ./scripts/fix-local-permissions.sh',
             'Doctor CLI' => './scripts/devpanel-doctor.sh',
+            'Instalar QR 2FA' => 'sudo apt install qrencode',
             'Lint PHP' => "find . -name '*.php' -print0 | xargs -0 -n1 /opt/lampp/bin/php -l",
         ]
     ];

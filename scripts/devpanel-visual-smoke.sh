@@ -49,6 +49,9 @@ cat > "$TEST_FILE" <<'HTML'
         const settingsResponse = await fetch('/devpanel/settings.php');
         const settings = await settingsResponse.text();
         const settingsDoc = new DOMParser().parseFromString(settings, 'text/html');
+        const auditResponse = await fetch('/devpanel/audit.php');
+        const audit = await auditResponse.text();
+        const auditDoc = new DOMParser().parseFromString(audit, 'text/html');
         const required = [
             '#systemHealthGrid',
             '#terminalWorkingDirectory',
@@ -73,14 +76,24 @@ cat > "$TEST_FILE" <<'HTML'
             '#apiTokenExpiry',
             '#twoFactorToggle',
             '#twoFactorQr',
+            '#configImportFile',
             '[onclick*="saveRuntimeSettings"]',
             '[onclick*="saveGithubSettings"]'
+        ];
+        const auditRequired = [
+            '#auditList',
+            '#auditSearch',
+            '#auditAction',
+            '#auditUser'
         ];
         const missing = [
             ...required.filter(selector => !doc.querySelector(selector)),
             ...settingsRequired
                 .filter(selector => !settingsDoc.querySelector(selector))
-                .map(selector => `settings ${selector}`)
+                .map(selector => `settings ${selector}`),
+            ...auditRequired
+                .filter(selector => !auditDoc.querySelector(selector))
+                .map(selector => `audit ${selector}`)
         ];
 
         if (missing.length) {

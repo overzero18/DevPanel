@@ -28,6 +28,7 @@ $devpanelAssetVersion = $devpanelAssetVersion ?? static function (string $path):
 <script src="/devpanel/assets/js/modules/backups.js?v=<?php echo $devpanelAssetVersion('/assets/js/modules/backups.js'); ?>"></script>
 <script src="/devpanel/assets/js/modules/users.js?v=<?php echo $devpanelAssetVersion('/assets/js/modules/users.js'); ?>"></script>
 <script src="/devpanel/assets/js/modules/logs.js?v=<?php echo $devpanelAssetVersion('/assets/js/modules/logs.js'); ?>"></script>
+<script src="/devpanel/assets/js/modules/audit.js?v=<?php echo $devpanelAssetVersion('/assets/js/modules/audit.js'); ?>"></script>
 <script src="/devpanel/assets/js/modules/system.js?v=<?php echo $devpanelAssetVersion('/assets/js/modules/system.js'); ?>"></script>
 <script src="/devpanel/assets/js/modules/terminal.js?v=<?php echo $devpanelAssetVersion('/assets/js/modules/terminal.js'); ?>"></script>
 <script src="/devpanel/assets/js/filemanager.js?v=<?php echo $devpanelAssetVersion('/assets/js/filemanager.js'); ?>"></script>

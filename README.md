@@ -25,6 +25,7 @@ The project provides a modern interface to manage services, projects, deployment
 * Change password functionality
 * Optional TOTP two-factor authentication
 * Local API tokens with role, expiration and last-used tracking
+* Dedicated audit page with filters
 
 ## 🔧 Service Management
 
@@ -425,6 +426,9 @@ Add that command to cron if you want DevPanel to execute the schedules created f
 * Full SHA-256 file diff before backup restore
 * 2FA QR endpoint for local authenticator setup when `qrencode` is installed
 * Expiring API tokens from settings
+* API token rotation
+* Public config export/import without secrets
+* Terminal dashboard section extracted into `sections/`
 
 API token example:
 

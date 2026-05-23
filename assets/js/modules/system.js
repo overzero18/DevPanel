@@ -402,11 +402,17 @@ function renderApiTokens(tokens)
 
         const actions = document.createElement('div');
         actions.className = 'database-actions';
+        const rotate = document.createElement('button');
+        rotate.type = 'button';
+        rotate.className = 'btn btn-sm btn-outline-warning';
+        rotate.textContent = 'Rotar';
+        rotate.addEventListener('click', () => rotateApiToken(token.id));
         const remove = document.createElement('button');
         remove.type = 'button';
         remove.className = 'btn btn-sm btn-outline-danger';
         remove.textContent = 'Borrar';
         remove.addEventListener('click', () => deleteApiToken(token.id));
+        actions.appendChild(rotate);
         actions.appendChild(remove);
 
         row.appendChild(info);
@@ -456,6 +462,50 @@ async function createApiToken()
     }
 }
 
+async function rotateApiToken(id)
+{
+    const confirmed = await appConfirm('El valor anterior dejará de funcionar y se mostrará un token nuevo una sola vez.', {
+        title: 'Rotar API token',
+        confirmText: 'Rotar',
+        cancelText: 'Cancelar',
+        danger: true
+    });
+
+    if (!confirmed) return;
+
+    const formData = new URLSearchParams();
+    formData.append('id', id);
+    formData.append('csrf_token', getSystemCsrfToken());
+
+    try {
+        const response = await fetch('/devpanel/api/tokens/rotate.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: formData
+        });
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+
+        if (!data.success) {
+            showToast(data.message || 'No se pudo rotar token', 'danger');
+            return;
+        }
+
+        await appConfirm(`Guarda este token nuevo ahora. No volverá a mostrarse:\n\n${data.token}`, {
+            title: 'API token rotado',
+            confirmText: 'Cerrar'
+        });
+
+        loadSecuritySettings();
+    }
+    catch(error) {
+        console.error(error);
+        showToast('Error rotando token', 'danger');
+    }
+}
+
 async function deleteApiToken(id)
 {
     const confirmed = await appConfirm('Este token dejará de funcionar inmediatamente.', {
@@ -487,5 +537,50 @@ async function deleteApiToken(id)
     catch(error) {
         console.error(error);
         showToast('Error borrando token', 'danger');
+    }
+}
+
+function exportPublicConfig()
+{
+    window.location.href = '/devpanel/api/config/export.php';
+}
+
+async function importPublicConfig()
+{
+    const input = document.getElementById('configImportFile');
+    const file = input?.files?.[0];
+
+    if (!file) {
+        showToast('Selecciona un JSON de configuración', 'warning');
+        return;
+    }
+
+    const confirmed = await appConfirm('Se importarán rutas, URLs, temas y roles. No se importan contraseñas ni tokens.', {
+        title: 'Importar configuración',
+        confirmText: 'Importar',
+        cancelText: 'Cancelar'
+    });
+
+    if (!confirmed) return;
+
+    const formData = new FormData();
+    formData.append('config', file);
+    formData.append('csrf_token', getSystemCsrfToken());
+
+    try {
+        const response = await fetch('/devpanel/api/config/import.php', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+        showToast(data.message || 'Configuración importada', data.success ? 'success' : 'danger');
+        if (data.success) setTimeout(() => window.location.reload(), 700);
+    }
+    catch(error) {
+        console.error(error);
+        showToast('Error importando configuración', 'danger');
     }
 }

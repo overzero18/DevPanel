@@ -38,6 +38,12 @@ $primaryLinks = [
         'match' => ['doctor.php'],
     ],
     [
+        'url' => '/devpanel/audit.php',
+        'icon' => 'clipboard-data',
+        'label' => 'Auditoría',
+        'match' => ['audit.php'],
+    ],
+    [
         'url' => '/devpanel/settings.php',
         'icon' => 'sliders',
         'label' => 'Ajustes',

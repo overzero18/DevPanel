@@ -217,6 +217,49 @@ function devpanelDeleteApiToken(string $id): bool
     return devpanelWriteSecurityConfig(['DEVPANEL_API_TOKENS' => $tokens]);
 }
 
+function devpanelRotateApiToken(string $id): ?array
+{
+    $tokens = devpanelConfig('DEVPANEL_API_TOKENS', []);
+    $tokens = is_array($tokens) ? $tokens : [];
+    $plain = 'dp_' . bin2hex(random_bytes(24));
+    $rotated = null;
+
+    foreach ($tokens as &$token)
+    {
+        if (($token['id'] ?? '') === $id)
+        {
+            $token['id'] = hash('sha256', $plain);
+            $token['prefix'] = substr($plain, 0, 10);
+            $token['hash'] = password_hash($plain, PASSWORD_BCRYPT, ['cost' => 10]);
+            $token['last_used_at'] = null;
+            $token['rotated_at'] = date('Y-m-d H:i:s');
+            $rotated = $token;
+            break;
+        }
+    }
+
+    unset($token);
+
+    if (!$rotated || !devpanelWriteSecurityConfig(['DEVPANEL_API_TOKENS' => $tokens]))
+    {
+        return null;
+    }
+
+    return [
+        'token' => $plain,
+        'item' => [
+            'id' => $rotated['id'],
+            'name' => $rotated['name'] ?? 'token',
+            'prefix' => $rotated['prefix'],
+            'role' => $rotated['role'] ?? 'viewer',
+            'created_at' => $rotated['created_at'] ?? null,
+            'last_used_at' => null,
+            'expires_at' => $rotated['expires_at'] ?? null,
+            'expired' => devpanelApiTokenExpired($rotated),
+        ],
+    ];
+}
+
 function devpanelPublicRoles(): array
 {
     $config = devpanelUsersConfig();

@@ -223,6 +223,21 @@ $runtimeSettings = devpanelConfig();
                     <div class="file-manager-empty">Cargando tokens...</div>
                 </div>
             </div>
+
+            <div class="database-users mt-4">
+                <h5 class="mb-3">Configuración portable</h5>
+                <div class="database-toolbar">
+                    <button type="button" class="btn btn-outline-info" onclick="exportPublicConfig()">
+                        <i class="bi bi-download"></i>
+                        Exportar sin secretos
+                    </button>
+                    <input type="file" id="configImportFile" class="form-control" accept="application/json">
+                    <button type="button" class="btn btn-outline-warning" onclick="importPublicConfig()">
+                        <i class="bi bi-upload"></i>
+                        Importar
+                    </button>
+                </div>
+            </div>
         </section>
 
     </div>
