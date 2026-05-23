@@ -20,6 +20,8 @@
         href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.css">
 
     <link rel="stylesheet" href="/devpanel/assets/css/style.css">
+    <link rel="stylesheet" href="/devpanel/assets/css/admin.css">
+    <link rel="stylesheet" href="/devpanel/assets/css/docker.css">
     <?php
     // Load theme CSS if helper is available
     @include_once __DIR__ . '/../includes/helpers/theme.php';

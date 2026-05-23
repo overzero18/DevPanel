@@ -143,6 +143,7 @@ function devpanelPreviewProjectBackup(string $file, int $limit = 120): ?array
 
     $items = [];
     $totalSize = 0;
+    $targetPath = $backup['path'] ?? '';
 
     for ($index = 0; $index < $zip->numFiles; $index++)
     {
@@ -157,9 +158,19 @@ function devpanelPreviewProjectBackup(string $file, int $limit = 120): ?array
 
         if (count($items) < $limit)
         {
+            $name = $stat['name'] ?? '';
+            $currentFile = $targetPath ? rtrim($targetPath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $name : '';
+            $currentState = 'missing';
+
+            if ($currentFile && is_file($currentFile))
+            {
+                $currentState = filesize($currentFile) === (int) ($stat['size'] ?? 0) ? 'same_size' : 'different_size';
+            }
+
             $items[] = [
-                'name' => $stat['name'] ?? '',
+                'name' => $name,
                 'size' => (int) ($stat['size'] ?? 0),
+                'current_state' => $currentState,
             ];
         }
     }

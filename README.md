@@ -58,6 +58,7 @@ The project provides a modern interface to manage services, projects, deployment
 * Docker Compose detection and basic actions
 * Local domains helper for `.test` Apache vhosts
 * Optional automatic local domain apply with sudo fallback commands
+* Local domain response check
 * Log insights for recent errors and warnings
 
 ## 🎨 UI
@@ -237,9 +238,11 @@ Then update `/config.php` with the generated hash.
 * ✅ Project backups with downloadable history
 * ✅ Backup restore with safety backup
 * ✅ Backup preview and restore into a new folder
+* ✅ Backup compare hints before restore
 * ✅ Cron-ready backup runner
 * ✅ Log insights
 * ✅ API smoke test script
+* ✅ Guided local installer/checklist
 * ✅ Permissions diagnostics
 * ✅ System monitor
 * ✅ Password authentication
@@ -365,7 +368,7 @@ For security, only these commands are allowed:
 * API tokens
 * More dashboard sections extracted into `sections/`
 * Docker Compose service health charts
-* Backup diff/compare view before restore
+* Full file hash diff before restore
 
 ---
 

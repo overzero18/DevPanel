@@ -24,6 +24,7 @@ echo "[2/11] Dashboard"
 dashboard="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/index.php")"
 csrf="$(printf '%s' "$dashboard" | sed -n 's/.*csrf-token" content="\([^"]*\)".*/\1/p')"
 test -n "$csrf"
+curl -s "$BASE_URL/install.php" | grep -q 'Instalación guiada'
 
 echo "[3/11] Permisos"
 curl -s -b "$COOKIE_FILE" "$BASE_URL/api/permissions.php" | grep -q '"success":true'
@@ -55,6 +56,18 @@ echo "[11/11] Stats"
 curl -s -b "$COOKIE_FILE" "$BASE_URL/api/system_stats.php" | grep -q '"success":true'
 
 if [[ "$WRITE_TESTS" == "1" ]]; then
+    test_user="devpanel_smoke_$(date +%s)"
+    test_password="SmokeTest${RANDOM}Aa!"
+
+    echo "[write] Usuario temporal"
+    curl -s -b "$COOKIE_FILE" \
+        -d "name=$test_user&role=viewer&password=$test_password&csrf_token=$csrf" \
+        "$BASE_URL/api/users/save.php" | grep -q '"success":true'
+
+    curl -s -b "$COOKIE_FILE" \
+        -d "name=$test_user&csrf_token=$csrf" \
+        "$BASE_URL/api/users/delete.php" | grep -q '"success":true'
+
     echo "[write] Backup devpanel"
     backup_response="$(curl -s -b "$COOKIE_FILE" -d "path=/opt/lampp/htdocs/devpanel&csrf_token=$csrf" "$BASE_URL/api/backups/create.php")"
     echo "$backup_response" | grep -q '"success":true'

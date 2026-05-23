@@ -25,15 +25,69 @@ function devpanelFindComposeFiles(): array
             continue;
         }
 
+        $services = $docker ? devpanelComposeServices($docker, $file) : [];
+
         $items[] = [
             'project' => basename(dirname($file)),
             'path' => $file,
             'directory' => dirname($file),
-            'services' => $docker ? devpanelComposeServices($docker, $file) : [],
+            'services' => $services,
+            'status' => $docker ? devpanelComposeStatus($docker, $file) : [],
         ];
     }
 
     return $items;
+}
+
+function devpanelComposeStatus(string $docker, string $file): array
+{
+    $process = proc_open(
+        [$docker, 'compose', '-f', $file, 'ps', '--format', 'json'],
+        [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+        $pipes,
+        dirname($file),
+        ['HOME' => sys_get_temp_dir()]
+    );
+
+    if (!is_resource($process))
+    {
+        return [];
+    }
+
+    $output = trim(stream_get_contents($pipes[1]));
+    fclose($pipes[1]);
+    fclose($pipes[2]);
+    $exit = proc_close($process);
+
+    if ($exit !== 0 || $output === '')
+    {
+        return [];
+    }
+
+    $rows = [];
+
+    foreach (preg_split('/\R/', $output) ?: [] as $line)
+    {
+        $item = json_decode($line, true);
+
+        if (!is_array($item))
+        {
+            continue;
+        }
+
+        $service = $item['Service'] ?? $item['Name'] ?? null;
+
+        if ($service)
+        {
+            $rows[$service] = [
+                'state' => $item['State'] ?? '',
+                'health' => $item['Health'] ?? '',
+                'publishers' => $item['Publishers'] ?? [],
+            ];
+        }
+    }
+
+    return $rows;
 }
 
 function devpanelComposeServices(string $docker, string $file): array

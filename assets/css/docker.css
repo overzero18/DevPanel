@@ -1,0 +1,22 @@
+.compose-service-list {
+    display: grid;
+    gap: 8px;
+    margin-top: -4px;
+}
+
+.compose-service-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.compose-service-chip {
+    margin-right: auto;
+    padding: 5px 9px;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+}

@@ -12,3 +12,5 @@ Reglas:
 Primer bloque extraído:
 
 - `dashboard/system_metrics.php`
+- `dashboard/local_domains.php`
+- `dashboard/backups.php`

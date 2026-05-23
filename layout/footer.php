@@ -8,6 +8,13 @@
 
 <!-- JS personalizado -->
 <script src="/devpanel/assets/js/app.js"></script>
+<script src="/devpanel/assets/js/modules/docker.js"></script>
+<script src="/devpanel/assets/js/modules/domains.js"></script>
+<script src="/devpanel/assets/js/modules/backups.js"></script>
+<script src="/devpanel/assets/js/modules/users.js"></script>
+<script src="/devpanel/assets/js/modules/logs.js"></script>
+<script src="/devpanel/assets/js/modules/system.js"></script>
+<script src="/devpanel/assets/js/modules/terminal.js"></script>
 <script src="/devpanel/assets/js/filemanager.js"></script>
 
 </body>
