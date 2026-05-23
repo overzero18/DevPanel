@@ -5,6 +5,7 @@ require_once __DIR__ . '/../includes/security.php';
 header('Content-Type: application/json');
 
 authenticateSession();
+requirePermission('files');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST')
 {

@@ -9,4 +9,8 @@ $authenticated = isset($_SESSION[SESSION_TOKEN_KEY])
     && isset($_SESSION['auth_time'])
     && time() - $_SESSION['auth_time'] <= SESSION_TIMEOUT;
 
-echo json_encode(['authenticated' => $authenticated]);
+echo json_encode([
+    'authenticated' => $authenticated,
+    'user' => $authenticated ? getCurrentUserName() : null,
+    'role' => $authenticated ? getCurrentUserRole() : null,
+]);

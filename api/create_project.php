@@ -7,6 +7,7 @@ require_once __DIR__ . '/../includes/helpers/project_templates.php';
 header('Content-Type: application/json');
 
 authenticateSession();
+requirePermission('projects');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST')
 {

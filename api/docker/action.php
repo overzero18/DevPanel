@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../includes/security.php';
 header('Content-Type: application/json');
 
 authenticateSession();
+requirePermission('docker');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST')
 {

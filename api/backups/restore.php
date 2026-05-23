@@ -22,16 +22,20 @@ if (!validateCsrfToken())
     exit;
 }
 
-$path = trim((string) ($_POST['path'] ?? ''));
-$backup = devpanelCreateProjectBackup($path);
+$file = basename((string) ($_POST['file'] ?? ''));
+$result = devpanelRestoreProjectBackup($file);
 
-if (!$backup)
+if (!$result)
 {
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'No se pudo crear backup']);
+    echo json_encode(['success' => false, 'message' => 'No se pudo restaurar el backup']);
     exit;
 }
 
-logAction('backup_create', $backup['project']);
+logAction('backup_restore', $result['project'] . ' from ' . $file);
 
-echo json_encode(['success' => true, 'message' => 'Backup creado', 'backup' => $backup]);
+echo json_encode([
+    'success' => true,
+    'message' => 'Backup restaurado',
+    'restore' => $result,
+]);

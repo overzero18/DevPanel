@@ -7,6 +7,7 @@ require_once __DIR__ . '/../includes/projects.php';
 header('Content-Type: application/json');
 
 authenticateSession();
+requirePermission('logs');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET')
 {

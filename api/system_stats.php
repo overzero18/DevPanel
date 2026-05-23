@@ -6,6 +6,7 @@ header('Content-Type: application/json');
 ini_set('serialize_precision', '-1');
 
 authenticateSession();
+requirePermission('dashboard');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET')
 {

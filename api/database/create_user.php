@@ -6,6 +6,7 @@ require_once __DIR__ . '/../../includes/helpers/database.php';
 header('Content-Type: application/json');
 
 authenticateSession();
+requirePermission('database');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST')
 {
@@ -53,8 +54,8 @@ try
     $passwordSafe = $connection->real_escape_string($password);
     $databaseSafe = $connection->real_escape_string($database);
 
-    $connection->query("CREATE USER IF NOT EXISTS `$userSafe`@'localhost' IDENTIFIED BY '$passwordSafe'");
-    $connection->query("GRANT ALL PRIVILEGES ON `$databaseSafe`.* TO `$userSafe`@'localhost'");
+    $connection->query("CREATE USER IF NOT EXISTS '$userSafe'@'localhost' IDENTIFIED BY '$passwordSafe'");
+    $connection->query("GRANT ALL PRIVILEGES ON `$databaseSafe`.* TO '$userSafe'@'localhost'");
     $connection->query('FLUSH PRIVILEGES');
 
     logAction('database_create_user', "$username on $database");

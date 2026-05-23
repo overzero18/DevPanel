@@ -1094,7 +1094,14 @@ function renderBackups(backups)
         download.className = 'btn btn-sm btn-outline-info';
         download.textContent = 'Descargar';
 
+        const restore = document.createElement('button');
+        restore.type = 'button';
+        restore.className = 'btn btn-sm btn-outline-warning';
+        restore.textContent = 'Restaurar';
+        restore.addEventListener('click', () => restoreProjectBackup(backup));
+
         actions.appendChild(download);
+        actions.appendChild(restore);
         row.appendChild(info);
         row.appendChild(actions);
         container.appendChild(row);
@@ -1135,6 +1142,47 @@ async function createProjectBackup()
     {
         console.error(error);
         showToast('Error creando backup', 'danger');
+    }
+}
+
+async function restoreProjectBackup(backup)
+{
+    const confirmed = await appConfirm(
+        `Se restaurará ${backup.project} desde ${backup.file}. Antes se creará un backup de seguridad del estado actual.`,
+        {
+            title: 'Restaurar backup',
+            confirmText: 'Restaurar',
+            cancelText: 'Cancelar',
+            danger: true
+        }
+    );
+
+    if (!confirmed) return;
+
+    const formData = new URLSearchParams();
+    formData.append('file', backup.file);
+    formData.append('csrf_token', csrfToken);
+
+    try
+    {
+        const response = await fetch('/devpanel/api/backups/restore.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: formData
+        });
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+        showToast(data.message || 'Backup procesado', data.success ? 'success' : 'danger');
+        if (data.success) loadBackups();
+    }
+    catch(error)
+    {
+        console.error(error);
+        showToast('Error restaurando backup', 'danger');
     }
 }
 

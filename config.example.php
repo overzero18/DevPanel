@@ -23,7 +23,7 @@ return [
     'DEVPANEL_USERS' => [],
     'DEVPANEL_ROLES' => [
         'admin' => ['*'],
-        'developer' => ['projects', 'files', 'git', 'terminal', 'logs'],
+        'developer' => ['dashboard', 'projects', 'files', 'git', 'terminal', 'logs', 'backups', 'domains'],
         'viewer' => ['dashboard', 'logs'],
     ],
     'THEME' => 'dark',

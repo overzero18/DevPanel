@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../../includes/security.php';
 
 authenticateSession();
+requirePermission('files');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET')
 {

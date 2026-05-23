@@ -6,6 +6,7 @@ require_once __DIR__ . '/../includes/helpers/config.php';
 header('Content-Type: application/json');
 
 authenticateSession();
+requirePermission('settings');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST')
 {

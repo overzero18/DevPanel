@@ -6,6 +6,7 @@ require_once '../../includes/security.php';
 require_once '../../includes/helpers/filesystem.php';
 
 authenticateSession();
+requirePermission('files');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET')
 {

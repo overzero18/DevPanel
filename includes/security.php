@@ -250,6 +250,18 @@ function currentUserCan($permission)
     return in_array('*', $permissions, true) || in_array($permission, $permissions, true);
 }
 
+function requirePermission($permission)
+{
+    if (currentUserCan($permission))
+    {
+        return;
+    }
+
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'No tienes permiso para esta acción']);
+    exit;
+}
+
 function logAction($action, $details = '')
 {
     if (!is_dir(LOGS_DIR) && !mkdir(LOGS_DIR, 0755, true))

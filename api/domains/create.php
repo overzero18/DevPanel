@@ -7,6 +7,7 @@ require_once __DIR__ . '/../../includes/helpers/local_domains.php';
 header('Content-Type: application/json');
 
 authenticateSession();
+requirePermission('domains');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST')
 {

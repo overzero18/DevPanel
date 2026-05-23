@@ -6,6 +6,7 @@ require_once __DIR__ . '/../../includes/helpers/filesystem.php';
 header('Content-Type: application/json');
 
 authenticateSession();
+requirePermission('docker');
 
 $method = $_SERVER['REQUEST_METHOD'];
 $docker = trim(shell_exec('command -v docker') ?? '');

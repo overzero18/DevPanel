@@ -6,6 +6,7 @@ require_once __DIR__ . '/../../includes/helpers/database.php';
 header('Content-Type: application/json');
 
 authenticateSession();
+requirePermission('database');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST')
 {

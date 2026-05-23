@@ -246,6 +246,7 @@ Then update `/config.php` with the generated hash.
 * ✅ Docker Compose UI
 * ✅ Local domains helper
 * ✅ Project backups with downloadable history
+* ✅ Backup restore with safety backup
 * ✅ Cron-ready backup runner
 * ✅ Log insights
 * ✅ API smoke test script
@@ -343,6 +344,7 @@ Before publishing a public release:
 - Search for private usernames, tokens, passwords and personal repository URLs.
 - Run PHP lint across the project.
 - Run `scripts/devpanel-api-smoke.sh` with `DEVPANEL_TEST_PASSWORD` locally.
+- Use `DEVPANEL_SMOKE_WRITE=1` only when you want the smoke test to create a real backup.
 - Open the dashboard and check **Permisos del sistema**.
 - Test login, project listing, File Manager, logs and MariaDB on a fresh local setup.
 - Update screenshots separately when the UI is final.

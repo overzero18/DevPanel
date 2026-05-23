@@ -100,3 +100,109 @@ function devpanelCreateProjectBackup(string $path): ?array
 
     return $item;
 }
+
+function devpanelFindBackup(string $file): ?array
+{
+    if (!preg_match('/^[a-zA-Z0-9._-]+\.zip$/', $file))
+    {
+        return null;
+    }
+
+    foreach (devpanelLoadBackups() as $backup)
+    {
+        if (($backup['file'] ?? '') === $file)
+        {
+            return $backup;
+        }
+    }
+
+    return null;
+}
+
+function devpanelRestoreProjectBackup(string $file): ?array
+{
+    if (!class_exists('ZipArchive'))
+    {
+        return null;
+    }
+
+    $backup = devpanelFindBackup($file);
+
+    if (!$backup)
+    {
+        return null;
+    }
+
+    $zipPath = devpanelBackupsDir() . '/' . $file;
+    $targetPath = $backup['path'] ?? '';
+
+    if (!is_file($zipPath) || !is_dir($targetPath) || !esRutaPermitida($targetPath))
+    {
+        return null;
+    }
+
+    $safetyBackup = devpanelCreateProjectBackup($targetPath);
+    $zip = new ZipArchive();
+
+    if ($zip->open($zipPath) !== true)
+    {
+        return null;
+    }
+
+    for ($index = 0; $index < $zip->numFiles; $index++)
+    {
+        $entry = $zip->getNameIndex($index);
+
+        if (!$entry || str_starts_with($entry, '/') || str_contains($entry, '..'))
+        {
+            $zip->close();
+            return null;
+        }
+    }
+
+    $restoredFiles = 0;
+
+    for ($index = 0; $index < $zip->numFiles; $index++)
+    {
+        $entry = $zip->getNameIndex($index);
+        $destination = rtrim($targetPath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $entry;
+
+        if (str_ends_with($entry, '/'))
+        {
+            if (!is_dir($destination) && !mkdir($destination, 0755, true))
+            {
+                $zip->close();
+                return null;
+            }
+
+            continue;
+        }
+
+        if (!is_dir(dirname($destination)) && !mkdir(dirname($destination), 0755, true))
+        {
+            $zip->close();
+            return null;
+        }
+
+        $contents = $zip->getFromIndex($index);
+
+        if ($contents === false || file_put_contents($destination, $contents, LOCK_EX) === false)
+        {
+            $zip->close();
+            return null;
+        }
+
+        $restoredFiles++;
+    }
+
+    $zip->close();
+
+    return [
+        'project' => $backup['project'] ?? basename($targetPath),
+        'path' => $targetPath,
+        'file' => $file,
+        'restored_files' => $restoredFiles,
+        'safety_backup' => $safetyBackup,
+        'restored_at' => date('Y-m-d H:i:s'),
+    ];
+}

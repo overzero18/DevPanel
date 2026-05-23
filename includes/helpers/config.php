@@ -50,7 +50,7 @@ if (!function_exists('devpanelConfig')) {
 }
 
 if (!function_exists('devpanelBuildConfigContent')) {
-    function devpanelBuildConfigContent($passwordHash, $availableThemes = null, $defaultTheme = 'dark', $runtimeConfig = [])
+    function devpanelBuildConfigContent($passwordHash, $availableThemes = null, $defaultTheme = 'dark', $runtimeConfig = [], $users = [], $roles = null)
     {
         $availableThemes = $availableThemes ?: ['dark', 'cyber', 'ubuntu', 'glass'];
         $runtimeConfig = array_merge(devpanelDefaultRuntimeConfig(), $runtimeConfig);
@@ -59,6 +59,13 @@ if (!function_exists('devpanelBuildConfigContent')) {
         $defaultThemeExport = var_export($defaultTheme, true);
         $hashExport = var_export($passwordHash, true);
         $runtimeConfigExport = var_export($runtimeConfig, true);
+        $usersExport = var_export(is_array($users) ? $users : [], true);
+        $roles = is_array($roles) ? $roles : [
+            'admin' => ['*'],
+            'developer' => ['dashboard', 'projects', 'files', 'git', 'terminal', 'logs', 'backups', 'domains'],
+            'viewer' => ['dashboard', 'logs'],
+        ];
+        $rolesExport = var_export($roles, true);
 
         return <<<PHP
 <?php
@@ -67,6 +74,8 @@ if (!function_exists('devpanelBuildConfigContent')) {
 
 return array_merge(\$runtimeConfig, [
     'DEVPANEL_PASSWORD' => $hashExport,
+    'DEVPANEL_USERS' => $usersExport,
+    'DEVPANEL_ROLES' => $rolesExport,
     'THEME' => $defaultThemeExport,
     'AVAILABLE_THEMES' => $themesExport,
 ]);
@@ -79,8 +88,10 @@ if (!function_exists('devpanelWriteConfig')) {
     {
         $availableThemes = $existingConfig['AVAILABLE_THEMES'] ?? ['dark', 'cyber', 'ubuntu', 'glass'];
         $defaultTheme = $existingConfig['THEME'] ?? 'dark';
+        $users = $existingConfig['DEVPANEL_USERS'] ?? [];
+        $roles = $existingConfig['DEVPANEL_ROLES'] ?? null;
         $runtimeConfig = array_intersect_key($existingConfig, devpanelDefaultRuntimeConfig());
-        $content = devpanelBuildConfigContent($passwordHash, $availableThemes, $defaultTheme, $runtimeConfig);
+        $content = devpanelBuildConfigContent($passwordHash, $availableThemes, $defaultTheme, $runtimeConfig, $users, $roles);
 
         return file_put_contents($configFile, $content, LOCK_EX) !== false;
     }
