@@ -20,6 +20,9 @@ return [
     'GITHUB_REMOTE_URL' => '',
     'EXCLUDED_PROJECT_FOLDERS' => ['dashboard', 'webalizer', 'xampp', 'phpmyadmin', 'devpanel'],
     'DEVPANEL_PASSWORD' => 'CHANGE_ME_WITH_BCRYPT_HASH',
+    'DEVPANEL_2FA_ENABLED' => false,
+    'DEVPANEL_2FA_SECRET' => '',
+    'DEVPANEL_API_TOKENS' => [],
     'DEVPANEL_USERS' => [],
     'DEVPANEL_ROLES' => [
         'admin' => ['*'],

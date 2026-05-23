@@ -53,12 +53,15 @@ done
 
 echo "[4/15] Permisos"
 permissions_response="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/api/permissions.php")"
+security_response="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/api/security/settings.php")"
 expect_json_success "$permissions_response"
+expect_json_success "$security_response"
 settings_page="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/settings.php")"
 grep -q 'Ajustes' <<< "$settings_page"
 grep -q 'Permisos del sistema' <<< "$settings_page"
 grep -q 'Configuración local' <<< "$settings_page"
 grep -q 'GitHub' <<< "$settings_page"
+grep -q 'Seguridad avanzada' <<< "$settings_page"
 
 echo "[5/15] Logs"
 logs_response="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/api/logs.php?type=devpanel&lines=25")"

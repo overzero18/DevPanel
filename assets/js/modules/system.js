@@ -125,15 +125,17 @@ function renderProcesses(processes)
 
 document.addEventListener("DOMContentLoaded", () =>
 {
-    if (!document.getElementById('cpuLoad')) {
-        return;
+    if (document.getElementById('cpuLoad')) {
+        loadSystemStats();
+        loadSystemHealth();
+        setTimeout(loadSystemHealth, 350);
+
+        setInterval(loadSystemStats, 5000);
     }
 
-    loadSystemStats();
-    loadSystemHealth();
-    setTimeout(loadSystemHealth, 350);
-
-    setInterval(loadSystemStats, 5000);
+    if (document.getElementById('security-settings')) {
+        loadSecuritySettings();
+    }
 });
 
 async function loadSystemHealth()
@@ -242,5 +244,239 @@ function updateHealthItem(element, state, label)
     const value = element.querySelector('strong');
     if (value) {
         value.textContent = label;
+    }
+}
+
+async function loadSecuritySettings()
+{
+    const list = document.getElementById('apiTokenList');
+
+    if (!list) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/devpanel/api/security/settings.php');
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+
+        if (!data.success) {
+            showToast(data.message || 'No se pudo cargar seguridad', 'danger');
+            return;
+        }
+
+        renderTwoFactor(data.two_factor || {});
+        renderApiTokens(data.api_tokens || []);
+    }
+    catch(error) {
+        console.error(error);
+        showToast('Error cargando seguridad', 'danger');
+    }
+}
+
+function renderTwoFactor(twoFactor)
+{
+    const status = document.getElementById('twoFactorStatus');
+    const button = document.getElementById('twoFactorToggle');
+    const panel = document.getElementById('twoFactorSecretPanel');
+    const secret = document.getElementById('twoFactorSecret');
+    const uri = document.getElementById('twoFactorUri');
+    const enabled = Boolean(twoFactor.enabled);
+
+    if (status) {
+        status.textContent = enabled
+            ? 'Activo. El login pedirá código TOTP.'
+            : 'Inactivo. El login usa solo contraseña.';
+    }
+
+    if (button) {
+        button.textContent = enabled ? 'Desactivar' : 'Activar';
+        button.dataset.enabled = enabled ? '1' : '0';
+        button.className = enabled ? 'btn btn-sm btn-outline-warning' : 'btn btn-sm btn-outline-info';
+    }
+
+    if (panel) {
+        panel.hidden = !enabled;
+    }
+
+    if (secret) {
+        secret.value = twoFactor.secret || '';
+    }
+
+    if (uri) {
+        const issuer = encodeURIComponent(twoFactor.issuer || 'DevPanel');
+        const account = encodeURIComponent(twoFactor.account || 'admin');
+        uri.value = twoFactor.secret
+            ? `otpauth://totp/${issuer}:${account}?secret=${encodeURIComponent(twoFactor.secret)}&issuer=${issuer}`
+            : '';
+    }
+}
+
+async function toggleTwoFactor()
+{
+    const button = document.getElementById('twoFactorToggle');
+    const currentlyEnabled = button?.dataset.enabled === '1';
+    const enabled = currentlyEnabled ? '0' : '1';
+    const confirmed = await appConfirm(
+        enabled === '1'
+            ? 'Se activará 2FA. Guarda el secret en tu app autenticadora antes de cerrar sesión.'
+            : 'Se desactivará 2FA para el login.',
+        {
+            title: enabled === '1' ? 'Activar 2FA' : 'Desactivar 2FA',
+            confirmText: enabled === '1' ? 'Activar' : 'Desactivar',
+            cancelText: 'Cancelar',
+            danger: enabled !== '1'
+        }
+    );
+
+    if (!confirmed) return;
+
+    const formData = new URLSearchParams();
+    formData.append('enabled', enabled);
+    formData.append('csrf_token', getSystemCsrfToken());
+
+    try {
+        const response = await fetch('/devpanel/api/security/two_factor.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: formData
+        });
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+        showToast(data.message || 'Seguridad actualizada', data.success ? 'success' : 'danger');
+
+        if (data.success) {
+            renderTwoFactor(data.two_factor || {});
+        }
+    }
+    catch(error) {
+        console.error(error);
+        showToast('Error guardando 2FA', 'danger');
+    }
+}
+
+function renderApiTokens(tokens)
+{
+    const container = document.getElementById('apiTokenList');
+
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    if (!tokens.length) {
+        const empty = document.createElement('div');
+        empty.className = 'file-manager-empty';
+        empty.textContent = 'Sin tokens creados.';
+        container.appendChild(empty);
+        return;
+    }
+
+    tokens.forEach(token => {
+        const row = document.createElement('div');
+        row.className = 'database-row';
+
+        const info = document.createElement('div');
+        info.className = 'database-info';
+        const icon = document.createElement('i');
+        icon.className = 'bi bi-key-fill';
+        const text = document.createElement('div');
+        const name = document.createElement('strong');
+        name.textContent = token.name || 'API token';
+        const meta = document.createElement('small');
+        meta.textContent = `${token.prefix || 'dp_'}... · ${token.role || 'viewer'} · creado ${token.created_at || '--'}`;
+        text.appendChild(name);
+        text.appendChild(meta);
+        info.appendChild(icon);
+        info.appendChild(text);
+
+        const actions = document.createElement('div');
+        actions.className = 'database-actions';
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'btn btn-sm btn-outline-danger';
+        remove.textContent = 'Borrar';
+        remove.addEventListener('click', () => deleteApiToken(token.id));
+        actions.appendChild(remove);
+
+        row.appendChild(info);
+        row.appendChild(actions);
+        container.appendChild(row);
+    });
+}
+
+async function createApiToken()
+{
+    const name = document.getElementById('apiTokenName')?.value || 'API token';
+    const role = document.getElementById('apiTokenRole')?.value || 'viewer';
+    const formData = new URLSearchParams();
+    formData.append('name', name);
+    formData.append('role', role);
+    formData.append('csrf_token', getSystemCsrfToken());
+
+    try {
+        const response = await fetch('/devpanel/api/tokens/create.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: formData
+        });
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+
+        if (!data.success) {
+            showToast(data.message || 'No se pudo crear token', 'danger');
+            return;
+        }
+
+        await appConfirm(`Guarda este token ahora. No volverá a mostrarse:\n\n${data.token}`, {
+            title: 'API token creado',
+            confirmText: 'Cerrar'
+        });
+
+        document.getElementById('apiTokenName').value = '';
+        loadSecuritySettings();
+    }
+    catch(error) {
+        console.error(error);
+        showToast('Error creando token', 'danger');
+    }
+}
+
+async function deleteApiToken(id)
+{
+    const confirmed = await appConfirm('Este token dejará de funcionar inmediatamente.', {
+        title: 'Borrar API token',
+        confirmText: 'Borrar',
+        cancelText: 'Cancelar',
+        danger: true
+    });
+
+    if (!confirmed) return;
+
+    const formData = new URLSearchParams();
+    formData.append('id', id);
+    formData.append('csrf_token', getSystemCsrfToken());
+
+    try {
+        const response = await fetch('/devpanel/api/tokens/delete.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: formData
+        });
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+        showToast(data.message || 'Token actualizado', data.success ? 'success' : 'danger');
+        if (data.success) loadSecuritySettings();
+    }
+    catch(error) {
+        console.error(error);
+        showToast('Error borrando token', 'danger');
     }
 }

@@ -407,6 +407,12 @@ function devpanelPreviewProjectBackup(string $file, int $limit = 120): ?array
     $items = [];
     $totalSize = 0;
     $targetPath = $backup['path'] ?? '';
+    $summary = [
+        'same_hash' => 0,
+        'different_hash' => 0,
+        'missing' => 0,
+        'directories' => 0,
+    ];
 
     for ($index = 0; $index < $zip->numFiles; $index++)
     {
@@ -418,22 +424,39 @@ function devpanelPreviewProjectBackup(string $file, int $limit = 120): ?array
         }
 
         $totalSize += (int) ($stat['size'] ?? 0);
+        $name = $stat['name'] ?? '';
+
+        if (str_ends_with($name, '/'))
+        {
+            $summary['directories']++;
+            continue;
+        }
+
+        $currentFile = $targetPath ? rtrim($targetPath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $name : '';
+        $currentState = 'missing';
+        $backupHash = null;
+        $currentHash = null;
+
+        if ($currentFile && is_file($currentFile))
+        {
+            $contents = $zip->getFromIndex($index);
+            $backupHash = $contents === false ? null : hash('sha256', $contents);
+            $currentHash = hash_file('sha256', $currentFile) ?: null;
+            $currentState = ($backupHash && $currentHash && hash_equals($backupHash, $currentHash))
+                ? 'same_hash'
+                : 'different_hash';
+        }
+
+        $summary[$currentState] = ($summary[$currentState] ?? 0) + 1;
 
         if (count($items) < $limit)
         {
-            $name = $stat['name'] ?? '';
-            $currentFile = $targetPath ? rtrim($targetPath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $name : '';
-            $currentState = 'missing';
-
-            if ($currentFile && is_file($currentFile))
-            {
-                $currentState = filesize($currentFile) === (int) ($stat['size'] ?? 0) ? 'same_size' : 'different_size';
-            }
-
             $items[] = [
                 'name' => $name,
                 'size' => (int) ($stat['size'] ?? 0),
                 'current_state' => $currentState,
+                'backup_hash' => $backupHash ? substr($backupHash, 0, 12) : null,
+                'current_hash' => $currentHash ? substr($currentHash, 0, 12) : null,
             ];
         }
     }
@@ -446,6 +469,7 @@ function devpanelPreviewProjectBackup(string $file, int $limit = 120): ?array
         'files' => $items,
         'file_count' => $count,
         'total_size' => $totalSize,
+        'diff_summary' => $summary,
         'truncated' => $count > $limit,
     ];
 }

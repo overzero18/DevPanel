@@ -153,6 +153,66 @@ $runtimeSettings = devpanelConfig();
             </div>
         </section>
 
+        <section class="dashboard-card runtime-settings-card" id="security-settings">
+            <div class="section-title-row">
+                <div>
+                    <h4 class="mb-1">Seguridad avanzada</h4>
+                    <p class="text-secondary mb-0">2FA opcional y tokens locales para automatización.</p>
+                </div>
+                <button type="button" class="btn btn-outline-info" onclick="loadSecuritySettings()">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    Recargar
+                </button>
+            </div>
+
+            <div class="database-users">
+                <div class="database-row">
+                    <div class="database-info">
+                        <i class="bi bi-shield-lock"></i>
+                        <div>
+                            <strong>Two-factor authentication</strong>
+                            <small id="twoFactorStatus">Cargando estado...</small>
+                        </div>
+                    </div>
+                    <div class="database-actions">
+                        <button type="button" class="btn btn-sm btn-outline-info" id="twoFactorToggle" onclick="toggleTwoFactor()">
+                            Cambiar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="runtime-settings-grid mt-3" id="twoFactorSecretPanel" hidden>
+                    <div>
+                        <label class="form-label">Secret TOTP</label>
+                        <input type="text" class="form-control" id="twoFactorSecret" readonly>
+                    </div>
+                    <div>
+                        <label class="form-label">URI para app autenticadora</label>
+                        <input type="text" class="form-control" id="twoFactorUri" readonly>
+                    </div>
+                </div>
+            </div>
+
+            <div class="database-users mt-4">
+                <h5 class="mb-3">API tokens</h5>
+                <div class="database-toolbar">
+                    <input type="text" id="apiTokenName" class="form-control" placeholder="nombre del token">
+                    <select id="apiTokenRole" class="form-select">
+                        <option value="viewer">viewer</option>
+                        <option value="developer">developer</option>
+                        <option value="admin">admin</option>
+                    </select>
+                    <button type="button" class="btn btn-devpanel" onclick="createApiToken()">
+                        <i class="bi bi-key"></i>
+                        Crear token
+                    </button>
+                </div>
+                <div class="database-list" id="apiTokenList">
+                    <div class="file-manager-empty">Cargando tokens...</div>
+                </div>
+            </div>
+        </section>
+
     </div>
 
 </div>

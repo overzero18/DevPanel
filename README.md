@@ -414,13 +414,13 @@ Add that command to cron if you want DevPanel to execute the schedules created f
 
 ---
 
-# 📈 Future Improvements
+# Implemented From Future Improvements
 
-* Two-factor authentication
-* API tokens
+* Optional two-factor authentication from local settings
+* Local API tokens with role-based access
 * More dashboard sections extracted into `sections/`
 * Docker Compose service health charts
-* Full file hash diff before restore
+* Full SHA-256 file diff before backup restore
 
 ---
 

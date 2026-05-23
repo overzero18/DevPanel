@@ -61,6 +61,111 @@ function devpanelPublicUsers(): array
     return $users;
 }
 
+function devpanelPublicApiTokens(): array
+{
+    $tokens = devpanelConfig('DEVPANEL_API_TOKENS', []);
+
+    if (!is_array($tokens))
+    {
+        return [];
+    }
+
+    return array_values(array_map(static function ($token) {
+        return [
+            'id' => $token['id'] ?? '',
+            'name' => $token['name'] ?? 'token',
+            'prefix' => $token['prefix'] ?? '',
+            'role' => $token['role'] ?? 'viewer',
+            'created_at' => $token['created_at'] ?? null,
+            'last_used_at' => $token['last_used_at'] ?? null,
+        ];
+    }, $tokens));
+}
+
+function devpanelWriteSecurityConfig(array $updates): bool
+{
+    $configFile = dirname(__DIR__, 2) . '/config.php';
+    $config = file_exists($configFile) ? require $configFile : [];
+
+    if (!is_array($config))
+    {
+        $config = [];
+    }
+
+    foreach ($updates as $key => $value)
+    {
+        $config[$key] = $value;
+    }
+
+    $passwordHash = $config['DEVPANEL_PASSWORD'] ?? getConfigPassword();
+
+    return $passwordHash && devpanelWriteConfig($configFile, $passwordHash, $config);
+}
+
+function devpanelGenerateBase32Secret(int $length = 32): string
+{
+    $alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+    $secret = '';
+
+    for ($i = 0; $i < $length; $i++)
+    {
+        $secret .= $alphabet[random_int(0, strlen($alphabet) - 1)];
+    }
+
+    return $secret;
+}
+
+function devpanelCreateApiToken(string $name, string $role): ?array
+{
+    $config = devpanelUsersConfig();
+
+    if (!isset($config['roles'][$role]))
+    {
+        return null;
+    }
+
+    $plain = 'dp_' . bin2hex(random_bytes(24));
+    $tokens = devpanelConfig('DEVPANEL_API_TOKENS', []);
+    $tokens = is_array($tokens) ? $tokens : [];
+    $item = [
+        'id' => hash('sha256', $plain),
+        'name' => $name !== '' ? substr($name, 0, 80) : 'API token',
+        'prefix' => substr($plain, 0, 10),
+        'hash' => password_hash($plain, PASSWORD_BCRYPT, ['cost' => 10]),
+        'role' => $role,
+        'created_at' => date('Y-m-d H:i:s'),
+        'last_used_at' => null,
+    ];
+
+    array_unshift($tokens, $item);
+
+    if (!devpanelWriteSecurityConfig(['DEVPANEL_API_TOKENS' => array_slice($tokens, 0, 50)]))
+    {
+        return null;
+    }
+
+    return [
+        'token' => $plain,
+        'item' => [
+            'id' => $item['id'],
+            'name' => $item['name'],
+            'prefix' => $item['prefix'],
+            'role' => $item['role'],
+            'created_at' => $item['created_at'],
+            'last_used_at' => null,
+        ],
+    ];
+}
+
+function devpanelDeleteApiToken(string $id): bool
+{
+    $tokens = devpanelConfig('DEVPANEL_API_TOKENS', []);
+    $tokens = is_array($tokens) ? $tokens : [];
+    $tokens = array_values(array_filter($tokens, static fn ($token) => ($token['id'] ?? '') !== $id));
+
+    return devpanelWriteSecurityConfig(['DEVPANEL_API_TOKENS' => $tokens]);
+}
+
 function devpanelPublicRoles(): array
 {
     $config = devpanelUsersConfig();

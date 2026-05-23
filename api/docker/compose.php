@@ -34,9 +34,56 @@ function devpanelFindComposeFiles(): array
             'services' => $services,
             'status' => $docker ? devpanelComposeStatus($docker, $file) : [],
         ];
+
+        $items[array_key_last($items)]['health_summary'] = devpanelComposeHealthSummary(
+            $items[array_key_last($items)]['services'],
+            $items[array_key_last($items)]['status']
+        );
     }
 
     return $items;
+}
+
+function devpanelComposeHealthSummary(array $services, array $status): array
+{
+    $summary = [
+        'total' => count($services),
+        'running' => 0,
+        'healthy' => 0,
+        'warning' => 0,
+        'stopped' => 0,
+    ];
+
+    foreach ($services as $service)
+    {
+        $item = $status[$service] ?? [];
+        $state = strtolower((string) ($item['state'] ?? ''));
+        $health = strtolower((string) ($item['health'] ?? ''));
+
+        if ($state === 'running')
+        {
+            $summary['running']++;
+        }
+        else
+        {
+            $summary['stopped']++;
+        }
+
+        if ($health === 'healthy' || ($health === '' && $state === 'running'))
+        {
+            $summary['healthy']++;
+        }
+        elseif ($health !== '' || $state !== 'running')
+        {
+            $summary['warning']++;
+        }
+    }
+
+    $summary['percent'] = $summary['total'] > 0
+        ? (int) round(($summary['healthy'] / $summary['total']) * 100)
+        : 0;
+
+    return $summary;
 }
 
 function devpanelComposeStatus(string $docker, string $file): array

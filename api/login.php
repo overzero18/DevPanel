@@ -30,5 +30,18 @@ if (login($password))
 else
 {
     http_response_code(401);
-    echo json_encode(['success' => false, 'message' => 'Invalid password']);
+    if (!empty($GLOBALS['devpanel_login_requires_2fa']))
+    {
+        echo json_encode([
+            'success' => false,
+            'two_factor_required' => true,
+            'message' => 'Código 2FA requerido',
+        ]);
+        exit;
+    }
+
+    echo json_encode([
+        'success' => false,
+        'message' => !empty($GLOBALS['devpanel_login_invalid_2fa']) ? 'Código 2FA inválido' : 'Invalid password',
+    ]);
 }

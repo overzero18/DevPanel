@@ -67,7 +67,10 @@ cat > "$TEST_FILE" <<'HTML'
         const settingsRequired = [
             '#permissionsList',
             '#runtime-settings',
+            '#security-settings',
             '#githubRemoteUrl',
+            '#apiTokenList',
+            '#twoFactorToggle',
             '[onclick*="saveRuntimeSettings"]',
             '[onclick*="saveGithubSettings"]'
         ];

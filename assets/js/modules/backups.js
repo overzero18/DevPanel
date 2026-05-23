@@ -505,10 +505,12 @@ async function previewProjectBackup(backup)
 
         const preview = data.preview || {};
         const files = preview.files || [];
+        const diff = preview.diff_summary || {};
         const output = [
             `${preview.file_count || 0} archivos · ${formatBackupSize(preview.total_size || 0)}`,
+            `${diff.same_hash || 0} idénticos · ${diff.different_hash || 0} cambiados · ${diff.missing || 0} nuevos`,
             '',
-            ...files.map(file => `${file.name} · ${formatBackupSize(file.size || 0)} · ${backupFileStateLabel(file.current_state)}`),
+            ...files.map(file => `${file.name} · ${formatBackupSize(file.size || 0)} · ${backupFileStateLabel(file.current_state)}${file.backup_hash ? ` · ${file.backup_hash}` : ''}`),
             preview.truncated ? '' : null,
             preview.truncated ? 'Vista limitada a los primeros archivos.' : null
         ].filter(Boolean).join('\n');
@@ -527,6 +529,8 @@ async function previewProjectBackup(backup)
 
 function backupFileStateLabel(state)
 {
+    if (state === 'same_hash') return 'idéntico';
+    if (state === 'different_hash') return 'contenido distinto';
     if (state === 'same_size') return 'igual tamaño';
     if (state === 'different_size') return 'cambió tamaño';
     return 'no existe';
@@ -534,10 +538,11 @@ function backupFileStateLabel(state)
 
 async function restoreProjectBackup(backup, asNew = false)
 {
+    const diffMessage = await getBackupRestoreDiffMessage(backup);
     const confirmed = await appConfirm(
         asNew
-            ? `Se restaurará ${backup.project} desde ${backup.file} en una carpeta nueva.`
-            : `Se restaurará ${backup.project} desde ${backup.file}. Antes se creará un backup de seguridad del estado actual.`,
+            ? `Se restaurará ${backup.project} desde ${backup.file} en una carpeta nueva.\n\n${diffMessage}`
+            : `Se restaurará ${backup.project} desde ${backup.file}. Antes se creará un backup de seguridad del estado actual.\n\n${diffMessage}`,
         {
             title: 'Restaurar backup',
             confirmText: 'Restaurar',
@@ -573,6 +578,24 @@ async function restoreProjectBackup(backup, asNew = false)
     {
         console.error(error);
         showToast('Error restaurando backup', 'danger');
+    }
+}
+
+async function getBackupRestoreDiffMessage(backup)
+{
+    try {
+        const response = await fetch(`/devpanel/api/backups/preview.php?file=${encodeURIComponent(backup.file)}`);
+
+        if (!checkAuth(response)) return 'No se pudo comprobar diff antes de restaurar.';
+
+        const data = await response.json();
+        const diff = data.preview?.diff_summary || {};
+
+        return `Diff SHA-256: ${diff.same_hash || 0} idénticos, ${diff.different_hash || 0} cambiados, ${diff.missing || 0} nuevos.`;
+    }
+    catch(error) {
+        console.error(error);
+        return 'No se pudo comprobar diff antes de restaurar.';
     }
 }
 

@@ -92,6 +92,11 @@ function renderDockerCompose(files)
             : file.path;
         text.appendChild(name);
         text.appendChild(meta);
+
+        if (file.health_summary) {
+            text.appendChild(createComposeHealthChart(file.health_summary));
+        }
+
         info.appendChild(icon);
         info.appendChild(text);
 
@@ -142,6 +147,27 @@ function renderDockerCompose(files)
             container.appendChild(services);
         }
     });
+}
+
+function createComposeHealthChart(summary)
+{
+    const chart = document.createElement('div');
+    chart.className = 'compose-health-chart';
+
+    const bar = document.createElement('div');
+    bar.className = 'compose-health-bar';
+    const fill = document.createElement('span');
+    fill.style.width = `${Math.max(0, Math.min(100, Number(summary.percent || 0)))}%`;
+    fill.className = Number(summary.warning || 0) > 0 ? 'is-warning' : 'is-ok';
+    bar.appendChild(fill);
+
+    const label = document.createElement('small');
+    label.textContent = `${summary.healthy || 0}/${summary.total || 0} servicios sanos · ${summary.running || 0} running`;
+
+    chart.appendChild(bar);
+    chart.appendChild(label);
+
+    return chart;
 }
 
 async function runDockerCompose(path, action, service = '')

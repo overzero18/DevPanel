@@ -33,6 +33,11 @@ function authenticateSession()
 
     if (!isset($_SESSION[SESSION_TOKEN_KEY]))
     {
+        if (authenticateApiToken())
+        {
+            return;
+        }
+
         http_response_code(401);
         echo json_encode(['success' => false, 'message' => 'Unauthorized']);
         exit;
@@ -49,8 +54,49 @@ function authenticateSession()
     $_SESSION['auth_time'] = time();
 }
 
+function authenticateApiToken(): bool
+{
+    $header = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
+
+    if (!preg_match('/^Bearer\s+(.+)$/i', $header, $matches))
+    {
+        return false;
+    }
+
+    $plain = trim($matches[1]);
+    $tokens = devpanelConfig('DEVPANEL_API_TOKENS', []);
+
+    if ($plain === '' || !is_array($tokens))
+    {
+        return false;
+    }
+
+    foreach ($tokens as $token)
+    {
+        $hash = $token['hash'] ?? '';
+
+        if ($hash && password_verify($plain, $hash))
+        {
+            $_SERVER['DEVPANEL_API_TOKEN_AUTH'] = '1';
+            $_SERVER['DEVPANEL_API_TOKEN_NAME'] = $token['name'] ?? 'token';
+            $_SESSION['user_name'] = 'api:' . ($_SERVER['DEVPANEL_API_TOKEN_NAME']);
+            $_SESSION['user_role'] = $token['role'] ?? 'viewer';
+            return true;
+        }
+    }
+
+    logAction('api_token_failed', 'Invalid bearer token');
+
+    return false;
+}
+
 function validateCsrfToken($token = null)
 {
+    if (!empty($_SERVER['DEVPANEL_API_TOKEN_AUTH']))
+    {
+        return true;
+    }
+
     if (!isset($_SESSION[CSRF_TOKEN_KEY]))
     {
         return false;
@@ -145,9 +191,121 @@ function generateAuthToken()
     return bin2hex(random_bytes(32));
 }
 
+function devpanelTwoFactorEnabled(): bool
+{
+    return (bool) devpanelConfig('DEVPANEL_2FA_ENABLED', false)
+        && devpanelConfig('DEVPANEL_2FA_SECRET', '') !== '';
+}
+
+function devpanelBase32Decode(string $value): string
+{
+    $alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+    $value = strtoupper(preg_replace('/[^A-Z2-7]/i', '', $value) ?? '');
+    $bits = '';
+    $output = '';
+
+    foreach (str_split($value) as $char)
+    {
+        $position = strpos($alphabet, $char);
+
+        if ($position === false)
+        {
+            continue;
+        }
+
+        $bits .= str_pad(decbin($position), 5, '0', STR_PAD_LEFT);
+    }
+
+    foreach (str_split($bits, 8) as $byte)
+    {
+        if (strlen($byte) === 8)
+        {
+            $output .= chr(bindec($byte));
+        }
+    }
+
+    return $output;
+}
+
+function devpanelTotpCode(string $secret, ?int $timestamp = null): string
+{
+    $timestamp = $timestamp ?? time();
+    $counter = intdiv($timestamp, 30);
+    $binaryCounter = pack('N*', 0) . pack('N*', $counter);
+    $hash = hash_hmac('sha1', $binaryCounter, devpanelBase32Decode($secret), true);
+    $offset = ord($hash[19]) & 0x0f;
+    $value = (
+        ((ord($hash[$offset]) & 0x7f) << 24)
+        | ((ord($hash[$offset + 1]) & 0xff) << 16)
+        | ((ord($hash[$offset + 2]) & 0xff) << 8)
+        | (ord($hash[$offset + 3]) & 0xff)
+    ) % 1000000;
+
+    return str_pad((string) $value, 6, '0', STR_PAD_LEFT);
+}
+
+function devpanelVerifyTwoFactorCode(string $code): bool
+{
+    $secret = devpanelConfig('DEVPANEL_2FA_SECRET', '');
+    $code = preg_replace('/\D/', '', $code) ?? '';
+
+    if ($secret === '' || strlen($code) !== 6)
+    {
+        return false;
+    }
+
+    for ($offset = -1; $offset <= 1; $offset++)
+    {
+        if (hash_equals(devpanelTotpCode($secret, time() + ($offset * 30)), $code))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function finishLogin(string $username, string $role): bool
+{
+    $_SESSION[SESSION_TOKEN_KEY] = generateAuthToken();
+    $_SESSION['auth_time'] = time();
+    $_SESSION['user_name'] = $username;
+    $_SESSION['user_role'] = $role;
+    generateCsrfToken();
+    recordLoginAttempt(true);
+    logAction('login_success', 'User logged in');
+
+    return true;
+}
+
+function passwordRequiresTwoFactor(string $code): bool
+{
+    if (!devpanelTwoFactorEnabled())
+    {
+        return false;
+    }
+
+    if ($code === '')
+    {
+        $GLOBALS['devpanel_login_requires_2fa'] = true;
+        return true;
+    }
+
+    if (!devpanelVerifyTwoFactorCode($code))
+    {
+        recordLoginAttempt(false);
+        $GLOBALS['devpanel_login_invalid_2fa'] = true;
+        logAction('login_2fa_failed', 'Invalid two-factor code');
+        return true;
+    }
+
+    return false;
+}
+
 function login($password)
 {
     $username = trim((string) ($_POST['username'] ?? 'admin'));
+    $twoFactorCode = trim((string) ($_POST['two_factor_code'] ?? ''));
     $user = getConfigUser($username);
 
     if ($user)
@@ -161,14 +319,12 @@ function login($password)
             return false;
         }
 
-        $_SESSION[SESSION_TOKEN_KEY] = generateAuthToken();
-        $_SESSION['auth_time'] = time();
-        $_SESSION['user_name'] = $username;
-        $_SESSION['user_role'] = $user['role'] ?? 'admin';
-        generateCsrfToken();
-        recordLoginAttempt(true);
-        logAction('login_success', 'User logged in');
-        return true;
+        if (passwordRequiresTwoFactor($twoFactorCode))
+        {
+            return false;
+        }
+
+        return finishLogin($username, $user['role'] ?? 'admin');
     }
 
     $configPassword = getConfigPassword();
@@ -180,14 +336,12 @@ function login($password)
         return false;
     }
 
-    $_SESSION[SESSION_TOKEN_KEY] = generateAuthToken();
-    $_SESSION['auth_time'] = time();
-    $_SESSION['user_name'] = 'admin';
-    $_SESSION['user_role'] = 'admin';
-    generateCsrfToken();
-    recordLoginAttempt(true);
-    logAction('login_success', 'User logged in');
-    return true;
+    if (passwordRequiresTwoFactor($twoFactorCode))
+    {
+        return false;
+    }
+
+    return finishLogin('admin', 'admin');
 }
 
 function logout()
@@ -278,7 +432,9 @@ function logAction($action, $details = '')
 
     $ip = $_SERVER['REMOTE_ADDR'] ?? 'cli';
     $timestamp = date('Y-m-d H:i:s');
-    $user = isset($_SESSION[SESSION_TOKEN_KEY]) ? getCurrentUserName() . ':' . getCurrentUserRole() : 'anonymous';
+    $user = isset($_SESSION[SESSION_TOKEN_KEY]) || !empty($_SERVER['DEVPANEL_API_TOKEN_AUTH'])
+        ? getCurrentUserName() . ':' . getCurrentUserRole()
+        : 'anonymous';
 
     $logEntry = "[$timestamp] [$ip] [$user] [$action] $details\n";
 
