@@ -58,13 +58,13 @@ function authenticateSession()
 function authenticateApiToken(): bool
 {
     $header = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
+    $plain = trim((string) ($_SERVER['HTTP_X_DEVPANEL_TOKEN'] ?? ''));
 
-    if (!preg_match('/^Bearer\s+(.+)$/i', $header, $matches))
+    if ($plain === '' && preg_match('/^Bearer\s+(.+)$/i', $header, $matches))
     {
-        return false;
+        $plain = trim($matches[1]);
     }
 
-    $plain = trim($matches[1]);
     $tokens = devpanelConfig('DEVPANEL_API_TOKENS', []);
 
     if ($plain === '' || !is_array($tokens))
@@ -82,6 +82,7 @@ function authenticateApiToken(): bool
             $_SERVER['DEVPANEL_API_TOKEN_NAME'] = $token['name'] ?? 'token';
             $_SESSION['user_name'] = 'api:' . ($_SERVER['DEVPANEL_API_TOKEN_NAME']);
             $_SESSION['user_role'] = $token['role'] ?? 'viewer';
+            devpanelTouchApiToken($token['id'] ?? '');
             return true;
         }
     }

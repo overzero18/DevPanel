@@ -394,7 +394,7 @@ function renderApiTokens(tokens)
         const name = document.createElement('strong');
         name.textContent = token.name || 'API token';
         const meta = document.createElement('small');
-        meta.textContent = `${token.prefix || 'dp_'}... · ${token.role || 'viewer'} · expira ${token.expires_at || '--'}${token.expired ? ' · expirado' : ''}`;
+        meta.textContent = `${token.prefix || 'dp_'}... · ${token.role || 'viewer'} · expira ${token.expires_at || '--'} · último uso ${token.last_used_at || '--'}${token.expired ? ' · expirado' : ''}`;
         text.appendChild(name);
         text.appendChild(meta);
         info.appendChild(icon);

@@ -24,7 +24,7 @@ The project provides a modern interface to manage services, projects, deployment
 * Output sanitization (XSS prevention)
 * Change password functionality
 * Optional TOTP two-factor authentication
-* Local API tokens with role and expiration
+* Local API tokens with role, expiration and last-used tracking
 
 ## 🔧 Service Management
 
@@ -425,6 +425,13 @@ Add that command to cron if you want DevPanel to execute the schedules created f
 * Full SHA-256 file diff before backup restore
 * 2FA QR endpoint for local authenticator setup when `qrencode` is installed
 * Expiring API tokens from settings
+
+API token example:
+
+```bash
+curl -H "X-DevPanel-Token: dp_your_local_token" \
+  http://localhost/devpanel/api/logs/summary.php
+```
 
 ---
 

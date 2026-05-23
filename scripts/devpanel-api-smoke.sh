@@ -5,9 +5,14 @@ BASE_URL="${BASE_URL:-http://localhost/devpanel}"
 PASSWORD="${DEVPANEL_TEST_PASSWORD:-}"
 WRITE_TESTS="${DEVPANEL_SMOKE_WRITE:-0}"
 COOKIE_FILE="$(mktemp)"
+CONFIG_BACKUP=""
 
 cleanup() {
     rm -f "$COOKIE_FILE"
+    if [[ -n "$CONFIG_BACKUP" && -f "$CONFIG_BACKUP" ]]; then
+        cp "$CONFIG_BACKUP" /opt/lampp/htdocs/devpanel/config.php
+        rm -f "$CONFIG_BACKUP"
+    fi
 }
 trap cleanup EXIT
 
@@ -62,6 +67,49 @@ grep -q 'Permisos del sistema' <<< "$settings_page"
 grep -q 'Configuración local' <<< "$settings_page"
 grep -q 'GitHub' <<< "$settings_page"
 grep -q 'Seguridad avanzada' <<< "$settings_page"
+
+echo "[4b/15] API token"
+token_response="$(curl -s -b "$COOKIE_FILE" \
+    -d "name=smoke-token&role=viewer&expires_days=7&csrf_token=$csrf" \
+    "$BASE_URL/api/tokens/create.php")"
+expect_json_success "$token_response"
+api_token="$(printf '%s' "$token_response" | /opt/lampp/bin/php -r '$data=json_decode(stream_get_contents(STDIN), true); echo $data["token"] ?? "";')"
+api_token_id="$(printf '%s' "$token_response" | /opt/lampp/bin/php -r '$data=json_decode(stream_get_contents(STDIN), true); echo $data["item"]["id"] ?? "";')"
+test -n "$api_token"
+token_summary="$(curl -s -H "X-DevPanel-Token: $api_token" "$BASE_URL/api/logs/summary.php")"
+expect_json_success "$token_summary"
+token_settings="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/api/security/settings.php")"
+printf '%s' "$token_settings" | grep -q '"last_used_at":"'
+delete_token_response="$(curl -s -b "$COOKIE_FILE" \
+    -d "id=$api_token_id&csrf_token=$csrf" \
+    "$BASE_URL/api/tokens/delete.php")"
+expect_json_success "$delete_token_response"
+
+CONFIG_BACKUP="$(mktemp)"
+cp /opt/lampp/htdocs/devpanel/config.php "$CONFIG_BACKUP"
+expired_token="$(/opt/lampp/bin/php -r 'echo "dp_" . bin2hex(random_bytes(24));')"
+expired_token_hash="$(/opt/lampp/bin/php -r 'echo password_hash($argv[1], PASSWORD_BCRYPT, ["cost" => 10]);' "$expired_token")"
+/opt/lampp/bin/php -r '
+$file = "/opt/lampp/htdocs/devpanel/config.php";
+$config = require $file;
+$config["DEVPANEL_API_TOKENS"][] = [
+    "id" => hash("sha256", $argv[1]),
+    "name" => "expired-smoke-token",
+    "prefix" => substr($argv[1], 0, 10),
+    "hash" => $argv[2],
+    "role" => "viewer",
+    "created_at" => date("Y-m-d H:i:s", time() - 172800),
+    "last_used_at" => null,
+    "expires_at" => date("Y-m-d H:i:s", time() - 86400),
+];
+$content = "<?php\n\nreturn " . var_export($config, true) . ";\n";
+file_put_contents($file, $content, LOCK_EX);
+' "$expired_token" "$expired_token_hash"
+expired_code="$(curl -s -o /dev/null -w '%{http_code}' -H "X-DevPanel-Token: $expired_token" "$BASE_URL/api/logs/summary.php")"
+test "$expired_code" = "401"
+cp "$CONFIG_BACKUP" /opt/lampp/htdocs/devpanel/config.php
+rm -f "$CONFIG_BACKUP"
+CONFIG_BACKUP=""
 
 echo "[5/15] Logs"
 logs_response="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/api/logs.php?type=devpanel&lines=25")"

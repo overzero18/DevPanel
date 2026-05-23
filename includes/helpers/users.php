@@ -187,6 +187,27 @@ function devpanelFindApiToken(string $id): ?array
     return null;
 }
 
+function devpanelTouchApiToken(string $id): bool
+{
+    $tokens = devpanelConfig('DEVPANEL_API_TOKENS', []);
+    $tokens = is_array($tokens) ? $tokens : [];
+    $changed = false;
+
+    foreach ($tokens as &$token)
+    {
+        if (($token['id'] ?? '') === $id)
+        {
+            $token['last_used_at'] = date('Y-m-d H:i:s');
+            $changed = true;
+            break;
+        }
+    }
+
+    unset($token);
+
+    return $changed && devpanelWriteSecurityConfig(['DEVPANEL_API_TOKENS' => $tokens]);
+}
+
 function devpanelDeleteApiToken(string $id): bool
 {
     $tokens = devpanelConfig('DEVPANEL_API_TOKENS', []);

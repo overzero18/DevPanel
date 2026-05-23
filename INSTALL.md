@@ -122,6 +122,14 @@ Entra en **Ajustes → Seguridad avanzada** para activar 2FA o crear tokens.
 - Si quieres QR visual, instala `qrencode` en el sistema; DevPanel generará el SVG localmente.
 - Los API tokens se muestran una sola vez al crearlos.
 - Cada token tiene rol y fecha de expiración.
+- DevPanel registra `last_used_at` cuando un token se usa correctamente.
+
+Ejemplo de uso:
+
+```bash
+curl -H "X-DevPanel-Token: dp_tu_token_local" \
+  http://localhost/devpanel/api/logs/summary.php
+```
 
 ## ✅ Permisos Locales
 
