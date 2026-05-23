@@ -113,6 +113,8 @@ function tailLogLines(string $file, int $lineLimit): array
 function isDevpanelInternalAccessLine(string $line): bool
 {
     $internalPaths = [
+        'GET /favicon.ico',
+        'GET /devpanel/',
         '/devpanel/api/',
         '/devpanel/assets/',
         '/devpanel/api/logs.php',
