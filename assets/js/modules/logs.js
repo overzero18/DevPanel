@@ -176,7 +176,8 @@ function updateLogMeta(data)
 
     const filterLabel = data.filtered ? ' · filtrado' : '';
     const hiddenLabel = data.hidden_internal_lines > 0 ? ` · ${data.hidden_internal_lines} internas ocultas` : '';
-    meta.textContent = `${data.label} · ${data.lines} líneas · actualizado ${data.updated_at || '--'}${filterLabel}${hiddenLabel}`;
+    const noiseLabel = data.hidden_noise_lines > 0 ? ` · ${data.hidden_noise_lines} resueltas ocultas` : '';
+    meta.textContent = `${data.label} · ${data.lines} líneas · actualizado ${data.updated_at || '--'}${filterLabel}${hiddenLabel}${noiseLabel}`;
 }
 
 function setActiveLogType(type)

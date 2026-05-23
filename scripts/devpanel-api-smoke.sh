@@ -11,6 +11,14 @@ cleanup() {
 }
 trap cleanup EXIT
 
+expect_json_success() {
+    grep -q '"success":true' <<< "$1"
+}
+
+expect_contains() {
+    grep -q "$2" <<< "$1"
+}
+
 if [[ -z "$PASSWORD" ]]; then
     echo "Define DEVPANEL_TEST_PASSWORD para ejecutar pruebas API." >&2
     exit 1
@@ -18,7 +26,7 @@ fi
 
 echo "[1/15] Login"
 login_response="$(curl -s -c "$COOKIE_FILE" -d "password=$PASSWORD" "$BASE_URL/api/login.php")"
-grep -q '"success":true' <<< "$login_response"
+expect_json_success "$login_response"
 
 echo "[2/15] Dashboard"
 dashboard="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/index.php")"
@@ -28,7 +36,8 @@ grep -q 'Estado global' <<< "$dashboard"
 grep -q 'terminalWorkingDirectory' <<< "$dashboard"
 grep -q 'DevPanel' <<< "$dashboard"
 grep -q 'is-internal' <<< "$dashboard"
-curl -s "$BASE_URL/install.php" | grep -q 'Instalación guiada'
+install_page="$(curl -s "$BASE_URL/install.php")"
+expect_contains "$install_page" 'Instalación guiada'
 
 echo "[3/15] Assets"
 for asset in \
@@ -43,7 +52,8 @@ do
 done
 
 echo "[4/15] Permisos"
-curl -s -b "$COOKIE_FILE" "$BASE_URL/api/permissions.php" | grep -q '"success":true'
+permissions_response="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/api/permissions.php")"
+expect_json_success "$permissions_response"
 settings_page="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/settings.php")"
 grep -q 'Ajustes' <<< "$settings_page"
 grep -q 'Permisos del sistema' <<< "$settings_page"
@@ -51,12 +61,16 @@ grep -q 'Configuración local' <<< "$settings_page"
 grep -q 'GitHub' <<< "$settings_page"
 
 echo "[5/15] Logs"
-curl -s -b "$COOKIE_FILE" "$BASE_URL/api/logs.php?type=devpanel&lines=25" | grep -q '"success":true'
-curl -s -b "$COOKIE_FILE" "$BASE_URL/api/logs/insights.php" | grep -q '"success":true'
-curl -s -b "$COOKIE_FILE" "$BASE_URL/api/logs/summary.php" | grep -q '"success":true'
+logs_response="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/api/logs.php?type=devpanel&lines=25")"
+insights_response="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/api/logs/insights.php")"
+summary_response="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/api/logs/summary.php")"
+expect_json_success "$logs_response"
+expect_json_success "$insights_response"
+expect_json_success "$summary_response"
 
 echo "[6/15] Notificaciones"
-curl -s -b "$COOKIE_FILE" "$BASE_URL/api/notifications/list.php" | grep -q '"success":true'
+notifications_response="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/api/notifications/list.php")"
+expect_json_success "$notifications_response"
 
 echo "[7/15] Doctor"
 doctor_page="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/doctor.php")"
@@ -65,57 +79,69 @@ grep -q 'Checks del sistema' <<< "$doctor_page"
 echo "[8/15] Usuarios"
 users_page="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/users.php")"
 grep -q 'Usuarios y roles' <<< "$users_page"
-curl -s -b "$COOKIE_FILE" "$BASE_URL/api/users/list.php" | grep -q '"success":true'
+users_response="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/api/users/list.php")"
+expect_json_success "$users_response"
 
 echo "[9/15] Dominios"
-curl -s -b "$COOKIE_FILE" "$BASE_URL/api/domains/list.php" | grep -q '"success":true'
+domains_response="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/api/domains/list.php")"
+expect_json_success "$domains_response"
 
 echo "[10/15] Backups"
-curl -s -b "$COOKIE_FILE" "$BASE_URL/api/backups/list.php" | grep -q '"success":true'
-curl -s -b "$COOKIE_FILE" "$BASE_URL/api/backups/schedules.php" | grep -q '"success":true'
+backups_response="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/api/backups/list.php")"
+schedules_response="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/api/backups/schedules.php")"
+expect_json_success "$backups_response"
+expect_json_success "$schedules_response"
 
 echo "[11/15] Docker"
-curl -s -b "$COOKIE_FILE" "$BASE_URL/api/docker/compose.php" | grep -q '"success":true'
+docker_response="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/api/docker/compose.php")"
+expect_json_success "$docker_response"
 
 echo "[12/15] Stats"
-curl -s -b "$COOKIE_FILE" "$BASE_URL/api/system_stats.php" | grep -q '"success":true'
+stats_response="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/api/system_stats.php")"
+expect_json_success "$stats_response"
 
 echo "[13/15] Terminal"
-curl -s -b "$COOKIE_FILE" \
+terminal_pwd_response="$(curl -s -b "$COOKIE_FILE" \
     --data-urlencode "command=pwd" \
     --data-urlencode "cwd=/opt/lampp/htdocs/devpanel" \
     --data-urlencode "csrf_token=$csrf" \
-    "$BASE_URL/api/terminal.php" | grep -q '"success":true'
+    "$BASE_URL/api/terminal.php")"
+expect_json_success "$terminal_pwd_response"
 
-curl -s -b "$COOKIE_FILE" \
+terminal_git_response="$(curl -s -b "$COOKIE_FILE" \
     --data-urlencode "command=git status" \
     --data-urlencode "cwd=/opt/lampp/htdocs/devpanel" \
     --data-urlencode "csrf_token=$csrf" \
-    "$BASE_URL/api/terminal.php" | grep -q '"success":true'
+    "$BASE_URL/api/terminal.php")"
+expect_json_success "$terminal_git_response"
 
 echo "[14/15] Git button API"
-curl -s -b "$COOKIE_FILE" \
+git_response="$(curl -s -b "$COOKIE_FILE" \
     --data-urlencode "path=/opt/lampp/htdocs/devpanel" \
     --data-urlencode "action=status" \
     --data-urlencode "csrf_token=$csrf" \
-    "$BASE_URL/api/git/action.php" | grep -q '"success":true'
+    "$BASE_URL/api/git/action.php")"
+expect_json_success "$git_response"
 
 echo "[15/15] File Manager"
-curl -s -b "$COOKIE_FILE" \
-    "$BASE_URL/api/filemanager/list.php?path=/opt/lampp/htdocs/devpanel" | grep -q '"success":true'
+filemanager_response="$(curl -s -b "$COOKIE_FILE" \
+    "$BASE_URL/api/filemanager/list.php?path=/opt/lampp/htdocs/devpanel")"
+expect_json_success "$filemanager_response"
 
 if [[ "$WRITE_TESTS" == "1" ]]; then
     test_user="devpanel_smoke_$(date +%s)"
     test_password="SmokeTest${RANDOM}Aa!"
 
     echo "[write] Usuario temporal"
-    curl -s -b "$COOKIE_FILE" \
+    save_user_response="$(curl -s -b "$COOKIE_FILE" \
         -d "name=$test_user&role=viewer&password=$test_password&csrf_token=$csrf" \
-        "$BASE_URL/api/users/save.php" | grep -q '"success":true'
+        "$BASE_URL/api/users/save.php")"
+    expect_json_success "$save_user_response"
 
-    curl -s -b "$COOKIE_FILE" \
+    delete_user_response="$(curl -s -b "$COOKIE_FILE" \
         -d "name=$test_user&csrf_token=$csrf" \
-        "$BASE_URL/api/users/delete.php" | grep -q '"success":true'
+        "$BASE_URL/api/users/delete.php")"
+    expect_json_success "$delete_user_response"
 
     echo "[write] Backup devpanel"
     backup_response="$(curl -s -b "$COOKIE_FILE" -d "path=/opt/lampp/htdocs/devpanel&csrf_token=$csrf" "$BASE_URL/api/backups/create.php")"
@@ -124,7 +150,8 @@ if [[ "$WRITE_TESTS" == "1" ]]; then
 
     if [[ -n "$backup_file" ]]; then
         echo "[write] Backup preview"
-        curl -s -b "$COOKIE_FILE" "$BASE_URL/api/backups/preview.php?file=$backup_file" | grep -q '"success":true'
+        preview_response="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/api/backups/preview.php?file=$backup_file")"
+        expect_json_success "$preview_response"
     fi
 fi
 

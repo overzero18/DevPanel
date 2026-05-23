@@ -141,14 +141,58 @@ function isDevpanelInternalAccessLine(string $line): bool
     return false;
 }
 
+function isDevpanelResolvedApacheNoise(string $line): bool
+{
+    $lower = strtolower($line);
+    $systemStatsEndpointExists = is_file(__DIR__ . '/system_stats.php');
+    $patterns = [
+        'lbmethod_heartbeat:notice',
+        'ah02282: no slotmem from mod_heartmonitor',
+        'mpm_prefork:notice',
+        'ah00163: apache/',
+        'core:notice',
+        'ah00094: command line:',
+        'suexec:notice',
+        'ah01232: suexec mechanism enabled',
+        'caught sigterm, shutting down',
+        'www.example.com:443',
+        'ah01906:',
+        'ah01909:',
+        '(98)address already in use',
+        'ah00072: make_sock',
+        'no listening sockets available, shutting down',
+        'ah00015: unable to open logs',
+    ];
+
+    foreach ($patterns as $pattern)
+    {
+        if (str_contains($lower, $pattern))
+        {
+            return true;
+        }
+    }
+
+    return $systemStatsEndpointExists
+        && str_contains($lower, '/api/system_stats.php')
+        && str_contains($lower, 'not found');
+}
+
 $lines = tailLogLines($file, $lineLimit);
 $hiddenInternalLines = 0;
+$hiddenNoiseLines = 0;
 
 if ($type === 'apache_access' && $query === '' && $project === '')
 {
     $before = count($lines);
     $lines = array_values(array_filter($lines, static fn ($line) => !isDevpanelInternalAccessLine($line)));
     $hiddenInternalLines = $before - count($lines);
+}
+
+if ($type === 'apache_error' && $query === '' && $project === '')
+{
+    $before = count($lines);
+    $lines = array_values(array_filter($lines, static fn ($line) => !isDevpanelResolvedApacheNoise($line)));
+    $hiddenNoiseLines = $before - count($lines);
 }
 
 if ($query !== '')
@@ -218,6 +262,7 @@ echo json_encode([
     'lines' => count($lines),
     'limit' => $lineLimit,
     'hidden_internal_lines' => $hiddenInternalLines,
+    'hidden_noise_lines' => $hiddenNoiseLines,
     'filtered' => $query !== '' || $project !== '',
     'project' => $project,
     'updated_at' => $modifiedAt ? date('Y-m-d H:i:s', $modifiedAt) : null,

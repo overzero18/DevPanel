@@ -52,6 +52,22 @@ function devpanelSummaryShouldIgnore(string $line): bool
         'failed to initialize display server connection',
         'unsupported or missing session type',
         'nautilus-application-message',
+        'lbmethod_heartbeat:notice',
+        'ah02282: no slotmem from mod_heartmonitor',
+        'mpm_prefork:notice',
+        'ah00163: apache/',
+        'core:notice',
+        'ah00094: command line:',
+        'suexec:notice',
+        'ah01232: suexec mechanism enabled',
+        'caught sigterm, shutting down',
+        'www.example.com:443',
+        'ah01906:',
+        'ah01909:',
+        '(98)address already in use',
+        'ah00072: make_sock',
+        'no listening sockets available, shutting down',
+        'ah00015: unable to open logs',
     ];
 
     foreach ($ignoredPatterns as $pattern)
