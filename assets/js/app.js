@@ -827,7 +827,9 @@ function renderDockerCompose(files)
         const name = document.createElement('strong');
         name.textContent = file.project;
         const meta = document.createElement('small');
-        meta.textContent = file.path;
+        meta.textContent = file.services && file.services.length
+            ? `${file.path} · servicios: ${file.services.join(', ')}`
+            : file.path;
         text.appendChild(name);
         text.appendChild(meta);
         info.appendChild(icon);
@@ -847,14 +849,45 @@ function renderDockerCompose(files)
         row.appendChild(info);
         row.appendChild(actions);
         container.appendChild(row);
+
+        if (file.services && file.services.length) {
+            const services = document.createElement('div');
+            services.className = 'compose-service-list';
+            file.services.forEach(service => {
+                const chip = document.createElement('span');
+                chip.className = 'compose-service-chip';
+                chip.textContent = service;
+
+                const logs = document.createElement('button');
+                logs.type = 'button';
+                logs.className = 'btn btn-sm btn-outline-info';
+                logs.textContent = 'logs';
+                logs.addEventListener('click', () => runDockerCompose(file.path, 'logs', service));
+
+                const restart = document.createElement('button');
+                restart.type = 'button';
+                restart.className = 'btn btn-sm btn-outline-warning';
+                restart.textContent = 'restart';
+                restart.addEventListener('click', () => runDockerCompose(file.path, 'restart', service));
+
+                const group = document.createElement('div');
+                group.className = 'compose-service-actions';
+                group.appendChild(chip);
+                group.appendChild(logs);
+                group.appendChild(restart);
+                services.appendChild(group);
+            });
+            container.appendChild(services);
+        }
     });
 }
 
-async function runDockerCompose(path, action)
+async function runDockerCompose(path, action, service = '')
 {
     const formData = new URLSearchParams();
     formData.append('path', path);
     formData.append('action', action);
+    if (service) formData.append('service', service);
     formData.append('csrf_token', csrfToken);
 
     try
@@ -872,7 +905,7 @@ async function runDockerCompose(path, action)
         const data = await response.json();
         showToast(data.message || 'Compose ejecutado', data.success ? 'success' : 'danger');
         await appConfirm(data.output || data.message || 'Sin salida', {
-            title: `Docker Compose ${action}`,
+            title: `Docker Compose ${action}${service ? ` ${service}` : ''}`,
             confirmText: 'Cerrar'
         });
         loadDockerCompose();
@@ -964,7 +997,14 @@ function renderLocalDomains(domains)
         commands.textContent = 'Comandos';
         commands.addEventListener('click', () => showLocalDomainCommands(domain));
 
+        const apply = document.createElement('button');
+        apply.type = 'button';
+        apply.className = 'btn btn-sm btn-outline-warning';
+        apply.textContent = 'Aplicar';
+        apply.addEventListener('click', () => applyLocalDomain(domain));
+
         actions.appendChild(open);
+        actions.appendChild(apply);
         actions.appendChild(commands);
         row.appendChild(info);
         row.appendChild(actions);
@@ -1014,6 +1054,46 @@ async function createLocalDomain()
     {
         console.error(error);
         showToast('Error creando dominio local', 'danger');
+    }
+}
+
+async function applyLocalDomain(domain)
+{
+    const confirmed = await appConfirm(`Se intentará aplicar ${domain.domain} con sudo no interactivo.`, {
+        title: 'Aplicar dominio local',
+        confirmText: 'Aplicar',
+        cancelText: 'Cancelar'
+    });
+
+    if (!confirmed) return;
+
+    const formData = new URLSearchParams();
+    formData.append('domain', domain.domain);
+    formData.append('csrf_token', csrfToken);
+
+    try
+    {
+        const response = await fetch('/devpanel/api/domains/apply.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: formData
+        });
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+        showToast(data.message || 'Dominio procesado', data.success ? 'success' : 'danger');
+
+        if (!data.success && data.domain) {
+            showLocalDomainCommands(data.domain);
+        }
+    }
+    catch(error)
+    {
+        console.error(error);
+        showToast('Error aplicando dominio', 'danger');
     }
 }
 
@@ -1098,10 +1178,24 @@ function renderBackups(backups)
         restore.type = 'button';
         restore.className = 'btn btn-sm btn-outline-warning';
         restore.textContent = 'Restaurar';
-        restore.addEventListener('click', () => restoreProjectBackup(backup));
+        restore.addEventListener('click', () => restoreProjectBackup(backup, false));
+
+        const preview = document.createElement('button');
+        preview.type = 'button';
+        preview.className = 'btn btn-sm btn-outline-secondary';
+        preview.textContent = 'Vista';
+        preview.addEventListener('click', () => previewProjectBackup(backup));
+
+        const restoreNew = document.createElement('button');
+        restoreNew.type = 'button';
+        restoreNew.className = 'btn btn-sm btn-outline-warning';
+        restoreNew.textContent = 'Restaurar copia';
+        restoreNew.addEventListener('click', () => restoreProjectBackup(backup, true));
 
         actions.appendChild(download);
+        actions.appendChild(preview);
         actions.appendChild(restore);
+        actions.appendChild(restoreNew);
         row.appendChild(info);
         row.appendChild(actions);
         container.appendChild(row);
@@ -1145,10 +1239,49 @@ async function createProjectBackup()
     }
 }
 
-async function restoreProjectBackup(backup)
+async function previewProjectBackup(backup)
+{
+    try
+    {
+        const response = await fetch(`/devpanel/api/backups/preview.php?file=${encodeURIComponent(backup.file)}`);
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+
+        if (!data.success) {
+            showToast(data.message || 'No se pudo abrir la vista', 'danger');
+            return;
+        }
+
+        const preview = data.preview || {};
+        const files = preview.files || [];
+        const output = [
+            `${preview.file_count || 0} archivos · ${formatBackupSize(preview.total_size || 0)}`,
+            '',
+            ...files.map(file => `${file.name} · ${formatBackupSize(file.size || 0)}`),
+            preview.truncated ? '' : null,
+            preview.truncated ? 'Vista limitada a los primeros archivos.' : null
+        ].filter(Boolean).join('\n');
+
+        await appConfirm(output || 'Backup vacío', {
+            title: `Vista ${backup.file}`,
+            confirmText: 'Cerrar'
+        });
+    }
+    catch(error)
+    {
+        console.error(error);
+        showToast('Error leyendo backup', 'danger');
+    }
+}
+
+async function restoreProjectBackup(backup, asNew = false)
 {
     const confirmed = await appConfirm(
-        `Se restaurará ${backup.project} desde ${backup.file}. Antes se creará un backup de seguridad del estado actual.`,
+        asNew
+            ? `Se restaurará ${backup.project} desde ${backup.file} en una carpeta nueva.`
+            : `Se restaurará ${backup.project} desde ${backup.file}. Antes se creará un backup de seguridad del estado actual.`,
         {
             title: 'Restaurar backup',
             confirmText: 'Restaurar',
@@ -1161,6 +1294,7 @@ async function restoreProjectBackup(backup)
 
     const formData = new URLSearchParams();
     formData.append('file', backup.file);
+    if (asNew) formData.append('mode', 'new');
     formData.append('csrf_token', csrfToken);
 
     try

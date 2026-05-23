@@ -57,6 +57,7 @@ The project provides a modern interface to manage services, projects, deployment
 * Docker detection and container actions
 * Docker Compose detection and basic actions
 * Local domains helper for `.test` Apache vhosts
+* Optional automatic local domain apply with sudo fallback commands
 * Log insights for recent errors and warnings
 
 ## 🎨 UI
@@ -67,19 +68,6 @@ The project provides a modern interface to manage services, projects, deployment
 * Dashboard cards
 * Dark, Cyber, Ubuntu and Glass themes
 * Optional users and roles configuration
-
----
-
-# 📸 Screenshots
-
-Add updated screenshots here before publishing:
-
-```text
-screenshots/dashboard.png
-screenshots/file-manager.png
-screenshots/database-manager.png
-screenshots/terminal.png
-```
 
 ---
 
@@ -108,6 +96,7 @@ devpanel/
 │   └── js/
 ├── includes/                # PHP utilities
 ├── layout/                  # Header, Sidebar
+├── sections/                # Dashboard partials
 ├── themes/                  # Theme files
 ├── logs/                    # Audit logs
 ├── tmp/                     # Temporary files
@@ -247,6 +236,7 @@ Then update `/config.php` with the generated hash.
 * ✅ Local domains helper
 * ✅ Project backups with downloadable history
 * ✅ Backup restore with safety backup
+* ✅ Backup preview and restore into a new folder
 * ✅ Cron-ready backup runner
 * ✅ Log insights
 * ✅ API smoke test script
@@ -371,13 +361,11 @@ For security, only these commands are allowed:
 
 # 📈 Future Improvements
 
-* Advanced File Manager
-* Project logs and diagnostics
-* Notification center
-* Local domains
 * Two-factor authentication
 * API tokens
-* User roles
+* More dashboard sections extracted into `sections/`
+* Docker Compose service health charts
+* Backup diff/compare view before restore
 
 ---
 
@@ -404,3 +392,13 @@ focused on:
 Project maintainer
 
 GitHub: configure your own repository in DevPanel settings.
+
+---
+
+# 📸 Screenshots
+
+Existing screenshots are kept at the end so public docs can be updated without exposing private paths, tokens or usernames.
+
+![DevPanel screenshot 1](screenshots/Captura%20de%20pantalla%202026-05-16%20035127.png)
+
+![DevPanel screenshot 2](screenshots/Captura%20de%20pantalla%202026-05-16%20035210.png)

@@ -119,7 +119,64 @@ function devpanelFindBackup(string $file): ?array
     return null;
 }
 
-function devpanelRestoreProjectBackup(string $file): ?array
+function devpanelPreviewProjectBackup(string $file, int $limit = 120): ?array
+{
+    if (!class_exists('ZipArchive'))
+    {
+        return null;
+    }
+
+    $backup = devpanelFindBackup($file);
+    $zipPath = devpanelBackupsDir() . '/' . $file;
+
+    if (!$backup || !is_file($zipPath))
+    {
+        return null;
+    }
+
+    $zip = new ZipArchive();
+
+    if ($zip->open($zipPath) !== true)
+    {
+        return null;
+    }
+
+    $items = [];
+    $totalSize = 0;
+
+    for ($index = 0; $index < $zip->numFiles; $index++)
+    {
+        $stat = $zip->statIndex($index);
+
+        if (!$stat)
+        {
+            continue;
+        }
+
+        $totalSize += (int) ($stat['size'] ?? 0);
+
+        if (count($items) < $limit)
+        {
+            $items[] = [
+                'name' => $stat['name'] ?? '',
+                'size' => (int) ($stat['size'] ?? 0),
+            ];
+        }
+    }
+
+    $count = $zip->numFiles;
+    $zip->close();
+
+    return [
+        'backup' => $backup,
+        'files' => $items,
+        'file_count' => $count,
+        'total_size' => $totalSize,
+        'truncated' => $count > $limit,
+    ];
+}
+
+function devpanelRestoreProjectBackup(string $file, bool $restoreAsNew = false): ?array
 {
     if (!class_exists('ZipArchive'))
     {
@@ -134,14 +191,29 @@ function devpanelRestoreProjectBackup(string $file): ?array
     }
 
     $zipPath = devpanelBackupsDir() . '/' . $file;
-    $targetPath = $backup['path'] ?? '';
+    $originalPath = $backup['path'] ?? '';
+    $targetPath = $originalPath;
 
-    if (!is_file($zipPath) || !is_dir($targetPath) || !esRutaPermitida($targetPath))
+    if (!is_file($zipPath) || !$originalPath || !esRutaPermitida(dirname($originalPath)))
     {
         return null;
     }
 
-    $safetyBackup = devpanelCreateProjectBackup($targetPath);
+    if ($restoreAsNew)
+    {
+        $targetPath = rtrim(dirname($originalPath), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . basename($originalPath) . '_restored_' . date('Ymd_His');
+
+        if (!mkdir($targetPath, 0755, true))
+        {
+            return null;
+        }
+    }
+    elseif (!is_dir($targetPath) || !esRutaPermitida($targetPath))
+    {
+        return null;
+    }
+
+    $safetyBackup = $restoreAsNew ? null : devpanelCreateProjectBackup($targetPath);
     $zip = new ZipArchive();
 
     if ($zip->open($zipPath) !== true)
@@ -202,6 +274,7 @@ function devpanelRestoreProjectBackup(string $file): ?array
         'path' => $targetPath,
         'file' => $file,
         'restored_files' => $restoredFiles,
+        'mode' => $restoreAsNew ? 'new_folder' : 'overwrite',
         'safety_backup' => $safetyBackup,
         'restored_at' => date('Y-m-d H:i:s'),
     ];

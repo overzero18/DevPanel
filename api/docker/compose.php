@@ -16,6 +16,7 @@ function devpanelFindComposeFiles(): array
 {
     $base = obtenerRutaBase();
     $items = [];
+    $docker = trim(shell_exec('command -v docker') ?? '');
 
     foreach (glob($base . '/*/{docker-compose.yml,docker-compose.yaml,compose.yml,compose.yaml}', GLOB_BRACE) ?: [] as $file)
     {
@@ -28,10 +29,39 @@ function devpanelFindComposeFiles(): array
             'project' => basename(dirname($file)),
             'path' => $file,
             'directory' => dirname($file),
+            'services' => $docker ? devpanelComposeServices($docker, $file) : [],
         ];
     }
 
     return $items;
+}
+
+function devpanelComposeServices(string $docker, string $file): array
+{
+    $process = proc_open(
+        [$docker, 'compose', '-f', $file, 'config', '--services'],
+        [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+        $pipes,
+        dirname($file),
+        ['HOME' => sys_get_temp_dir()]
+    );
+
+    if (!is_resource($process))
+    {
+        return [];
+    }
+
+    $output = stream_get_contents($pipes[1]);
+    fclose($pipes[1]);
+    fclose($pipes[2]);
+    $exit = proc_close($process);
+
+    if ($exit !== 0)
+    {
+        return [];
+    }
+
+    return array_values(array_filter(array_map('trim', preg_split('/\R/', $output) ?: [])));
 }
 
 if ($method === 'GET')
@@ -61,11 +91,13 @@ if (!validateCsrfToken())
 
 $path = trim((string) ($_POST['path'] ?? ''));
 $action = trim((string) ($_POST['action'] ?? ''));
+$service = trim((string) ($_POST['service'] ?? ''));
 $allowed = [
     'up' => ['docker', 'compose', '-f', $path, 'up', '-d'],
     'down' => ['docker', 'compose', '-f', $path, 'down'],
     'ps' => ['docker', 'compose', '-f', $path, 'ps'],
     'logs' => ['docker', 'compose', '-f', $path, 'logs', '--tail', '120'],
+    'restart' => ['docker', 'compose', '-f', $path, 'restart'],
 ];
 
 if (!$composeAvailable)
@@ -83,6 +115,18 @@ if (!$path || !is_file($path) || !validatePath($path) || !isset($allowed[$action
 
 $command = $allowed[$action];
 $command[0] = $docker;
+
+if ($service !== '')
+{
+    if (!preg_match('/^[a-zA-Z0-9_.-]{1,80}$/', $service))
+    {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Servicio inválido']);
+        exit;
+    }
+
+    $command[] = $service;
+}
 
 $process = proc_open(
     $command,
@@ -104,7 +148,7 @@ fclose($pipes[1]);
 fclose($pipes[2]);
 $exit = proc_close($process);
 
-logAction('docker_compose', "$action $path");
+logAction('docker_compose', trim("$action $service $path"));
 
 echo json_encode([
     'success' => $exit === 0,

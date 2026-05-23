@@ -23,7 +23,8 @@ if (!validateCsrfToken())
 }
 
 $file = basename((string) ($_POST['file'] ?? ''));
-$result = devpanelRestoreProjectBackup($file);
+$restoreAsNew = ($_POST['mode'] ?? '') === 'new';
+$result = devpanelRestoreProjectBackup($file, $restoreAsNew);
 
 if (!$result)
 {

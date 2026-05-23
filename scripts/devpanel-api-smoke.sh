@@ -56,7 +56,14 @@ curl -s -b "$COOKIE_FILE" "$BASE_URL/api/system_stats.php" | grep -q '"success":
 
 if [[ "$WRITE_TESTS" == "1" ]]; then
     echo "[write] Backup devpanel"
-    curl -s -b "$COOKIE_FILE" -d "path=/opt/lampp/htdocs/devpanel&csrf_token=$csrf" "$BASE_URL/api/backups/create.php" | grep -q '"success":true'
+    backup_response="$(curl -s -b "$COOKIE_FILE" -d "path=/opt/lampp/htdocs/devpanel&csrf_token=$csrf" "$BASE_URL/api/backups/create.php")"
+    echo "$backup_response" | grep -q '"success":true'
+    backup_file="$(printf '%s' "$backup_response" | sed -n 's/.*"file":"\([^"]*\.zip\)".*/\1/p' | head -n 1)"
+
+    if [[ -n "$backup_file" ]]; then
+        echo "[write] Backup preview"
+        curl -s -b "$COOKIE_FILE" "$BASE_URL/api/backups/preview.php?file=$backup_file" | grep -q '"success":true'
+    fi
 fi
 
 echo "Smoke OK"

@@ -115,3 +115,63 @@ function devpanelUpsertDomain(string $domain, string $path): ?array
 
     return devpanelSaveDomains($items) ? $item : null;
 }
+
+function devpanelFindDomain(string $domain): ?array
+{
+    foreach (devpanelLoadDomains() as $item)
+    {
+        if (($item['domain'] ?? '') === $domain)
+        {
+            return $item;
+        }
+    }
+
+    return null;
+}
+
+function devpanelApplyDomain(string $domain): array
+{
+    $item = devpanelFindDomain($domain);
+
+    if (!$item || !devpanelValidateDomain($domain))
+    {
+        return ['success' => false, 'message' => 'Dominio no encontrado'];
+    }
+
+    $snippetPath = $item['snippet'] ?? '';
+    $targetConf = "/opt/lampp/etc/extra/devpanel-$domain.conf";
+    $includeLine = "Include etc/extra/devpanel-$domain.conf";
+    $commands = [
+        ['sudo', '-n', 'sh', '-c', "grep -q '127.0.0.1 $domain' /etc/hosts || echo '127.0.0.1 $domain' >> /etc/hosts"],
+        ['sudo', '-n', 'cp', $snippetPath, $targetConf],
+        ['sudo', '-n', 'sh', '-c', "grep -q 'devpanel-$domain.conf' /opt/lampp/etc/httpd.conf || echo '$includeLine' >> /opt/lampp/etc/httpd.conf"],
+        ['sudo', '-n', '/opt/lampp/lampp', 'restart'],
+    ];
+
+    foreach ($commands as $command)
+    {
+        $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+
+        if (!is_resource($process))
+        {
+            return ['success' => false, 'message' => 'No se pudo ejecutar sudo', 'domain' => $item];
+        }
+
+        $output = stream_get_contents($pipes[1]) . stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        $exit = proc_close($process);
+
+        if ($exit !== 0)
+        {
+            return [
+                'success' => false,
+                'message' => 'Sudo no interactivo no está permitido. Usa los comandos manuales.',
+                'output' => trim($output),
+                'domain' => $item,
+            ];
+        }
+    }
+
+    return ['success' => true, 'message' => 'Dominio local aplicado', 'domain' => $item];
+}
