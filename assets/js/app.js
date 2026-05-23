@@ -1432,8 +1432,6 @@ document.addEventListener("DOMContentLoaded", () =>
     }
 });
 
-}
-
 async function generateZip(path)
 {
     try
