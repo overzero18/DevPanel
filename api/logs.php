@@ -103,7 +103,46 @@ function tailLogLines(string $file, int $lineLimit): array
     return array_slice($lines, -$lineLimit);
 }
 
+function isDevpanelInternalAccessLine(string $line): bool
+{
+    $internalPaths = [
+        '/devpanel/api/logs.php',
+        '/devpanel/api/logs/insights.php',
+        '/devpanel/api/login.php',
+        '/devpanel/api/logout.php',
+        '/devpanel/api/system_stats.php',
+        '/devpanel/api/session_status.php',
+        '/devpanel/api/notifications/list.php',
+        '/devpanel/api/permissions.php',
+        '/devpanel/api/projects/activity.php',
+        '/devpanel/api/docker/list.php',
+        '/devpanel/api/docker/compose.php',
+        '/devpanel/api/backups/list.php',
+        '/devpanel/api/domains/list.php',
+        '/devpanel/api/database/list.php',
+        '/devpanel/api/database/users.php',
+    ];
+
+    foreach ($internalPaths as $path)
+    {
+        if (str_contains($line, $path))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 $lines = tailLogLines($file, $lineLimit);
+$hiddenInternalLines = 0;
+
+if ($type === 'apache_access' && $query === '' && $project === '')
+{
+    $before = count($lines);
+    $lines = array_values(array_filter($lines, static fn ($line) => !isDevpanelInternalAccessLine($line)));
+    $hiddenInternalLines = $before - count($lines);
+}
 
 if ($query !== '')
 {
@@ -171,6 +210,7 @@ echo json_encode([
     'path' => $file,
     'lines' => count($lines),
     'limit' => $lineLimit,
+    'hidden_internal_lines' => $hiddenInternalLines,
     'filtered' => $query !== '' || $project !== '',
     'project' => $project,
     'updated_at' => $modifiedAt ? date('Y-m-d H:i:s', $modifiedAt) : null,

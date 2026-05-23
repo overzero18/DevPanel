@@ -1964,7 +1964,8 @@ function updateLogMeta(data)
     }
 
     const filterLabel = data.filtered ? ' · filtrado' : '';
-    meta.textContent = `${data.label} · ${data.lines} líneas · actualizado ${data.updated_at || '--'}${filterLabel}`;
+    const hiddenLabel = data.hidden_internal_lines > 0 ? ` · ${data.hidden_internal_lines} internas ocultas` : '';
+    meta.textContent = `${data.label} · ${data.lines} líneas · actualizado ${data.updated_at || '--'}${filterLabel}${hiddenLabel}`;
 }
 
 function setActiveLogType(type)
