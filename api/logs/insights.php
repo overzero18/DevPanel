@@ -61,6 +61,25 @@ function devpanelIsResolvedPermissionNoise(string $lower): bool
         return true;
     }
 
+    if (
+        (str_contains($lower, 'incorrect definition of table mysql.')
+            || str_contains($lower, 'please run mysql_upgrade'))
+        && is_file(rtrim(devpanelConfig('MYSQL_DATA_DIR'), DIRECTORY_SEPARATOR) . '/mysql_upgrade_info')
+    )
+    {
+        return true;
+    }
+
+    if (
+        (str_contains($lower, 'event scheduler: an error occurred when initializing system tables')
+            || str_contains($lower, 'using unique option prefix')
+            || str_contains($lower, 'column count of mysql.proc is wrong'))
+        && is_file(rtrim(devpanelConfig('MYSQL_DATA_DIR'), DIRECTORY_SEPARATOR) . '/mysql_upgrade_info')
+    )
+    {
+        return true;
+    }
+
     $isPermissionNoise = str_contains($lower, 'permiso denegado')
         || str_contains($lower, 'permission denied')
         || str_contains($lower, 'failed to open stream');
@@ -116,11 +135,17 @@ function devpanelNormalizeInsightLine(string $line): string
 
 $hostname = gethostname() ?: '';
 $mysqlDataDir = rtrim(devpanelConfig('MYSQL_DATA_DIR'), DIRECTORY_SEPARATOR);
+$mariaDbLogPath = "$mysqlDataDir/$hostname.err";
+$mariaDbMatches = is_file($mariaDbLogPath) ? [] : glob($mysqlDataDir . '/*.err');
+if (!is_file($mariaDbLogPath) && $mariaDbMatches)
+{
+    $mariaDbLogPath = $mariaDbMatches[0];
+}
 $sources = [
     'Apache error' => devpanelConfig('APACHE_ERROR_LOG'),
     'Apache access' => devpanelConfig('APACHE_ACCESS_LOG'),
     'PHP' => devpanelConfig('PHP_ERROR_LOG'),
-    'MariaDB' => "$mysqlDataDir/$hostname.err",
+    'MariaDB' => $mariaDbLogPath,
     'DevPanel' => __DIR__ . '/../../logs/actions.log',
 ];
 

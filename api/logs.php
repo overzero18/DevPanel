@@ -25,6 +25,12 @@ $lineLimit = max(25, min(500, $lineLimit));
 
 $hostname = gethostname() ?: '';
 $mysqlDataDir = rtrim(devpanelConfig('MYSQL_DATA_DIR'), DIRECTORY_SEPARATOR);
+$mariaDbLogPath = "$mysqlDataDir/$hostname.err";
+$mariaDbMatches = is_file($mariaDbLogPath) ? [] : glob($mysqlDataDir . '/*.err');
+if (!is_file($mariaDbLogPath) && $mariaDbMatches)
+{
+    $mariaDbLogPath = $mariaDbMatches[0];
+}
 $logs = [
     'apache_error' => [
         'label' => 'Apache error',
@@ -40,7 +46,7 @@ $logs = [
     ],
     'mariadb' => [
         'label' => 'MariaDB',
-        'path' => "$mysqlDataDir/$hostname.err"
+        'path' => $mariaDbLogPath
     ],
     'devpanel' => [
         'label' => 'DevPanel',

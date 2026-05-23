@@ -1,9 +1,9 @@
-tmp/
-logs/
+/tmp/
+/logs/
 *.zip
 .env
 config.php
-node_modules/
-vendor/
+/node_modules/
+/vendor/
 .DS_Store
 Thumbs.db
