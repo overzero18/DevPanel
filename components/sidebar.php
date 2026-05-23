@@ -38,6 +38,12 @@ $primaryLinks = [
         'match' => ['doctor.php'],
     ],
     [
+        'url' => '/devpanel/settings.php',
+        'icon' => 'sliders',
+        'label' => 'Ajustes',
+        'match' => ['settings.php'],
+    ],
+    [
         'url' => '/devpanel/users.php',
         'icon' => 'people-fill',
         'label' => 'Usuarios',

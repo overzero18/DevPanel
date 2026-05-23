@@ -46,6 +46,9 @@ cat > "$TEST_FILE" <<'HTML'
         const dashboardResponse = await fetch('/devpanel/index.php');
         const dashboard = await dashboardResponse.text();
         const doc = new DOMParser().parseFromString(dashboard, 'text/html');
+        const settingsResponse = await fetch('/devpanel/settings.php');
+        const settings = await settingsResponse.text();
+        const settingsDoc = new DOMParser().parseFromString(settings, 'text/html');
         const required = [
             '#systemHealthGrid',
             '#terminalWorkingDirectory',
@@ -61,7 +64,19 @@ cat > "$TEST_FILE" <<'HTML'
             'link[href*="style.css?v="]',
             'script[src*="codemirror"]'
         ];
-        const missing = required.filter(selector => !doc.querySelector(selector));
+        const settingsRequired = [
+            '#permissionsList',
+            '#runtime-settings',
+            '#githubRemoteUrl',
+            '[onclick*="saveRuntimeSettings"]',
+            '[onclick*="saveGithubSettings"]'
+        ];
+        const missing = [
+            ...required.filter(selector => !doc.querySelector(selector)),
+            ...settingsRequired
+                .filter(selector => !settingsDoc.querySelector(selector))
+                .map(selector => `settings ${selector}`)
+        ];
 
         if (missing.length) {
             throw new Error(`missing ${missing.join(', ')}`);

@@ -1432,6 +1432,13 @@ document.addEventListener("DOMContentLoaded", () =>
     }
 });
 
+document.addEventListener("DOMContentLoaded", () =>
+{
+    if (document.getElementById('permissionsList')) {
+        loadPermissions();
+    }
+});
+
 async function generateZip(path)
 {
     try

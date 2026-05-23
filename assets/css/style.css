@@ -365,6 +365,16 @@ body {
     color: var(--accent-danger);
 }
 
+.settings-layout {
+    display: grid;
+    gap: 18px;
+}
+
+.settings-layout .dashboard-card {
+    display: grid;
+    gap: 16px;
+}
+
 .metric-card {
     min-height: 184px;
     display: flex;

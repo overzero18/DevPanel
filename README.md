@@ -71,6 +71,7 @@ The project provides a modern interface to manage services, projects, deployment
 * Modern Bootstrap 5 interface
 * Responsive layout
 * Sidebar navigation
+* Dedicated settings page for runtime config, permissions and GitHub
 * Dashboard cards
 * Dark, Cyber, Ubuntu and Glass themes
 * Optional users and roles configuration
@@ -253,6 +254,7 @@ Then update `/config.php` with the generated hash.
 * ✅ Visual Chromium smoke test for dashboard controls
 * ✅ Guided local installer/checklist
 * ✅ Permissions diagnostics
+* ✅ Dedicated settings page
 * ✅ System monitor
 * ✅ Password authentication
 * ✅ Local users and role management

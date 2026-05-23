@@ -44,6 +44,11 @@ done
 
 echo "[4/15] Permisos"
 curl -s -b "$COOKIE_FILE" "$BASE_URL/api/permissions.php" | grep -q '"success":true'
+settings_page="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/settings.php")"
+grep -q 'Ajustes' <<< "$settings_page"
+grep -q 'Permisos del sistema' <<< "$settings_page"
+grep -q 'Configuración local' <<< "$settings_page"
+grep -q 'GitHub' <<< "$settings_page"
 
 echo "[5/15] Logs"
 curl -s -b "$COOKIE_FILE" "$BASE_URL/api/logs.php?type=devpanel&lines=25" | grep -q '"success":true'
