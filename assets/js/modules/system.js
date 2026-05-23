@@ -283,6 +283,7 @@ function renderTwoFactor(twoFactor)
     const panel = document.getElementById('twoFactorSecretPanel');
     const secret = document.getElementById('twoFactorSecret');
     const uri = document.getElementById('twoFactorUri');
+    const qr = document.getElementById('twoFactorQr');
     const enabled = Boolean(twoFactor.enabled);
 
     if (status) {
@@ -310,6 +311,12 @@ function renderTwoFactor(twoFactor)
         const account = encodeURIComponent(twoFactor.account || 'admin');
         uri.value = twoFactor.secret
             ? `otpauth://totp/${issuer}:${account}?secret=${encodeURIComponent(twoFactor.secret)}&issuer=${issuer}`
+            : '';
+    }
+
+    if (qr) {
+        qr.src = enabled
+            ? `/devpanel/api/security/two_factor_qr.php?v=${Date.now()}`
             : '';
     }
 }
@@ -387,7 +394,7 @@ function renderApiTokens(tokens)
         const name = document.createElement('strong');
         name.textContent = token.name || 'API token';
         const meta = document.createElement('small');
-        meta.textContent = `${token.prefix || 'dp_'}... · ${token.role || 'viewer'} · creado ${token.created_at || '--'}`;
+        meta.textContent = `${token.prefix || 'dp_'}... · ${token.role || 'viewer'} · expira ${token.expires_at || '--'}${token.expired ? ' · expirado' : ''}`;
         text.appendChild(name);
         text.appendChild(meta);
         info.appendChild(icon);
@@ -412,9 +419,11 @@ async function createApiToken()
 {
     const name = document.getElementById('apiTokenName')?.value || 'API token';
     const role = document.getElementById('apiTokenRole')?.value || 'viewer';
+    const expiresDays = document.getElementById('apiTokenExpiry')?.value || '30';
     const formData = new URLSearchParams();
     formData.append('name', name);
     formData.append('role', role);
+    formData.append('expires_days', expiresDays);
     formData.append('csrf_token', getSystemCsrfToken());
 
     try {

@@ -24,7 +24,8 @@ if (!validateCsrfToken())
 
 $name = trim((string) ($_POST['name'] ?? ''));
 $role = trim((string) ($_POST['role'] ?? 'viewer'));
-$created = devpanelCreateApiToken($name, $role);
+$expiresDays = (int) ($_POST['expires_days'] ?? 30);
+$created = devpanelCreateApiToken($name, $role, $expiresDays);
 
 if (!$created)
 {

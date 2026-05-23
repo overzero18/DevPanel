@@ -23,6 +23,8 @@ The project provides a modern interface to manage services, projects, deployment
 * Complete audit logging
 * Output sanitization (XSS prevention)
 * Change password functionality
+* Optional TOTP two-factor authentication
+* Local API tokens with role and expiration
 
 ## 🔧 Service Management
 
@@ -421,6 +423,8 @@ Add that command to cron if you want DevPanel to execute the schedules created f
 * More dashboard sections extracted into `sections/`
 * Docker Compose service health charts
 * Full SHA-256 file diff before backup restore
+* 2FA QR endpoint for local authenticator setup when `qrencode` is installed
+* Expiring API tokens from settings
 
 ---
 

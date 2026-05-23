@@ -70,7 +70,9 @@ cat > "$TEST_FILE" <<'HTML'
             '#security-settings',
             '#githubRemoteUrl',
             '#apiTokenList',
+            '#apiTokenExpiry',
             '#twoFactorToggle',
+            '#twoFactorQr',
             '[onclick*="saveRuntimeSettings"]',
             '[onclick*="saveGithubSettings"]'
         ];

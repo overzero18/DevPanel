@@ -2093,3 +2093,20 @@ body {
         max-height: 320px;
     }
 }
+.two-factor-qr-frame {
+    display: inline-grid;
+    place-items: center;
+    width: 190px;
+    height: 190px;
+    padding: 5px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: #fff;
+}
+
+.two-factor-qr-frame img {
+    display: block;
+    width: 180px;
+    height: 180px;
+    object-fit: contain;
+}

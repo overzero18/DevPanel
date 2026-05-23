@@ -110,6 +110,18 @@ devpanel/
 ✅ **Output Sanitization** - Previene XSS
 ✅ **Audit Logging** - Todos los eventos se registran
 ✅ **File Protection** - .htaccess protege archivos sensibles
+✅ **2FA opcional** - TOTP desde Ajustes → Seguridad avanzada
+✅ **API tokens** - Tokens locales con rol y expiración
+
+### 2FA y API tokens
+
+Entra en **Ajustes → Seguridad avanzada** para activar 2FA o crear tokens.
+
+- 2FA queda desactivado por defecto para no romper el primer login.
+- Al activar 2FA, guarda el secret en tu app autenticadora antes de cerrar sesión.
+- Si quieres QR visual, instala `qrencode` en el sistema; DevPanel generará el SVG localmente.
+- Los API tokens se muestran una sola vez al crearlos.
+- Cada token tiene rol y fecha de expiración.
 
 ## ✅ Permisos Locales
 

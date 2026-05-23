@@ -183,6 +183,12 @@ $runtimeSettings = devpanelConfig();
 
                 <div class="runtime-settings-grid mt-3" id="twoFactorSecretPanel" hidden>
                     <div>
+                        <label class="form-label">QR</label>
+                        <div class="two-factor-qr-frame">
+                            <img id="twoFactorQr" alt="QR 2FA" width="180" height="180">
+                        </div>
+                    </div>
+                    <div>
                         <label class="form-label">Secret TOTP</label>
                         <input type="text" class="form-control" id="twoFactorSecret" readonly>
                     </div>
@@ -201,6 +207,12 @@ $runtimeSettings = devpanelConfig();
                         <option value="viewer">viewer</option>
                         <option value="developer">developer</option>
                         <option value="admin">admin</option>
+                    </select>
+                    <select id="apiTokenExpiry" class="form-select">
+                        <option value="7">7 días</option>
+                        <option value="30" selected>30 días</option>
+                        <option value="90">90 días</option>
+                        <option value="365">1 año</option>
                     </select>
                     <button type="button" class="btn btn-devpanel" onclick="createApiToken()">
                         <i class="bi bi-key"></i>

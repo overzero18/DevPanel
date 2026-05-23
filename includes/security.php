@@ -17,6 +17,7 @@ define('LOGIN_ATTEMPT_WINDOW', 900);
 
 require_once __DIR__ . '/helpers/filesystem.php';
 require_once __DIR__ . '/helpers/config.php';
+require_once __DIR__ . '/helpers/users.php';
 
 function setSecurityHeaders()
 {
@@ -75,7 +76,7 @@ function authenticateApiToken(): bool
     {
         $hash = $token['hash'] ?? '';
 
-        if ($hash && password_verify($plain, $hash))
+        if ($hash && password_verify($plain, $hash) && !devpanelApiTokenExpired($token))
         {
             $_SERVER['DEVPANEL_API_TOKEN_AUTH'] = '1';
             $_SERVER['DEVPANEL_API_TOKEN_NAME'] = $token['name'] ?? 'token';

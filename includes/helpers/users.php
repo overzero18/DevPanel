@@ -78,6 +78,8 @@ function devpanelPublicApiTokens(): array
             'role' => $token['role'] ?? 'viewer',
             'created_at' => $token['created_at'] ?? null,
             'last_used_at' => $token['last_used_at'] ?? null,
+            'expires_at' => $token['expires_at'] ?? null,
+            'expired' => devpanelApiTokenExpired($token),
         ];
     }, $tokens));
 }
@@ -115,7 +117,14 @@ function devpanelGenerateBase32Secret(int $length = 32): string
     return $secret;
 }
 
-function devpanelCreateApiToken(string $name, string $role): ?array
+function devpanelApiTokenExpired(array $token): bool
+{
+    $expiresAt = $token['expires_at'] ?? null;
+
+    return $expiresAt !== null && $expiresAt !== '' && strtotime((string) $expiresAt) < time();
+}
+
+function devpanelCreateApiToken(string $name, string $role, int $expiresDays = 30): ?array
 {
     $config = devpanelUsersConfig();
 
@@ -127,6 +136,8 @@ function devpanelCreateApiToken(string $name, string $role): ?array
     $plain = 'dp_' . bin2hex(random_bytes(24));
     $tokens = devpanelConfig('DEVPANEL_API_TOKENS', []);
     $tokens = is_array($tokens) ? $tokens : [];
+    $expiresDays = max(1, min(365, $expiresDays));
+    $expiresAt = date('Y-m-d H:i:s', time() + ($expiresDays * 86400));
     $item = [
         'id' => hash('sha256', $plain),
         'name' => $name !== '' ? substr($name, 0, 80) : 'API token',
@@ -135,6 +146,7 @@ function devpanelCreateApiToken(string $name, string $role): ?array
         'role' => $role,
         'created_at' => date('Y-m-d H:i:s'),
         'last_used_at' => null,
+        'expires_at' => $expiresAt,
     ];
 
     array_unshift($tokens, $item);
@@ -153,6 +165,8 @@ function devpanelCreateApiToken(string $name, string $role): ?array
             'role' => $item['role'],
             'created_at' => $item['created_at'],
             'last_used_at' => null,
+            'expires_at' => $item['expires_at'],
+            'expired' => false,
         ],
     ];
 }
