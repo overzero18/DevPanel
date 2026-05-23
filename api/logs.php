@@ -113,8 +113,11 @@ function tailLogLines(string $file, int $lineLimit): array
 function isDevpanelInternalAccessLine(string $line): bool
 {
     $internalPaths = [
+        '/devpanel/api/',
+        '/devpanel/assets/',
         '/devpanel/api/logs.php',
         '/devpanel/api/logs/insights.php',
+        '/devpanel/api/logs/summary.php',
         '/devpanel/api/login.php',
         '/devpanel/api/logout.php',
         '/devpanel/api/system_stats.php',
@@ -128,6 +131,7 @@ function isDevpanelInternalAccessLine(string $line): bool
         '/devpanel/api/domains/list.php',
         '/devpanel/api/database/list.php',
         '/devpanel/api/database/users.php',
+        '/devpanel/tmp/visual-smoke.html',
     ];
 
     foreach ($internalPaths as $path)
@@ -141,9 +145,23 @@ function isDevpanelInternalAccessLine(string $line): bool
     return false;
 }
 
-function isDevpanelResolvedApacheNoise(string $line): bool
+function lineContainsAnyPattern(string $line, array $patterns): bool
 {
     $lower = strtolower($line);
+
+    foreach ($patterns as $pattern)
+    {
+        if (str_contains($lower, $pattern))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function isDevpanelResolvedApacheNoise(string $line): bool
+{
     $systemStatsEndpointExists = is_file(__DIR__ . '/system_stats.php');
     $patterns = [
         'lbmethod_heartbeat:notice',
@@ -164,20 +182,107 @@ function isDevpanelResolvedApacheNoise(string $line): bool
         'ah00015: unable to open logs',
     ];
 
-    foreach ($patterns as $pattern)
+    if (lineContainsAnyPattern($line, $patterns))
     {
-        if (str_contains($lower, $pattern))
-        {
-            return true;
-        }
+        return true;
     }
+
+    $lower = strtolower($line);
 
     return $systemStatsEndpointExists
         && str_contains($lower, '/api/system_stats.php')
         && str_contains($lower, 'not found');
 }
 
+function isDevpanelResolvedPhpNoise(string $line): bool
+{
+    $lower = strtolower($line);
+
+    if (str_contains($lower, 'devpanel_template_check') || str_contains($lower, 'devpanel_check_db'))
+    {
+        return true;
+    }
+
+    if (
+        (str_contains($lower, 'incorrect definition of table mysql.')
+            || str_contains($lower, 'please run mysql_upgrade')
+            || str_contains($lower, 'column count of mysql.proc is wrong'))
+        && is_file(rtrim(devpanelConfig('MYSQL_DATA_DIR'), DIRECTORY_SEPARATOR) . '/mysql_upgrade_info')
+    )
+    {
+        return true;
+    }
+
+    $isPermissionNoise = str_contains($lower, 'permiso denegado')
+        || str_contains($lower, 'permission denied')
+        || str_contains($lower, 'failed to open stream');
+
+    if (!$isPermissionNoise)
+    {
+        return false;
+    }
+
+    $root = dirname(__DIR__);
+    $resolvedPaths = [
+        $root . '/config.php',
+        $root . '/logs',
+        $root . '/tmp',
+        devpanelConfig('HTDOCS_PATH'),
+    ];
+
+    foreach ($resolvedPaths as $path)
+    {
+        if ($path && is_writable($path) && str_contains($lower, strtolower($path)))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function isDevpanelResolvedMariaDbNoise(string $line): bool
+{
+    if (lineContainsAnyPattern($line, [
+        '[note]',
+        'mysqld_safe starting mysqld daemon',
+        'version: ',
+    ]))
+    {
+        return true;
+    }
+
+    $upgradeInfo = rtrim(devpanelConfig('MYSQL_DATA_DIR'), DIRECTORY_SEPARATOR) . '/mysql_upgrade_info';
+
+    if (!is_file($upgradeInfo))
+    {
+        return false;
+    }
+
+    return lineContainsAnyPattern($line, [
+        'incorrect definition of table mysql.',
+        'please run mysql_upgrade',
+        'column count of mysql.proc is wrong',
+        'event scheduler: an error occurred when initializing system tables',
+        'using unique option prefix',
+        'innodb: table mysql/innodb_table_stats has length mismatch',
+    ]);
+}
+
+function isDevpanelRoutineActionLine(string $line): bool
+{
+    return lineContainsAnyPattern($line, [
+        '[view_logs]',
+        '[login_success]',
+        '[view_project_activity]',
+        '[git_action] status ',
+        '[execute_command] pwd',
+        '[execute_command] git status',
+    ]);
+}
+
 $lines = tailLogLines($file, $lineLimit);
+$lines = array_values(array_filter($lines, static fn ($line) => trim((string) $line) !== ''));
 $hiddenInternalLines = 0;
 $hiddenNoiseLines = 0;
 
@@ -188,11 +293,22 @@ if ($type === 'apache_access' && $query === '' && $project === '')
     $hiddenInternalLines = $before - count($lines);
 }
 
-if ($type === 'apache_error' && $query === '' && $project === '')
+if ($query === '' && $project === '')
 {
-    $before = count($lines);
-    $lines = array_values(array_filter($lines, static fn ($line) => !isDevpanelResolvedApacheNoise($line)));
-    $hiddenNoiseLines = $before - count($lines);
+    $noiseFilter = match ($type) {
+        'apache_error' => 'isDevpanelResolvedApacheNoise',
+        'php' => 'isDevpanelResolvedPhpNoise',
+        'mariadb' => 'isDevpanelResolvedMariaDbNoise',
+        'devpanel' => 'isDevpanelRoutineActionLine',
+        default => null,
+    };
+
+    if ($noiseFilter !== null)
+    {
+        $before = count($lines);
+        $lines = array_values(array_filter($lines, static fn ($line) => !$noiseFilter($line)));
+        $hiddenNoiseLines = $before - count($lines);
+    }
 }
 
 if ($query !== '')
