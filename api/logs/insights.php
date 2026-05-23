@@ -25,6 +25,7 @@ function devpanelShouldIgnoreInsight(string $line): bool
     $lower = strtolower($line);
 
     $ignoredPatterns = [
+        '[command_blocked]',
         'gtk-warning',
         'failed to open display',
         'failed to initialize display server connection',

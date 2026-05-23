@@ -173,6 +173,27 @@ function getProjects()
     $ignoredFolders = array_merge(['.', '..', 'img'], devpanelConfig('EXCLUDED_PROJECT_FOLDERS', []));
 
     $projects = [];
+    $devpanelPath = realpath(__DIR__ . '/..');
+    $htdocsRealPath = realpath($projectsPath);
+
+    if ($devpanelPath && $htdocsRealPath && str_starts_with($devpanelPath, $htdocsRealPath . DIRECTORY_SEPARATOR))
+    {
+        $devpanelFolder = basename($devpanelPath);
+        $stats = getProjectFilesystemStats($devpanelPath);
+
+        $projects[] = [
+            'name' => 'DevPanel',
+            'path' => $devpanelPath,
+            'url' => $localhostUrl . '/' . rawurlencode($devpanelFolder),
+            'type' => 'PHP',
+            'size' => $stats['size'],
+            'modified_at' => $stats['modified_at'],
+            'modified_label' => formatProjectModifiedAt($stats['modified_at']),
+            'writable' => is_writable($devpanelPath),
+            'internal' => true,
+            'git' => getProjectGitInfo($devpanelPath)
+        ];
+    }
 
     foreach ($folders as $folder)
     {
@@ -205,6 +226,8 @@ function getProjects()
                 'modified_label' => formatProjectModifiedAt($modifiedAt),
 
                 'writable' => is_writable($fullPath),
+
+                'internal' => false,
 
                 'git' => getProjectGitInfo($fullPath)
 

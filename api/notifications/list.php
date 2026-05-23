@@ -42,6 +42,11 @@ function devpanelNotificationSeverity(string $line, string $action = '', string 
         return 'info';
     }
 
+    if ($action === 'command_blocked')
+    {
+        return 'warning';
+    }
+
     if (str_contains($action, 'blocked') || str_contains($action, 'failed') || str_contains($action, 'error'))
     {
         return 'danger';

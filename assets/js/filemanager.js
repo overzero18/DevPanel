@@ -2,6 +2,7 @@ let currentFileManagerPath = document.getElementById('fileManagerPath')?.textCon
 let fileManagerParentPath = null;
 let activePreviewPath = null;
 let currentFileManagerItems = [];
+let filePreviewEditorInstance = null;
 
 function getFileManagerCsrfToken()
 {
@@ -252,6 +253,17 @@ function fileManagerGoUp()
     }
 }
 
+async function copyFileManagerPath()
+{
+    try {
+        await navigator.clipboard.writeText(currentFileManagerPath);
+        notifyFileManager('Ruta copiada', 'success');
+    }
+    catch(error) {
+        notifyFileManager('No se pudo copiar la ruta', 'danger');
+    }
+}
+
 async function previewFile(path)
 {
     try
@@ -287,6 +299,10 @@ function renderFilePreview(data)
     const body = document.getElementById('filePreviewBody');
     const saveButton = document.getElementById('filePreviewSave');
     const editorStatus = document.getElementById('fileEditorStatus');
+    if (filePreviewEditorInstance) {
+        filePreviewEditorInstance.toTextArea();
+        filePreviewEditorInstance = null;
+    }
     body.innerHTML = '';
     saveButton.hidden = true;
 
@@ -323,6 +339,26 @@ function renderFilePreview(data)
         if (editorStatus) {
             editorStatus.hidden = false;
         }
+
+        if (typeof CodeMirror !== 'undefined') {
+            filePreviewEditorInstance = CodeMirror.fromTextArea(editor, {
+                mode: getCodeMirrorMode(data.name, data.mime),
+                theme: 'material-darker',
+                lineNumbers: true,
+                lineWrapping: true,
+                matchBrackets: true,
+                autoCloseTags: true,
+                tabSize: 4
+            });
+            filePreviewEditorInstance.on('changes', updateFileEditorStatus);
+            filePreviewEditorInstance.on('cursorActivity', updateFileEditorStatus);
+            filePreviewEditorInstance.addKeyMap({
+                'Ctrl-S': () => saveFilePreview(),
+                'Cmd-S': () => saveFilePreview()
+            });
+            setTimeout(() => filePreviewEditorInstance.refresh(), 80);
+        }
+
         updateFileEditorStatus();
         return;
     }
@@ -336,7 +372,14 @@ function updateFileEditorStatus()
     const cursor = document.getElementById('fileEditorCursor');
     const count = document.getElementById('fileEditorCount');
 
-    if (!editor || !cursor || !count) {
+    if ((!editor && !filePreviewEditorInstance) || !cursor || !count) {
+        return;
+    }
+
+    if (filePreviewEditorInstance) {
+        const position = filePreviewEditorInstance.getCursor();
+        cursor.textContent = `Ln ${position.line + 1}, Col ${position.ch + 1}`;
+        count.textContent = `${filePreviewEditorInstance.getValue().length} caracteres`;
         return;
     }
 
@@ -344,22 +387,35 @@ function updateFileEditorStatus()
     const lines = beforeCursor.split('\n');
     const line = lines.length;
     const column = lines[lines.length - 1].length + 1;
-
     cursor.textContent = `Ln ${line}, Col ${column}`;
     count.textContent = `${editor.value.length} caracteres`;
+}
+
+function getCodeMirrorMode(name, mime)
+{
+    const lower = String(name || '').toLowerCase();
+    const type = String(mime || '').toLowerCase();
+
+    if (lower.endsWith('.php')) return 'application/x-httpd-php';
+    if (lower.endsWith('.js') || lower.endsWith('.json')) return 'javascript';
+    if (lower.endsWith('.css')) return 'css';
+    if (lower.endsWith('.html') || lower.endsWith('.htm') || type.includes('html')) return 'htmlmixed';
+    if (lower.endsWith('.xml')) return 'xml';
+
+    return null;
 }
 
 async function saveFilePreview()
 {
     const editor = document.getElementById('filePreviewEditor');
 
-    if (!activePreviewPath || !editor) {
+    if (!activePreviewPath || (!editor && !filePreviewEditorInstance)) {
         return;
     }
 
     const formData = new URLSearchParams();
     formData.append('path', activePreviewPath);
-    formData.append('content', editor.value);
+    formData.append('content', filePreviewEditorInstance ? filePreviewEditorInstance.getValue() : editor.value);
     formData.append('csrf_token', getFileManagerCsrfToken());
 
     await postFileManagerAction('/devpanel/api/filemanager/save.php', formData, false);

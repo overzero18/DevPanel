@@ -2,7 +2,8 @@ let terminalCurrentCommand = '';
 let terminalHistory = [];
 let terminalHistoryIndex = -1;
 let term = null;
-const terminalFavoriteCommands = ['pwd', 'ls', 'git status', 'git branch', 'php -v'];
+let terminalLastOutput = '';
+const terminalFavoriteCommands = ['pwd', 'ls', 'git status', 'git branch', 'php -v', 'composer install', 'npm install', 'npm run build', 'npm test'];
 const terminalPrompt = '$ ';
 
 document.addEventListener("DOMContentLoaded", () =>
@@ -17,6 +18,12 @@ document.addEventListener("DOMContentLoaded", () =>
 function initTerminal()
 {
     const terminalElement = document.getElementById('terminal');
+
+    if (typeof Terminal === 'undefined') {
+        terminalElement.textContent = 'No se pudo cargar xterm.js';
+        return;
+    }
+
     const rootStyles = getComputedStyle(document.documentElement);
     const terminalStyles = getComputedStyle(terminalElement);
     const terminalBackground = terminalStyles.backgroundColor || rootStyles.getPropertyValue('--bg-primary').trim() || '#000000';
@@ -39,6 +46,7 @@ function initTerminal()
     });
 
     term.open(terminalElement);
+    resizeTerminal();
 
     writeTerminalLine('DevPanel Terminal');
     writeTerminalPrompt();
@@ -93,6 +101,31 @@ function initTerminal()
 
         term.write(data);
     });
+
+    window.addEventListener('resize', resizeTerminal);
+}
+
+function resizeTerminal()
+{
+    const terminalElement = document.getElementById('terminal');
+
+    if (!term || !terminalElement || typeof term.resize !== 'function') {
+        return;
+    }
+
+    requestAnimationFrame(() => {
+        try {
+            const width = Math.max(terminalElement.clientWidth - 24, 320);
+            const height = Math.max(terminalElement.clientHeight - 24, 220);
+            const columns = Math.max(40, Math.floor(width / 9));
+            const rows = Math.max(10, Math.floor(height / 18));
+
+            term.resize(columns, rows);
+        }
+        catch(error) {
+            // Si el contenedor aun no tiene medidas, xterm funcionara con sus columnas por defecto.
+        }
+    });
 }
 
 async function executeCommand(command)
@@ -111,6 +144,11 @@ async function executeCommand(command)
         formData.append('command', command);
         formData.append('csrf_token', csrfToken);
 
+        const workingDirectory = document.getElementById('terminalWorkingDirectory')?.value || '';
+        if (workingDirectory) {
+            formData.append('cwd', workingDirectory);
+        }
+
         const response = await fetch(
             '/devpanel/api/terminal.php',
         {
@@ -128,6 +166,10 @@ async function executeCommand(command)
         const data = await response.json();
 
         writeTerminalOutput(data.output || '');
+
+        if (data.success === false && typeof showToast === 'function') {
+            showToast(`Comando terminó con código ${data.exit_code ?? 1}`, 'warning');
+        }
     }
     catch(error)
     {
@@ -149,6 +191,22 @@ function runQuickCommand(command)
     });
 }
 
+function openProjectTerminal(path)
+{
+    const select = document.getElementById('terminalWorkingDirectory');
+
+    if (select) {
+        select.value = path;
+    }
+
+    document.getElementById('terminal')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+    });
+
+    runQuickCommand('pwd');
+}
+
 function writeTerminalPrompt()
 {
     term.write(terminalPrompt);
@@ -164,6 +222,8 @@ function writeTerminalOutput(output)
     if (!output) {
         return;
     }
+
+    terminalLastOutput = String(output);
 
     const normalized = String(output)
         .replace(/\r\n/g, '\n')
@@ -277,9 +337,33 @@ function clearTerminalHistory()
     renderTerminalHistory();
 }
 
+async function copyTerminalOutput()
+{
+    if (!terminalLastOutput) {
+        if (typeof showToast === 'function') {
+            showToast('No hay salida para copiar', 'warning');
+        }
+        return;
+    }
+
+    try {
+        await navigator.clipboard.writeText(terminalLastOutput);
+        if (typeof showToast === 'function') {
+            showToast('Salida copiada', 'success');
+        }
+    }
+    catch(error) {
+        if (typeof showToast === 'function') {
+            showToast('No se pudo copiar la salida', 'danger');
+        }
+    }
+}
+
 function clearTerminal()
 {
     term.clear();
 
     terminalCurrentCommand = '';
+    terminalLastOutput = '';
     writeTerminalPrompt();
+}

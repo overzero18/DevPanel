@@ -71,12 +71,64 @@ async function loadLogInsights()
             summary.textContent = `${info.danger || 0} errores · ${info.warning || 0} avisos`;
         }
         renderLogInsights(data.items || []);
+        loadLogSummary();
     }
     catch(error)
     {
         console.error(error);
         container.textContent = 'Error analizando logs';
     }
+}
+
+async function loadLogSummary()
+{
+    const container = document.getElementById('logSummaryGrid');
+
+    if (!container) return;
+
+    try {
+        const response = await fetch('/devpanel/api/logs/summary.php');
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+        renderLogSummary(data.groups || []);
+    }
+    catch(error) {
+        console.error(error);
+        container.textContent = 'Error cargando resumen';
+    }
+}
+
+function renderLogSummary(groups)
+{
+    const container = document.getElementById('logSummaryGrid');
+    container.innerHTML = '';
+
+    groups.forEach(group => {
+        const total = Number(group.danger || 0) + Number(group.warning || 0) + Number(group.security || 0);
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = `log-summary-card ${group.danger > 0 ? 'is-danger' : total > 0 ? 'is-warning' : 'is-ok'}`;
+        card.addEventListener('click', () => {
+            if (group.key === 'apache') setActiveLogType('apache_error');
+            if (group.key === 'php' || group.key === 'permissions') setActiveLogType('php');
+            if (group.key === 'mariadb') setActiveLogType('mariadb');
+            if (group.key === 'security') setActiveLogType('devpanel');
+        });
+
+        const title = document.createElement('strong');
+        title.textContent = group.label;
+        const count = document.createElement('span');
+        count.textContent = total === 0 ? 'OK' : `${total} eventos`;
+        const detail = document.createElement('small');
+        detail.textContent = group.latest || (group.readable ? 'Sin errores recientes' : 'Log no legible');
+
+        card.appendChild(title);
+        card.appendChild(count);
+        card.appendChild(detail);
+        container.appendChild(card);
+    });
 }
 
 function renderLogInsights(items)

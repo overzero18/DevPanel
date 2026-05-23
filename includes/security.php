@@ -318,16 +318,22 @@ function getAllowedTerminalCommands()
     require_once __DIR__ . '/helpers/config.php';
 
     $phpBinary = devpanelConfig('PHP_BINARY', '/opt/lampp/bin/php');
+    $projectPath = realpath(__DIR__ . '/..') ?: dirname(__DIR__);
+    $safeGitDirectory = escapeshellarg($projectPath);
 
     return [
         'pwd' => 'pwd',
         'ls' => 'ls -la',
         'ls -la' => 'ls -la',
-        'git status' => 'git status --short',
-        'git branch' => 'git branch',
+        'git status' => 'git -c safe.directory=' . $safeGitDirectory . ' status --short',
+        'git branch' => 'git -c safe.directory=' . $safeGitDirectory . ' branch',
         'php -v' => $phpBinary . ' -v',
         'composer --version' => 'composer --version',
+        'composer install' => 'composer install --no-interaction --prefer-dist',
         'npm --version' => 'npm --version',
+        'npm install' => 'npm install',
+        'npm run build' => 'npm run build',
+        'npm test' => 'npm test',
     ];
 }
 

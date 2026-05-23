@@ -25,6 +25,8 @@ if (!validateCsrfToken())
 
 $command = $_POST['command'] ?? '';
 $command = trim($command);
+$workingDirectory = $_POST['cwd'] ?? '';
+$workingDirectory = trim($workingDirectory);
 
 if ($command === '')
 {
@@ -47,6 +49,32 @@ if (!validateCommand($command))
 }
 
 $safeCommand = getSafeTerminalCommand($command);
+$defaultWorkingDirectory = realpath(__DIR__ . '/..') ?: obtenerRutaBase();
+
+if ($workingDirectory === '')
+{
+    $workingDirectory = $defaultWorkingDirectory;
+}
+
+$workingDirectory = realpath($workingDirectory);
+
+if (!$workingDirectory || !is_dir($workingDirectory) || !validatePath($workingDirectory))
+{
+    http_response_code(403);
+    echo json_encode(['success' => false, 'output' => 'Ruta de trabajo no permitida']);
+    exit;
+}
+
+if ($command === 'git status')
+{
+    $safeCommand = 'git -c safe.directory=' . escapeshellarg($workingDirectory) . ' status --short';
+}
+
+if ($command === 'git branch')
+{
+    $safeCommand = 'git -c safe.directory=' . escapeshellarg($workingDirectory) . ' branch';
+}
+
 $process = proc_open(
     $safeCommand,
     [
@@ -54,7 +82,8 @@ $process = proc_open(
         2 => ['pipe', 'w']
     ],
     $pipes,
-    obtenerRutaBase()
+    $workingDirectory,
+    ['HOME' => sys_get_temp_dir()]
 );
 
 if (!is_resource($process))
@@ -70,9 +99,13 @@ $errorOutput = stream_get_contents($pipes[2]);
 fclose($pipes[1]);
 fclose($pipes[2]);
 
-proc_close($process);
+$exitCode = proc_close($process);
 $output .= $errorOutput;
 
 logAction('execute_command', $command);
 
-echo json_encode(['success' => true, 'output' => $output]);
+echo json_encode([
+    'success' => $exitCode === 0,
+    'output' => $output,
+    'exit_code' => $exitCode,
+]);

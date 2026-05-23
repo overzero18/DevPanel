@@ -130,8 +130,117 @@ document.addEventListener("DOMContentLoaded", () =>
     }
 
     loadSystemStats();
+    loadSystemHealth();
+    setTimeout(loadSystemHealth, 350);
 
     setInterval(loadSystemStats, 5000);
 });
 
-let term;
+async function loadSystemHealth()
+{
+    const grid = document.getElementById('systemHealthGrid');
+    const summary = document.getElementById('systemHealthSummary');
+
+    if (!grid) {
+        return;
+    }
+
+    const checks = [
+        checkHealthEndpoint('permissions', '/devpanel/api/permissions.php', data => {
+            const items = data.items || data.permissions || [];
+            const problems = Array.isArray(items)
+                ? items.filter(item => item.ok === false).length
+                : 0;
+
+            return problems === 0
+                ? ['is-ok', 'OK']
+                : ['is-warning', `${problems} avisos`];
+        }),
+        checkHealthEndpoint('terminal', '/devpanel/api/terminal.php', null, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: new URLSearchParams({
+                command: 'pwd',
+                csrf_token: getSystemCsrfToken()
+            })
+        }),
+        checkHealthEndpoint('git', '/devpanel/api/terminal.php', data => {
+            return data.success ? ['is-ok', 'OK'] : ['is-warning', 'Revisar'];
+        }, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: new URLSearchParams({
+                command: 'git status',
+                csrf_token: getSystemCsrfToken()
+            })
+        }),
+        checkHealthEndpoint('logs', '/devpanel/api/logs/insights.php', data => {
+            const danger = Number(data.summary?.danger || 0);
+            const warning = Number(data.summary?.warning || 0);
+
+            if (danger > 0) return ['is-danger', `${danger} errores`];
+            if (warning > 0) return ['is-warning', `${warning} avisos`];
+            return ['is-ok', 'OK'];
+        })
+    ];
+
+    const results = await Promise.all(checks);
+    const failed = results.filter(result => result !== 'is-ok').length;
+
+    if (summary) {
+        summary.textContent = failed === 0
+            ? 'Todo lo crítico responde correctamente.'
+            : `${failed} módulos necesitan revisión.`;
+    }
+}
+
+async function checkHealthEndpoint(key, url, mapper = null, options = {})
+{
+    const element = document.querySelector(`[data-health-check="${key}"]`);
+
+    try {
+        const response = await fetch(url, options);
+
+        if (!checkAuth(response)) {
+            return 'is-danger';
+        }
+
+        if (!response.ok) {
+            updateHealthItem(element, 'is-warning', 'Sin permiso');
+            return 'is-warning';
+        }
+
+        const data = await response.json();
+        const [state, label] = mapper
+            ? mapper(data)
+            : (data.success ? ['is-ok', 'OK'] : ['is-warning', 'Revisar']);
+
+        updateHealthItem(element, state, label);
+        return state;
+    }
+    catch(error) {
+        updateHealthItem(element, 'is-danger', 'Error');
+        return 'is-danger';
+    }
+}
+
+function getSystemCsrfToken()
+{
+    const tokenElement = document.querySelector('meta[name="csrf-token"]');
+    return tokenElement ? tokenElement.getAttribute('content') : (typeof csrfToken === 'string' ? csrfToken : '');
+}
+
+function updateHealthItem(element, state, label)
+{
+    if (!element) {
+        return;
+    }
+
+    element.classList.remove('is-pending', 'is-ok', 'is-warning', 'is-danger');
+    element.classList.add(state);
+
+    const value = element.querySelector('strong');
+    if (value) {
+        value.textContent = label;
+    }
+}

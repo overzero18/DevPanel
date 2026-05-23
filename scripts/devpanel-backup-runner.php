@@ -5,6 +5,26 @@ require_once __DIR__ . '/../includes/projects.php';
 require_once __DIR__ . '/../includes/helpers/backups.php';
 
 $target = $argv[1] ?? 'all';
+
+if ($target === '--due')
+{
+    $created = devpanelRunDueBackupSchedules();
+
+    if (!$created)
+    {
+        echo "No hay backups programados pendientes.\n";
+        exit(0);
+    }
+
+    foreach ($created as $backup)
+    {
+        echo "Backup programado creado: {$backup['file']}\n";
+    }
+
+    echo "Backups creados: " . count($created) . "\n";
+    exit(0);
+}
+
 $projects = getProjects();
 $created = 0;
 

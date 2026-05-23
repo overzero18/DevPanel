@@ -50,9 +50,14 @@ The project provides a modern interface to manage services, projects, deployment
 ## 🖥 System Tools
 
 * Linux terminal integration
+* Per-project terminal working directory
+* Open the terminal directly from a project card
+* Copy latest terminal output
 * Real-time Apache logs
 * System monitoring
 * CPU / RAM / Disk usage
+* Global health panel for services, permissions, terminal, Git and logs
+* Visual log dashboard grouped by security, permissions, PHP, Apache and MariaDB
 * Persistent notification center
 * Docker detection and container actions
 * Docker Compose detection and basic actions
@@ -236,12 +241,16 @@ Then update `/config.php` with the generated hash.
 * ✅ Docker Compose UI
 * ✅ Local domains helper
 * ✅ Project backups with downloadable history
+* ✅ Scheduled backups UI with cron-ready due runner
+* ✅ Run scheduled backups manually and inspect per-schedule history
+* ✅ Delete individual backups and clean old backup history from UI
 * ✅ Backup restore with safety backup
 * ✅ Backup preview and restore into a new folder
 * ✅ Backup compare hints before restore
 * ✅ Cron-ready backup runner
 * ✅ Log insights
-* ✅ API smoke test script
+* ✅ API smoke test script for dashboard, assets, terminal, Git, File Manager and APIs
+* ✅ Visual Chromium smoke test for dashboard controls
 * ✅ Guided local installer/checklist
 * ✅ Permissions diagnostics
 * ✅ System monitor
@@ -356,9 +365,50 @@ Before publishing a public release:
 
 For security, only these commands are allowed:
 
-- `ls`, `cd`, `pwd`, `cat`, `grep`, `find`
-- `git`, `svn`
-- `npm`, `composer`, `php`, `python`
+- `pwd`
+- `ls`, `ls -la`
+- `git status`, `git branch`
+- `php -v`
+- `composer --version`
+- `composer install`
+- `npm --version`
+- `npm install`
+- `npm run build`
+- `npm test`
+
+The terminal can run those commands from DevPanel or from a selected project path inside the configured `HTDOCS_PATH`.
+
+---
+
+# ✅ Local Verification
+
+Run the smoke test before pushing changes:
+
+```bash
+DEVPANEL_TEST_PASSWORD=your_local_password ./scripts/devpanel-api-smoke.sh
+```
+
+Visual dashboard check with Chromium:
+
+```bash
+DEVPANEL_TEST_PASSWORD=your_local_password ./scripts/devpanel-visual-smoke.sh
+```
+
+Optional write checks:
+
+```bash
+DEVPANEL_TEST_PASSWORD=your_local_password DEVPANEL_SMOKE_WRITE=1 ./scripts/devpanel-api-smoke.sh
+```
+
+The normal smoke test checks login, dashboard HTML, JS/CSS assets, permissions, logs, notifications, users, domains, backups, scheduled-backup endpoints, Docker detection, system stats, terminal, Git status and File Manager listing.
+
+Scheduled backups use the due runner:
+
+```bash
+/opt/lampp/bin/php /opt/lampp/htdocs/devpanel/scripts/devpanel-backup-runner.php --due
+```
+
+Add that command to cron if you want DevPanel to execute the schedules created from the UI.
 
 ---
 

@@ -16,44 +16,88 @@ if [[ -z "$PASSWORD" ]]; then
     exit 1
 fi
 
-echo "[1/11] Login"
+echo "[1/15] Login"
 login_response="$(curl -s -c "$COOKIE_FILE" -d "password=$PASSWORD" "$BASE_URL/api/login.php")"
-echo "$login_response" | grep -q '"success":true'
+grep -q '"success":true' <<< "$login_response"
 
-echo "[2/11] Dashboard"
+echo "[2/15] Dashboard"
 dashboard="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/index.php")"
 csrf="$(printf '%s' "$dashboard" | sed -n 's/.*csrf-token" content="\([^"]*\)".*/\1/p')"
 test -n "$csrf"
+grep -q 'Estado global' <<< "$dashboard"
+grep -q 'terminalWorkingDirectory' <<< "$dashboard"
+grep -q 'DevPanel' <<< "$dashboard"
+grep -q 'is-internal' <<< "$dashboard"
 curl -s "$BASE_URL/install.php" | grep -q 'Instalación guiada'
 
-echo "[3/11] Permisos"
+echo "[3/15] Assets"
+for asset in \
+    assets/js/app.js \
+    assets/js/modules/system.js \
+    assets/js/modules/terminal.js \
+    assets/js/filemanager.js \
+    assets/css/style.css
+do
+    asset_code="$(curl -s -o /dev/null -w '%{http_code}' "$BASE_URL/$asset")"
+    test "$asset_code" = "200"
+done
+
+echo "[4/15] Permisos"
 curl -s -b "$COOKIE_FILE" "$BASE_URL/api/permissions.php" | grep -q '"success":true'
 
-echo "[4/11] Logs"
+echo "[5/15] Logs"
 curl -s -b "$COOKIE_FILE" "$BASE_URL/api/logs.php?type=devpanel&lines=25" | grep -q '"success":true'
 curl -s -b "$COOKIE_FILE" "$BASE_URL/api/logs/insights.php" | grep -q '"success":true'
+curl -s -b "$COOKIE_FILE" "$BASE_URL/api/logs/summary.php" | grep -q '"success":true'
 
-echo "[5/11] Notificaciones"
+echo "[6/15] Notificaciones"
 curl -s -b "$COOKIE_FILE" "$BASE_URL/api/notifications/list.php" | grep -q '"success":true'
 
-echo "[6/11] Doctor"
-curl -s -b "$COOKIE_FILE" "$BASE_URL/doctor.php" | grep -q 'Checks del sistema'
+echo "[7/15] Doctor"
+doctor_page="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/doctor.php")"
+grep -q 'Checks del sistema' <<< "$doctor_page"
 
-echo "[7/11] Usuarios"
-curl -s -b "$COOKIE_FILE" "$BASE_URL/users.php" | grep -q 'Usuarios y roles'
+echo "[8/15] Usuarios"
+users_page="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/users.php")"
+grep -q 'Usuarios y roles' <<< "$users_page"
 curl -s -b "$COOKIE_FILE" "$BASE_URL/api/users/list.php" | grep -q '"success":true'
 
-echo "[8/11] Dominios"
+echo "[9/15] Dominios"
 curl -s -b "$COOKIE_FILE" "$BASE_URL/api/domains/list.php" | grep -q '"success":true'
 
-echo "[9/11] Backups"
+echo "[10/15] Backups"
 curl -s -b "$COOKIE_FILE" "$BASE_URL/api/backups/list.php" | grep -q '"success":true'
+curl -s -b "$COOKIE_FILE" "$BASE_URL/api/backups/schedules.php" | grep -q '"success":true'
 
-echo "[10/11] Docker"
+echo "[11/15] Docker"
 curl -s -b "$COOKIE_FILE" "$BASE_URL/api/docker/compose.php" | grep -q '"success":true'
 
-echo "[11/11] Stats"
+echo "[12/15] Stats"
 curl -s -b "$COOKIE_FILE" "$BASE_URL/api/system_stats.php" | grep -q '"success":true'
+
+echo "[13/15] Terminal"
+curl -s -b "$COOKIE_FILE" \
+    --data-urlencode "command=pwd" \
+    --data-urlencode "cwd=/opt/lampp/htdocs/devpanel" \
+    --data-urlencode "csrf_token=$csrf" \
+    "$BASE_URL/api/terminal.php" | grep -q '"success":true'
+
+curl -s -b "$COOKIE_FILE" \
+    --data-urlencode "command=git status" \
+    --data-urlencode "cwd=/opt/lampp/htdocs/devpanel" \
+    --data-urlencode "csrf_token=$csrf" \
+    "$BASE_URL/api/terminal.php" | grep -q '"success":true'
+
+echo "[14/15] Git button API"
+curl -s -b "$COOKIE_FILE" \
+    --data-urlencode "path=/opt/lampp/htdocs/devpanel" \
+    --data-urlencode "action=status" \
+    --data-urlencode "csrf_token=$csrf" \
+    "$BASE_URL/api/git/action.php" | grep -q '"success":true'
+
+echo "[15/15] File Manager"
+curl -s -b "$COOKIE_FILE" \
+    "$BASE_URL/api/filemanager/list.php?path=/opt/lampp/htdocs/devpanel" | grep -q '"success":true'
 
 if [[ "$WRITE_TESTS" == "1" ]]; then
     test_user="devpanel_smoke_$(date +%s)"
@@ -70,7 +114,7 @@ if [[ "$WRITE_TESTS" == "1" ]]; then
 
     echo "[write] Backup devpanel"
     backup_response="$(curl -s -b "$COOKIE_FILE" -d "path=/opt/lampp/htdocs/devpanel&csrf_token=$csrf" "$BASE_URL/api/backups/create.php")"
-    echo "$backup_response" | grep -q '"success":true'
+    grep -q '"success":true' <<< "$backup_response"
     backup_file="$(printf '%s' "$backup_response" | sed -n 's/.*"file":"\([^"]*\.zip\)".*/\1/p' | head -n 1)"
 
     if [[ -n "$backup_file" ]]; then

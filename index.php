@@ -46,6 +46,51 @@ $writableProjectCount = count(array_filter($projects, function ($project) {
 
 <h1 class="mb-4 fw-bold">Dashboard</h1>
 
+<div class="dashboard-card system-health-card mb-4">
+    <div class="section-title-row">
+        <div>
+            <h4 class="mb-1">Estado global</h4>
+            <p class="text-secondary mb-0" id="systemHealthSummary">Comprobando servicios y módulos clave.</p>
+        </div>
+        <button type="button" class="btn btn-outline-info" onclick="loadSystemHealth()">
+            <i class="bi bi-arrow-clockwise"></i>
+            Recargar
+        </button>
+    </div>
+
+    <div class="system-health-grid" id="systemHealthGrid">
+        <div class="system-health-item <?php echo $apacheRunning ? 'is-ok' : 'is-danger'; ?>">
+            <i class="bi bi-server"></i>
+            <span>Apache</span>
+            <strong><?php echo $apacheRunning ? 'Activo' : 'Detenido'; ?></strong>
+        </div>
+        <div class="system-health-item <?php echo $mariadbRunning ? 'is-ok' : 'is-danger'; ?>">
+            <i class="bi bi-database-fill"></i>
+            <span>MariaDB</span>
+            <strong><?php echo $mariadbRunning ? 'Activo' : 'Detenido'; ?></strong>
+        </div>
+        <div class="system-health-item is-pending" data-health-check="permissions">
+            <i class="bi bi-shield-check"></i>
+            <span>Permisos</span>
+            <strong>Comprobando</strong>
+        </div>
+        <div class="system-health-item is-pending" data-health-check="terminal">
+            <i class="bi bi-terminal"></i>
+            <span>Terminal</span>
+            <strong>Comprobando</strong>
+        </div>
+        <div class="system-health-item is-pending" data-health-check="git">
+            <i class="bi bi-git"></i>
+            <span>Git</span>
+            <strong>Comprobando</strong>
+        </div>
+        <div class="system-health-item is-pending" data-health-check="logs">
+            <i class="bi bi-activity"></i>
+            <span>Logs</span>
+            <strong>Comprobando</strong>
+        </div>
+    </div>
+</div>
 
 <?php include __DIR__ . '/sections/dashboard/system_metrics.php'; ?>
 
@@ -370,10 +415,13 @@ $writableProjectCount = count(array_filter($projects, function ($project) {
 
                             <div class="project-card-header">
                                 <span class="project-icon">
-                                    <i class="bi bi-folder-fill"></i>
+                                    <i class="bi <?php echo !empty($project['internal']) ? 'bi-speedometer2' : 'bi-folder-fill'; ?>"></i>
                                 </span>
 
                                 <div class="project-badges">
+                                    <?php if (!empty($project['internal'])): ?>
+                                        <span class="is-internal">panel</span>
+                                    <?php endif; ?>
                                     <span><?php echo htmlspecialchars($project['type'], ENT_QUOTES, 'UTF-8'); ?></span>
                                     <span class="<?php echo $project['writable'] ? 'is-writable' : 'is-readonly'; ?>">
                                         <?php echo $project['writable'] ? 'editable' : 'solo lectura'; ?>
@@ -503,6 +551,16 @@ $writableProjectCount = count(array_filter($projects, function ($project) {
 
                                     <i class="bi bi-code-square"></i>
                                     VS Code
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="btn btn-outline-info"
+                                    data-path="<?php echo htmlspecialchars($project['path'], ENT_QUOTES, 'UTF-8'); ?>"
+                                    onclick="openProjectTerminal(this.dataset.path)">
+
+                                    <i class="bi bi-terminal"></i>
+                                    Terminal
                                 </button>
                                 
 
@@ -857,6 +915,10 @@ $writableProjectCount = count(array_filter($projects, function ($project) {
                         <i class="bi bi-arrow-clockwise"></i>
                     </button>
 
+                    <button type="button" class="btn btn-outline-secondary" onclick="copyFileManagerPath()">
+                        <i class="bi bi-copy"></i>
+                    </button>
+
                     <button type="button" class="btn btn-devpanel" onclick="createFileManagerFolder()">
                         <i class="bi bi-folder-plus"></i>
                         Carpeta
@@ -1098,6 +1160,21 @@ Cargando logs...
                 </div>
             </div>
 
+            <div class="log-health-panel">
+                <div class="section-title-row">
+                    <div>
+                        <h5 class="mb-1">Errores por categoría</h5>
+                        <p class="text-secondary mb-0">Seguridad, permisos, PHP, Apache y MariaDB.</p>
+                    </div>
+                    <button type="button" class="btn btn-outline-info btn-sm" onclick="loadLogSummary()">
+                        <i class="bi bi-bar-chart"></i>
+                    </button>
+                </div>
+                <div class="log-summary-grid" id="logSummaryGrid">
+                    <div class="file-manager-empty">Cargando resumen...</div>
+                </div>
+            </div>
+
         </div>
 
     </div>
@@ -1118,10 +1195,25 @@ Cargando logs...
                 </div>
 
                 <div class="terminal-actions">
+                    <select id="terminalWorkingDirectory" class="form-select terminal-project-select">
+                        <?php foreach ($projects as $project): ?>
+                            <option value="<?php echo htmlspecialchars($project['path'], ENT_QUOTES, 'UTF-8'); ?>">
+                                <?php echo htmlspecialchars($project['name'], ENT_QUOTES, 'UTF-8'); ?>
+                            </option>
+                        <?php endforeach; ?>
+                        <?php if (!$projects): ?>
+                            <option value="<?php echo htmlspecialchars(__DIR__, ENT_QUOTES, 'UTF-8'); ?>">DevPanel</option>
+                        <?php endif; ?>
+                    </select>
                     <button type="button" class="btn btn-outline-secondary" onclick="runQuickCommand('pwd')">pwd</button>
                     <button type="button" class="btn btn-outline-secondary" onclick="runQuickCommand('ls')">ls</button>
                     <button type="button" class="btn btn-outline-secondary" onclick="runQuickCommand('git status')">git</button>
                     <button type="button" class="btn btn-outline-secondary" onclick="runQuickCommand('php -v')">php</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="runQuickCommand('composer install')">composer</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="runQuickCommand('npm run build')">build</button>
+                    <button type="button" class="btn btn-outline-info" onclick="copyTerminalOutput()">
+                        Copiar
+                    </button>
                     <button type="button" class="btn btn-outline-danger" onclick="clearTerminal()">
                         Limpiar
                     </button>

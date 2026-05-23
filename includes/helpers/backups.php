@@ -12,6 +12,11 @@ function devpanelBackupIndexFile(): string
     return dirname(__DIR__, 2) . '/logs/backups.json';
 }
 
+function devpanelBackupSchedulesFile(): string
+{
+    return dirname(__DIR__, 2) . '/logs/backup_schedules.json';
+}
+
 function devpanelLoadBackups(): array
 {
     $file = devpanelBackupIndexFile();
@@ -36,6 +41,193 @@ function devpanelSaveBackups(array $items): bool
     }
 
     return file_put_contents($file, json_encode(array_values($items), JSON_PRETTY_PRINT), LOCK_EX) !== false;
+}
+
+function devpanelLoadBackupSchedules(): array
+{
+    $file = devpanelBackupSchedulesFile();
+
+    if (!file_exists($file))
+    {
+        return [];
+    }
+
+    $items = json_decode((string) file_get_contents($file), true);
+
+    return is_array($items) ? $items : [];
+}
+
+function devpanelSaveBackupSchedules(array $items): bool
+{
+    $file = devpanelBackupSchedulesFile();
+
+    if (!is_dir(dirname($file)) && !mkdir(dirname($file), 0755, true))
+    {
+        return false;
+    }
+
+    return file_put_contents($file, json_encode(array_values($items), JSON_PRETTY_PRINT), LOCK_EX) !== false;
+}
+
+function devpanelBackupScheduleIntervalSeconds(string $frequency): int
+{
+    return match ($frequency) {
+        'hourly' => 3600,
+        'weekly' => 604800,
+        default => 86400,
+    };
+}
+
+function devpanelSaveBackupSchedule(string $path, string $frequency, bool $enabled = true): ?array
+{
+    if (!is_dir($path) || !esRutaPermitida($path))
+    {
+        return null;
+    }
+
+    if (!in_array($frequency, ['hourly', 'daily', 'weekly'], true))
+    {
+        return null;
+    }
+
+    $items = devpanelLoadBackupSchedules();
+    $id = hash('sha256', $path);
+    $now = date('Y-m-d H:i:s');
+    $existing = null;
+
+    foreach ($items as $index => $item)
+    {
+        if (($item['id'] ?? '') === $id)
+        {
+            $existing = $item;
+            unset($items[$index]);
+            break;
+        }
+    }
+
+    $schedule = array_merge($existing ?: [], [
+        'id' => $id,
+        'project' => basename($path),
+        'path' => $path,
+        'frequency' => $frequency,
+        'enabled' => $enabled,
+        'updated_at' => $now,
+        'created_at' => $existing['created_at'] ?? $now,
+        'last_run_at' => $existing['last_run_at'] ?? null,
+        'last_file' => $existing['last_file'] ?? null,
+        'history' => $existing['history'] ?? [],
+    ]);
+
+    array_unshift($items, $schedule);
+
+    return devpanelSaveBackupSchedules($items) ? $schedule : null;
+}
+
+function devpanelDeleteBackupSchedule(string $id): bool
+{
+    $items = array_values(array_filter(
+        devpanelLoadBackupSchedules(),
+        static fn ($item) => ($item['id'] ?? '') !== $id
+    ));
+
+    return devpanelSaveBackupSchedules($items);
+}
+
+function devpanelFindBackupSchedule(string $id): ?array
+{
+    foreach (devpanelLoadBackupSchedules() as $item)
+    {
+        if (($item['id'] ?? '') === $id)
+        {
+            return $item;
+        }
+    }
+
+    return null;
+}
+
+function devpanelRecordBackupScheduleRun(array $schedule, array $backup, int $timestamp): array
+{
+    $history = $schedule['history'] ?? [];
+    array_unshift($history, [
+        'file' => $backup['file'] ?? '',
+        'size' => $backup['size'] ?? 0,
+        'created_at' => $backup['created_at'] ?? date('Y-m-d H:i:s', $timestamp),
+        'download' => $backup['download'] ?? '',
+    ]);
+
+    $schedule['last_run_at'] = date('Y-m-d H:i:s', $timestamp);
+    $schedule['last_file'] = $backup['file'] ?? null;
+    $schedule['history'] = array_slice($history, 0, 8);
+
+    return $schedule;
+}
+
+function devpanelRunBackupScheduleNow(string $id): ?array
+{
+    $items = devpanelLoadBackupSchedules();
+    $now = time();
+
+    foreach ($items as $index => $item)
+    {
+        if (($item['id'] ?? '') !== $id || empty($item['path']) || !is_dir($item['path']))
+        {
+            continue;
+        }
+
+        $backup = devpanelCreateProjectBackup($item['path']);
+
+        if (!$backup)
+        {
+            return null;
+        }
+
+        $items[$index] = devpanelRecordBackupScheduleRun($item, $backup, $now);
+        devpanelSaveBackupSchedules($items);
+
+        return [
+            'schedule' => $items[$index],
+            'backup' => $backup,
+        ];
+    }
+
+    return null;
+}
+
+function devpanelRunDueBackupSchedules(): array
+{
+    $items = devpanelLoadBackupSchedules();
+    $created = [];
+    $now = time();
+
+    foreach ($items as &$item)
+    {
+        if (empty($item['enabled']) || empty($item['path']) || !is_dir($item['path']))
+        {
+            continue;
+        }
+
+        $lastRun = !empty($item['last_run_at']) ? strtotime($item['last_run_at']) : 0;
+        $interval = devpanelBackupScheduleIntervalSeconds($item['frequency'] ?? 'daily');
+
+        if ($lastRun && ($now - $lastRun) < $interval)
+        {
+            continue;
+        }
+
+        $backup = devpanelCreateProjectBackup($item['path']);
+
+        if ($backup)
+        {
+            $item = devpanelRecordBackupScheduleRun($item, $backup, $now);
+            $created[] = $backup;
+        }
+    }
+
+    unset($item);
+    devpanelSaveBackupSchedules($items);
+
+    return $created;
 }
 
 function devpanelCreateProjectBackup(string $path): ?array
@@ -117,6 +309,77 @@ function devpanelFindBackup(string $file): ?array
     }
 
     return null;
+}
+
+function devpanelDeleteBackupFile(string $file): bool
+{
+    $backup = devpanelFindBackup($file);
+    $path = devpanelBackupsDir() . '/' . $file;
+
+    if (!$backup || !is_file($path))
+    {
+        return false;
+    }
+
+    if (!unlink($path))
+    {
+        return false;
+    }
+
+    $items = array_values(array_filter(
+        devpanelLoadBackups(),
+        static fn ($item) => ($item['file'] ?? '') !== $file
+    ));
+
+    $schedules = devpanelLoadBackupSchedules();
+    foreach ($schedules as &$schedule)
+    {
+        if (($schedule['last_file'] ?? '') === $file)
+        {
+            $schedule['last_file'] = null;
+        }
+
+        $schedule['history'] = array_values(array_filter(
+            $schedule['history'] ?? [],
+            static fn ($item) => ($item['file'] ?? '') !== $file
+        ));
+    }
+    unset($schedule);
+
+    devpanelSaveBackups($items);
+    devpanelSaveBackupSchedules($schedules);
+
+    return true;
+}
+
+function devpanelCleanupBackups(int $keep = 10): array
+{
+    $keep = max(1, min(100, $keep));
+    $items = devpanelLoadBackups();
+    $removed = [];
+
+    usort($items, static function ($a, $b) {
+        return strcmp($b['created_at'] ?? '', $a['created_at'] ?? '');
+    });
+
+    $keepFiles = array_flip(array_column(array_slice($items, 0, $keep), 'file'));
+
+    foreach ($items as $item)
+    {
+        $file = $item['file'] ?? '';
+
+        if ($file === '' || isset($keepFiles[$file]))
+        {
+            continue;
+        }
+
+        if (devpanelDeleteBackupFile($file))
+        {
+            $removed[] = $file;
+        }
+    }
+
+    return $removed;
 }
 
 function devpanelPreviewProjectBackup(string $file, int $limit = 120): ?array

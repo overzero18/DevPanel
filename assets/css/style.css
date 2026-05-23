@@ -299,6 +299,72 @@ body {
     margin-bottom: 10px;
 }
 
+.system-health-card {
+    display: grid;
+    gap: 16px;
+}
+
+.system-health-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+}
+
+.system-health-item {
+    min-width: 0;
+    min-height: 74px;
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr);
+    grid-template-areas:
+        "icon label"
+        "icon value";
+    align-items: center;
+    column-gap: 10px;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--bg-primary) 38%, transparent);
+}
+
+.system-health-item i {
+    grid-area: icon;
+    margin: 0;
+    font-size: 22px;
+}
+
+.system-health-item span {
+    grid-area: label;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    font-weight: 800;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.system-health-item strong {
+    grid-area: value;
+    font-size: 0.9rem;
+}
+
+.system-health-item.is-ok i,
+.system-health-item.is-ok strong {
+    color: var(--accent-secondary);
+}
+
+.system-health-item.is-warning i,
+.system-health-item.is-warning strong,
+.system-health-item.is-pending i,
+.system-health-item.is-pending strong {
+    color: var(--accent-warning);
+}
+
+.system-health-item.is-danger i,
+.system-health-item.is-danger strong {
+    color: var(--accent-danger);
+}
+
 .metric-card {
     min-height: 184px;
     display: flex;
@@ -590,6 +656,11 @@ body {
     color: var(--accent-warning);
 }
 
+.project-badges .is-internal {
+    border-color: color-mix(in srgb, var(--accent-primary) 36%, transparent);
+    color: var(--accent-primary);
+}
+
 .project-meta {
     display: grid;
     gap: 8px;
@@ -613,7 +684,7 @@ body {
 
 .project-actions {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
     gap: 8px;
 }
 
@@ -1511,6 +1582,14 @@ body {
     justify-content: flex-end;
 }
 
+.terminal-project-select {
+    width: min(100%, 220px);
+    min-height: 38px;
+    background-color: var(--bg-primary);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
 .terminal-favorites {
     display: flex;
     flex-wrap: wrap;
@@ -1532,6 +1611,77 @@ body {
 .terminal-favorite:hover {
     border-color: color-mix(in srgb, var(--accent-primary) 45%, transparent);
     color: var(--accent-primary);
+}
+
+.backup-schedule-panel,
+.log-health-panel {
+    display: grid;
+    gap: 12px;
+    margin: 14px 0;
+    padding: 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--bg-primary) 30%, transparent);
+}
+
+.log-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 10px;
+}
+
+.log-summary-card {
+    min-width: 0;
+    display: grid;
+    gap: 6px;
+    min-height: 118px;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--overlay);
+    color: var(--text-primary);
+    text-align: left;
+}
+
+.log-summary-card strong,
+.log-summary-card span,
+.log-summary-card small {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.log-summary-card span {
+    font-size: 1.05rem;
+    font-weight: 800;
+}
+
+.log-summary-card small {
+    display: -webkit-box;
+    color: var(--text-secondary);
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.log-summary-card.is-ok span {
+    color: var(--accent-secondary);
+}
+
+.log-summary-card.is-warning span {
+    color: var(--accent-warning);
+}
+
+.log-summary-card.is-danger span {
+    color: var(--accent-danger);
+}
+
+.CodeMirror {
+    width: 100%;
+    min-height: 420px;
+    height: 100%;
+    border-radius: 8px;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    font-size: 0.86rem;
 }
 
 .terminal-layout {

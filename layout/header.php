@@ -18,10 +18,20 @@
     <!-- xterm -->
     <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.css">
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.css">
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/theme/material-darker.css">
 
-    <link rel="stylesheet" href="/devpanel/assets/css/style.css">
-    <link rel="stylesheet" href="/devpanel/assets/css/admin.css">
-    <link rel="stylesheet" href="/devpanel/assets/css/docker.css">
+    <?php
+    $devpanelAssetVersion = static function (string $path): string {
+        $fullPath = dirname(__DIR__) . $path;
+        return is_file($fullPath) ? (string) filemtime($fullPath) : (string) time();
+    };
+    ?>
+    <link rel="stylesheet" href="/devpanel/assets/css/style.css?v=<?php echo $devpanelAssetVersion('/assets/css/style.css'); ?>">
+    <link rel="stylesheet" href="/devpanel/assets/css/admin.css?v=<?php echo $devpanelAssetVersion('/assets/css/admin.css'); ?>">
+    <link rel="stylesheet" href="/devpanel/assets/css/docker.css?v=<?php echo $devpanelAssetVersion('/assets/css/docker.css'); ?>">
     <?php
     // Load theme CSS if helper is available
     @include_once __DIR__ . '/../includes/helpers/theme.php';
