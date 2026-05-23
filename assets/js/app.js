@@ -1937,7 +1937,7 @@ function renderLogInsights(items)
         const row = document.createElement('div');
         row.className = `activity-item is-${item.severity || 'info'}`;
         const title = document.createElement('strong');
-        title.textContent = `${item.source} · ${item.severity}`;
+        title.textContent = `${item.source} · ${item.severity}${item.count > 1 ? ` · x${item.count}` : ''}`;
         const detail = document.createElement('small');
         detail.textContent = item.line;
         row.appendChild(title);
