@@ -434,7 +434,12 @@ function renderBackupRestoreTreeModal(backup, preview)
                     <span class="backup-restore-name">${escapeBackupHtml(file.name)}</span>
                     <span class="backup-restore-state">${backupFileStateLabel(file.current_state)}</span>
                     <span class="backup-restore-size">${formatBackupSize(file.size || 0)}</span>
+                    <button type="button" class="btn btn-sm btn-outline-info">Versiones</button>
                 `;
+                row.querySelector('button').addEventListener('click', event => {
+                    event.preventDefault();
+                    showBackupFileVersions(backup.project, file.name);
+                });
                 tree.appendChild(row);
             });
 
@@ -472,6 +477,36 @@ function renderBackupRestoreTreeModal(backup, preview)
 
     renderRows();
     bootstrap.Modal.getOrCreateInstance(modalElement).show();
+}
+
+async function showBackupFileVersions(project, file)
+{
+    try {
+        const response = await fetch(`/devpanel/api/backups/versions.php?project=${encodeURIComponent(project)}&file=${encodeURIComponent(file)}`);
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+
+        if (!data.success) {
+            showToast(data.message || 'No se pudieron cargar versiones', 'danger');
+            return;
+        }
+
+        const versions = data.versions || [];
+        const output = versions.length
+            ? versions.map(item => `${item.created_at} · ${item.backup} · ${formatBackupSize(item.size)} · ${(item.sha256 || '').slice(0, 12)}`).join('\n')
+            : 'Sin versiones para este archivo.';
+
+        await appConfirm(output, {
+            title: `Versiones · ${file}`,
+            confirmText: 'Cerrar'
+        });
+    }
+    catch(error) {
+        console.error(error);
+        showToast('Error cargando versiones', 'danger');
+    }
 }
 
 function showBackupHistoryModal(title, history)

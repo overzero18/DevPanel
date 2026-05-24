@@ -65,6 +65,7 @@ The project provides a modern interface to manage services, projects, deployment
 * Persistent notification center
 * Docker detection and container actions
 * Docker Compose detection and basic actions
+* Docker Compose editor with validation
 * Local domains helper for `.test` Apache vhosts
 * Optional automatic local domain apply with sudo fallback commands
 * Local domain response check
@@ -72,6 +73,7 @@ The project provides a modern interface to manage services, projects, deployment
 * Visual backup restore by file tree
 * Docker setup assistant with install commands and daemon checks
 * Local project template marketplace
+* Template preview before import
 
 ## 🎨 UI
 
@@ -84,6 +86,7 @@ The project provides a modern interface to manage services, projects, deployment
 * Optional users and roles configuration
 * Per-action permissions for sensitive actions
 * Browser-local theme customizer
+* Theme preset export/import
 * First-run onboarding checklist
 
 ---
@@ -257,6 +260,7 @@ Then update `/config.php` with the generated hash.
 * ✅ Delete individual backups and clean old backup history from UI
 * ✅ Backup restore with safety backup
 * ✅ Backup preview and restore into a new folder
+* ✅ Per-file backup version history
 * ✅ Backup compare hints before restore
 * ✅ Cron-ready backup runner
 * ✅ Log insights
@@ -464,6 +468,11 @@ Add that command to cron if you want DevPanel to execute the schedules created f
 * Dashboard onboarding checklist
 * Functional smoke script for real write/restore/import workflows
 * Smarter project-aware log suggestions
+* Per-file backup version history
+* Template preview before import
+* Docker Compose editor with validation
+* Theme customizer preset export/import
+* More granular DB, Git and File Manager permissions
 
 API token example:
 

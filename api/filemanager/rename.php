@@ -8,6 +8,7 @@ header('Content-Type: application/json');
 authenticateSession();
 requirePermission('files');
 requirePermission('files.write');
+requirePermission('files.rename');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST')
 {

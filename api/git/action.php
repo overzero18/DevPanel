@@ -29,6 +29,16 @@ $branch = trim($_POST['branch'] ?? '');
 $remoteUrl = trim($_POST['remote_url'] ?? devpanelConfig('GITHUB_REMOTE_URL', ''));
 $target = trim($_POST['target'] ?? '');
 
+if ($action === 'pull')
+{
+    requirePermission('git.pull');
+}
+
+if ($action === 'push')
+{
+    requirePermission('git.push');
+}
+
 function devpanelValidateGitBranch(string $branch): bool
 {
     return preg_match('/^[a-zA-Z0-9._\/-]{1,120}$/', $branch) === 1

@@ -108,7 +108,9 @@ cat > "$TEST_FILE" <<'HTML'
                 '#configImportFile',
                 '#dashboardWidgetSettings',
                 '#template-marketplace',
+                '#templateImportPreview',
                 '#theme-customizer',
+                '#themePresetImportFile',
                 '[onclick*="saveRuntimeSettings"]',
                 '[onclick*="saveGithubSettings"]'
             ]),
@@ -135,7 +137,8 @@ cat > "$TEST_FILE" <<'HTML'
                 '#fileManagerUpload'
             ]),
             ...assertSelectors('docker', dashboardDoc, [
-                '#dockerSetupAssistant'
+                '#dockerSetupAssistant',
+                '#dockerComposeList'
             ]),
             ...assertSelectors('audit', auditDoc, [
                 '#auditList',

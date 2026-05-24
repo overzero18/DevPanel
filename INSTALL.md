@@ -245,6 +245,8 @@ Formato:
 - 🧩 **Marketplace de plantillas** - Importa/exporta plantillas JSON locales
 - 🎛️ **Personalizador visual** - Acentos, densidad y ancho de sidebar por navegador
 - 🧰 **Asistente Docker** - Instalación, daemon, grupo y comandos recomendados
+- 🧾 **Editor Compose** - Edita y valida `docker-compose.yml` desde el panel
+- 🕘 **Versionado de backups** - Consulta versiones por archivo dentro del historial
 - 📦 **Descargar ZIP** - Comprime proyectos (excluye node_modules, .git)
 - 🚀 **Deploy FTP** - Sube proyectos a servidores remotos
 - 🔧 **Control de Servicios** - Start/Stop/Restart Apache y MySQL

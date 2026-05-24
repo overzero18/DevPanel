@@ -403,11 +403,25 @@ function currentUserCan($permission)
     $roles = $config['DEVPANEL_ROLES'] ?? ['admin' => ['*']];
     $permissions = $roles[getCurrentUserRole()] ?? ['*'];
     $parents = function_exists('devpanelPermissionParents') ? devpanelPermissionParents() : [];
-    $parent = $parents[$permission] ?? null;
 
-    return in_array('*', $permissions, true)
-        || in_array($permission, $permissions, true)
-        || ($parent !== null && in_array($parent, $permissions, true));
+    if (in_array('*', $permissions, true))
+    {
+        return true;
+    }
+
+    $current = $permission;
+
+    while ($current !== null)
+    {
+        if (in_array($current, $permissions, true))
+        {
+            return true;
+        }
+
+        $current = $parents[$current] ?? null;
+    }
+
+    return false;
 }
 
 function requirePermission($permission)

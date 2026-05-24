@@ -1405,7 +1405,7 @@ body.density-compact .activity-item {
 
 .backup-restore-row {
     display: grid;
-    grid-template-columns: 22px minmax(0, 1fr) 140px 90px;
+    grid-template-columns: 22px minmax(0, 1fr) 140px 90px 96px;
     gap: 10px;
     align-items: center;
     padding: 9px 12px;
@@ -1528,6 +1528,58 @@ body.density-compact .activity-item {
     border-radius: 8px;
     background: color-mix(in srgb, var(--bg-primary) 34%, transparent);
     font-weight: 800;
+}
+
+.template-preview-panel {
+    display: grid;
+    gap: 10px;
+    margin-top: 12px;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--bg-primary) 34%, transparent);
+}
+
+.template-preview-header,
+.template-preview-file {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.template-preview-header small,
+.template-preview-file small {
+    color: var(--text-muted);
+}
+
+.template-preview-files {
+    display: grid;
+    gap: 7px;
+}
+
+.template-preview-file span {
+    min-width: 0;
+    overflow: hidden;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.compose-editor-textarea {
+    min-height: 420px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.compose-editor-output {
+    min-height: 90px;
+    max-height: 220px;
+    overflow: auto;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--bg-primary) 50%, transparent);
+    color: var(--text-secondary);
+    white-space: pre-wrap;
 }
 
 .text-muted,

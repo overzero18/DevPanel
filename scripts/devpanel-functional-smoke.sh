@@ -65,6 +65,9 @@ test -n "$backup_file"
 preview_response="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/api/backups/preview.php?file=$backup_file&limit=1000")"
 expect_json_success "$preview_response"
 grep -q 'alpha.txt' <<< "$preview_response"
+versions_response="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/api/backups/versions.php?project=functional-smoke-project&file=alpha.txt")"
+expect_json_success "$versions_response"
+grep -q "$backup_file" <<< "$versions_response"
 
 echo "[4/7] Selective restore"
 change_file_response="$(curl -s -b "$COOKIE_FILE" \

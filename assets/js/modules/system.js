@@ -140,6 +140,7 @@ document.addEventListener("DOMContentLoaded", () =>
         loadSecuritySettings();
         setupDashboardWidgetSettings();
         setupThemeCustomizer();
+        setupTemplateImportPreview();
         loadProjectTemplatesMarketplace();
     }
 });
@@ -325,6 +326,53 @@ async function importProjectTemplateFromFile()
     }
 }
 
+function setupTemplateImportPreview()
+{
+    const input = document.getElementById('templateImportFile');
+
+    if (!input) return;
+
+    input.addEventListener('change', previewProjectTemplateFile);
+}
+
+async function previewProjectTemplateFile()
+{
+    const input = document.getElementById('templateImportFile');
+    const container = document.getElementById('templateImportPreview');
+    const file = input?.files?.[0];
+
+    if (!container) return;
+
+    if (!file) {
+        container.innerHTML = '<div class="file-manager-empty">Selecciona una plantilla para ver su contenido antes de importarla.</div>';
+        return;
+    }
+
+    try {
+        const data = JSON.parse(await file.text());
+        const files = Object.entries(data.files || {});
+
+        container.innerHTML = `
+            <div class="template-preview-header">
+                <strong>${escapeSystemHtml(data.label || data.key || file.name)}</strong>
+                <small>${escapeSystemHtml(data.description || 'Sin descripción')}</small>
+            </div>
+            <div class="template-preview-files">
+                ${files.slice(0, 20).map(([path, content]) => `
+                    <div class="template-preview-file">
+                        <span>${escapeSystemHtml(path)}</span>
+                        <small>${String(content || '').length} caracteres</small>
+                    </div>
+                `).join('')}
+                ${files.length > 20 ? `<div class="file-manager-empty">${files.length - 20} archivos más</div>` : ''}
+            </div>
+        `;
+    }
+    catch(error) {
+        container.innerHTML = '<div class="file-manager-empty">JSON inválido.</div>';
+    }
+}
+
 function escapeSystemHtml(value)
 {
     return String(value)
@@ -401,6 +449,53 @@ function resetThemeCustomizer()
     document.body.classList.remove('density-compact');
     setupThemeCustomizer();
     showToast('Personalización reiniciada', 'success');
+}
+
+function exportThemePreset()
+{
+    const settings = getThemeCustomizerSettings();
+    const blob = new Blob([JSON.stringify({
+        type: 'devpanel-theme-preset',
+        version: 1,
+        settings
+    }, null, 2)], {type: 'application/json'});
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `devpanel-theme-preset-${Date.now()}.json`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+}
+
+async function importThemePreset()
+{
+    const input = document.getElementById('themePresetImportFile');
+    const file = input?.files?.[0];
+
+    if (!file) {
+        showToast('Selecciona un preset JSON', 'danger');
+        return;
+    }
+
+    try {
+        const data = JSON.parse(await file.text());
+        const settings = data.settings || data;
+        const next = {
+            primary: /^#[0-9a-fA-F]{6}$/.test(settings.primary || '') ? settings.primary : '#4f9ef9',
+            secondary: /^#[0-9a-fA-F]{6}$/.test(settings.secondary || '') ? settings.secondary : '#10d981',
+            density: settings.density === 'compact' ? 'compact' : 'comfortable',
+            sidebarWidth: Math.max(220, Math.min(320, Number(settings.sidebarWidth || 260))),
+        };
+
+        localStorage.setItem(themeCustomizerStorageKey(), JSON.stringify(next));
+        input.value = '';
+        setupThemeCustomizer();
+        applyThemeCustomizer();
+        showToast('Preset aplicado', 'success');
+    }
+    catch(error) {
+        console.error(error);
+        showToast('Preset inválido', 'danger');
+    }
 }
 
 applyThemeCustomizer();

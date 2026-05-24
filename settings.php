@@ -80,6 +80,10 @@ $runtimeSettings = devpanelConfig();
                 </button>
             </div>
 
+            <div class="template-preview-panel" id="templateImportPreview">
+                <div class="file-manager-empty">Selecciona una plantilla para ver su contenido antes de importarla.</div>
+            </div>
+
             <div class="database-list" id="projectTemplateMarketplace">
                 <div class="file-manager-empty">Cargando plantillas...</div>
             </div>
@@ -117,6 +121,17 @@ $runtimeSettings = devpanelConfig();
                     Sidebar
                     <input type="range" id="themeSidebarWidth" class="form-range" min="220" max="320" step="10" value="260">
                 </label>
+            </div>
+            <div class="database-toolbar mt-3">
+                <button type="button" class="btn btn-outline-info" onclick="exportThemePreset()">
+                    <i class="bi bi-download"></i>
+                    Exportar preset
+                </button>
+                <input type="file" id="themePresetImportFile" class="form-control" accept="application/json">
+                <button type="button" class="btn btn-outline-warning" onclick="importThemePreset()">
+                    <i class="bi bi-upload"></i>
+                    Importar preset
+                </button>
             </div>
         </section>
 

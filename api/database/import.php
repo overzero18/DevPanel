@@ -7,6 +7,7 @@ header('Content-Type: application/json');
 
 authenticateSession();
 requirePermission('database');
+requirePermission('database.import');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST')
 {

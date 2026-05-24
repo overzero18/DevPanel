@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../includes/helpers/database.php';
 
 authenticateSession();
 requirePermission('database');
+requirePermission('database.export');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET')
 {

@@ -168,6 +168,13 @@ function renderDockerCompose(files)
             actions.appendChild(button);
         });
 
+        const edit = document.createElement('button');
+        edit.type = 'button';
+        edit.className = 'btn btn-sm btn-outline-info';
+        edit.textContent = 'editar';
+        edit.addEventListener('click', () => openComposeEditor(file.path));
+        actions.appendChild(edit);
+
         row.appendChild(info);
         row.appendChild(actions);
         container.appendChild(row);
@@ -204,6 +211,97 @@ function renderDockerCompose(files)
             container.appendChild(services);
         }
     });
+}
+
+async function openComposeEditor(path)
+{
+    try {
+        const response = await fetch(`/devpanel/api/docker/compose_file.php?path=${encodeURIComponent(path)}`);
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+
+        if (!data.success) {
+            showToast(data.message || 'No se pudo abrir compose', 'danger');
+            return;
+        }
+
+        renderComposeEditor(data.path, data.content || '', data.writable);
+    }
+    catch(error) {
+        console.error(error);
+        showToast('Error abriendo compose', 'danger');
+    }
+}
+
+function renderComposeEditor(path, content, writable)
+{
+    let modalElement = document.getElementById('composeEditorModal');
+
+    if (!modalElement) {
+        modalElement = document.createElement('div');
+        modalElement.className = 'modal fade';
+        modalElement.id = 'composeEditorModal';
+        modalElement.tabIndex = -1;
+        modalElement.innerHTML = `
+            <div class="modal-dialog modal-dialog-centered modal-xl">
+                <div class="modal-content app-dialog">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="composeEditorTitle"></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <textarea class="form-control compose-editor-textarea" id="composeEditorContent"></textarea>
+                        <pre class="compose-editor-output mt-3" id="composeEditorOutput"></pre>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-info" id="composeEditorValidate">Validar</button>
+                        <button type="button" class="btn btn-devpanel" id="composeEditorSave">Guardar</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modalElement);
+    }
+
+    modalElement.querySelector('#composeEditorTitle').textContent = path;
+    modalElement.querySelector('#composeEditorContent').value = content;
+    modalElement.querySelector('#composeEditorSave').disabled = !writable;
+    modalElement.querySelector('#composeEditorOutput').textContent = writable ? 'Listo para validar.' : 'Archivo solo lectura.';
+    modalElement.querySelector('#composeEditorValidate').onclick = () => validateComposeEditor(path, false);
+    modalElement.querySelector('#composeEditorSave').onclick = () => validateComposeEditor(path, true);
+    bootstrap.Modal.getOrCreateInstance(modalElement).show();
+}
+
+async function validateComposeEditor(path, save)
+{
+    const content = document.getElementById('composeEditorContent')?.value || '';
+    const output = document.getElementById('composeEditorOutput');
+    const formData = new URLSearchParams();
+    formData.append('path', path);
+    formData.append('content', content);
+    formData.append('mode', save ? 'save' : 'validate');
+    formData.append('csrf_token', csrfToken);
+
+    try {
+        const response = await fetch('/devpanel/api/docker/compose_file.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: formData
+        });
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+        if (output) output.textContent = data.output || data.message || '';
+        showToast(data.message || 'Compose validado', data.success ? 'success' : 'danger');
+        if (data.success && save) loadDockerCompose();
+    }
+    catch(error) {
+        console.error(error);
+        showToast('Error validando compose', 'danger');
+    }
 }
 
 function createComposeHealthChart(summary)
