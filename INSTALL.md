@@ -176,9 +176,11 @@ También puedes usar el helper local:
 ```bash
 ./scripts/fix-local-permissions.sh
 FIX_HTDOCS=1 ./scripts/fix-local-permissions.sh
+FIX_DOCKER=1 APACHE_USER=daemon ./scripts/fix-local-permissions.sh
 ```
 
 La segunda línea pide `sudo` y permite crear/clonar proyectos directamente en `/opt/lampp/htdocs`.
+La tercera línea pide `sudo` y repara el acceso local al socket de Docker para tu usuario y para Apache/XAMPP. Tras añadir el grupo `docker`, cierra sesión y vuelve a entrar para que quede aplicado de forma normal.
 
 ## 🌍 Publicar en GitHub
 

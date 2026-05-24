@@ -66,8 +66,19 @@ check_writable "$HTDOCS_DIR" "htdocs escritura"
 
 if command -v docker >/dev/null 2>&1; then
     print_check ok "Docker" "$(docker --version 2>/dev/null || true)"
+    if docker ps >/dev/null 2>&1; then
+        print_check ok "Docker daemon" "Docker responde correctamente"
+    else
+        print_check warn "Docker daemon" "sin acceso al socket; usa FIX_DOCKER=1"
+    fi
 else
     print_check warn "Docker" "no instalado o fuera de PATH"
+fi
+
+if command -v qrencode >/dev/null 2>&1; then
+    print_check ok "qrencode" "$(qrencode --version 2>&1 | head -n 1)"
+else
+    print_check warn "qrencode" "opcional para QR 2FA real"
 fi
 
 if command -v git >/dev/null 2>&1; then
@@ -90,6 +101,7 @@ if (( warn > 0 )); then
     echo "Para permisos locales puedes ejecutar:"
     echo "  APACHE_USER=$APACHE_USER ./scripts/fix-local-permissions.sh"
     echo "  FIX_HTDOCS=1 APACHE_USER=$APACHE_USER ./scripts/fix-local-permissions.sh"
+    echo "  FIX_DOCKER=1 APACHE_USER=$APACHE_USER ./scripts/fix-local-permissions.sh"
 fi
 
 exit "$fail"
