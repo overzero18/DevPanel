@@ -43,61 +43,117 @@ cat > "$TEST_FILE" <<'HTML'
 
         if (!loginData.success) throw new Error('login failed');
 
-        const dashboardResponse = await fetch('/devpanel/index.php');
-        const dashboard = await dashboardResponse.text();
-        const doc = new DOMParser().parseFromString(dashboard, 'text/html');
-        const settingsResponse = await fetch('/devpanel/settings.php');
-        const settings = await settingsResponse.text();
-        const settingsDoc = new DOMParser().parseFromString(settings, 'text/html');
-        const auditResponse = await fetch('/devpanel/audit.php');
-        const audit = await auditResponse.text();
-        const auditDoc = new DOMParser().parseFromString(audit, 'text/html');
-        const required = [
-            '#systemHealthGrid',
-            '#terminalWorkingDirectory',
-            '#terminal',
-            '#fileManagerContent',
-            '#logSummaryGrid',
-            '#backupScheduleList',
-            '[onclick*="openProjectTerminal"]',
-            '[onclick*="copyTerminalOutput"]',
-            '[onclick*="saveBackupSchedule"]',
-            'script[src*="modules/terminal.js?v="]',
-            'script[src*="modules/logs.js?v="]',
-            'link[href*="style.css?v="]',
-            'script[src*="codemirror"]'
-        ];
-        const settingsRequired = [
-            '#permissionsList',
-            '#runtime-settings',
-            '#security-settings',
-            '#githubRemoteUrl',
-            '#apiTokenList',
-            '#apiTokenExpiry',
-            '#twoFactorToggle',
-            '#twoFactorQr',
-            '#configImportFile',
-            '[onclick*="saveRuntimeSettings"]',
-            '[onclick*="saveGithubSettings"]'
-        ];
-        const auditRequired = [
-            '#auditList',
-            '#auditSearch',
-            '#auditAction',
-            '#auditUser'
-        ];
+        const loadDoc = async (path) => {
+            const response = await fetch(path);
+            if (!response.ok) throw new Error(`${path} returned ${response.status}`);
+            return new DOMParser().parseFromString(await response.text(), 'text/html');
+        };
+
+        const assertSelectors = (label, doc, selectors) => {
+            return selectors
+                .filter(selector => !doc.querySelector(selector))
+                .map(selector => `${label} ${selector}`);
+        };
+
+        const dashboardDoc = await loadDoc('/devpanel/index.php');
+        const installDoc = await loadDoc('/devpanel/install.php');
+        const doctorDoc = await loadDoc('/devpanel/doctor.php');
+        const settingsDoc = await loadDoc('/devpanel/settings.php');
+        const usersDoc = await loadDoc('/devpanel/users.php');
+        const projectsDoc = await loadDoc('/devpanel/projects.php');
+        const fileManagerDoc = await loadDoc('/devpanel/filemanager.php');
+        const auditDoc = await loadDoc('/devpanel/audit.php');
+
         const missing = [
-            ...required.filter(selector => !doc.querySelector(selector)),
-            ...settingsRequired
-                .filter(selector => !settingsDoc.querySelector(selector))
-                .map(selector => `settings ${selector}`),
-            ...auditRequired
-                .filter(selector => !auditDoc.querySelector(selector))
-                .map(selector => `audit ${selector}`)
+            ...assertSelectors('dashboard', dashboardDoc, [
+                '#systemHealthGrid',
+                '#terminalWorkingDirectory',
+                '#terminal',
+                '#fileManagerContent',
+                '#logSummaryGrid',
+                '#backupScheduleList',
+                '[onclick*="openProjectTerminal"]',
+                '[onclick*="copyTerminalOutput"]',
+                '[onclick*="saveBackupSchedule"]',
+                'script[src*="modules/terminal.js?v="]',
+                'script[src*="modules/logs.js?v="]',
+                'link[href*="style.css?v="]',
+                'script[src*="codemirror"]'
+            ]),
+            ...assertSelectors('install', installDoc, [
+                '.install-page',
+                '.install-summary-grid',
+                '.install-step-list',
+                '.doctor-check-list',
+                '.doctor-command-list',
+                'a[href="/devpanel/doctor.php"]'
+            ]),
+            ...assertSelectors('doctor', doctorDoc, [
+                '.doctor-summary-grid',
+                '.doctor-check-list',
+                '.doctor-command-list',
+                '.doctor-summary-card.is-info'
+            ]),
+            ...assertSelectors('settings', settingsDoc, [
+                '#permissionsList',
+                '#runtime-settings',
+                '#security-settings',
+                '#githubRemoteUrl',
+                '#apiTokenList',
+                '#apiTokenExpiry',
+                '#twoFactorToggle',
+                '#twoFactorQr',
+                '#configImportFile',
+                '#dashboardWidgetSettings',
+                '[onclick*="saveRuntimeSettings"]',
+                '[onclick*="saveGithubSettings"]'
+            ]),
+            ...assertSelectors('users', usersDoc, [
+                '#adminUserName',
+                '#adminUserRole',
+                '#adminUserProjects',
+                '#adminUsersList',
+                '#adminPermissionsList',
+                '#adminRolesList',
+                '[onclick*="saveAdminUser"]'
+            ]),
+            ...assertSelectors('projects', projectsDoc, [
+                '.content',
+                'a[href="/devpanel/index.php#projects"]',
+                '.project-detail-card, .file-manager-empty'
+            ]),
+            ...assertSelectors('filemanager', fileManagerDoc, [
+                '#fileManagerContent',
+                '#fileManagerTree',
+                '#fileManagerPath',
+                '#fileEditorStatus',
+                '[onclick*="createFileManagerFile"]',
+                '#fileManagerUpload'
+            ]),
+            ...assertSelectors('audit', auditDoc, [
+                '#auditList',
+                '#auditSearch',
+                '#auditAction',
+                '#auditUser',
+                '[onclick*="loadAuditLog"]'
+            ])
         ];
 
         if (missing.length) {
             throw new Error(`missing ${missing.join(', ')}`);
+        }
+
+        const jsonChecks = [
+            ['/devpanel/api/logs/summary.php', 'logs summary'],
+            ['/devpanel/api/permissions.php', 'permissions'],
+            ['/devpanel/api/users/list.php', 'users list'],
+            ['/devpanel/api/backups/schedules.php', 'backup schedules']
+        ];
+
+        for (const [path, label] of jsonChecks) {
+            const response = await fetch(path);
+            if (!response.ok) throw new Error(`${label} returned ${response.status}`);
+            await response.json();
         }
 
         result.textContent = 'VISUAL_SMOKE_OK';

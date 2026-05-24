@@ -11,6 +11,14 @@ DevPanel es un panel de administración para XAMPP. Gestiona fácilmente tu serv
 
 ## 🔧 Instalación
 
+Antes o después del setup puedes abrir el instalador guiado:
+
+```text
+http://localhost/devpanel/install.php
+```
+
+Esa pantalla resume el estado real de `config.php`, permisos, XAMPP, Git, Docker opcional, `qrencode` opcional y logs. También muestra los comandos recomendados para corregir el entorno local.
+
 ### 1. **Descargar y Posicionar**
 
 ```bash
@@ -188,12 +196,18 @@ Checklist rápido antes de publicar:
 git status --short
 find . -name '*.php' -print0 | xargs -0 -n1 /opt/lampp/bin/php -l
 git diff --check
+DEVPANEL_TEST_PASSWORD=tu_password ./scripts/devpanel-api-smoke.sh
+DEVPANEL_TEST_PASSWORD=tu_password ./scripts/devpanel-visual-smoke.sh
 ```
 
 También revisa en el navegador:
 
 - Login
 - Dashboard
+- Instalador guiado
+- Doctor
+- Usuarios
+- Proyectos
 - Permisos del sistema
 - File Manager
 - Logs
@@ -224,6 +238,8 @@ Formato:
 - 🗄️ **MariaDB Manager** - Crear, importar, exportar y eliminar bases de datos
 - 🎨 **Temas** - Dark, Cyber, Ubuntu y Glass
 - ✅ **Diagnóstico de Permisos** - Detecta rutas sin escritura/lectura
+- 🧭 **Instalador guiado** - Resume preparación, pasos recomendados y checks
+- 🧪 **Smoke visual** - Comprueba pantallas y controles críticos con Chromium
 - 📦 **Descargar ZIP** - Comprime proyectos (excluye node_modules, .git)
 - 🚀 **Deploy FTP** - Sube proyectos a servidores remotos
 - 🔧 **Control de Servicios** - Start/Stop/Restart Apache y MySQL

@@ -254,8 +254,8 @@ Then update `/config.php` with the generated hash.
 * ✅ Cron-ready backup runner
 * ✅ Log insights
 * ✅ API smoke test script for dashboard, assets, terminal, Git, File Manager and APIs
-* ✅ Visual Chromium smoke test for dashboard controls
-* ✅ Guided local installer/checklist
+* ✅ Visual Chromium smoke test for dashboard, installer, Doctor, users, projects, File Manager, settings and audit controls
+* ✅ Guided installer with readiness summary, actionable steps and Doctor checks
 * ✅ Permissions diagnostics
 * ✅ Dedicated settings page
 * ✅ System monitor
@@ -407,6 +407,8 @@ DEVPANEL_TEST_PASSWORD=your_local_password DEVPANEL_SMOKE_WRITE=1 ./scripts/devp
 
 The normal smoke test checks login, dashboard HTML, JS/CSS assets, permissions, logs, notifications, users, domains, backups, scheduled-backup endpoints, Docker detection, system stats, terminal, Git status and File Manager listing.
 
+The visual smoke test checks the dashboard, installer, Doctor, settings, users, projects, File Manager and audit pages so missing controls are caught before publishing.
+
 Scheduled backups use the due runner:
 
 ```bash
@@ -435,6 +437,8 @@ Add that command to cron if you want DevPanel to execute the schedules created f
 * Dashboard widget visibility preferences
 * Project-aware log insights
 * Selective backup file restore
+* Guided installer with readiness summary and actionable checks
+* Expanded visual smoke coverage for the main project pages
 
 API token example:
 

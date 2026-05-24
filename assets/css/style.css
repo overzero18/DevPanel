@@ -1201,6 +1201,149 @@ body {
     white-space: nowrap;
 }
 
+.install-page {
+    max-width: 1440px;
+    margin: 0 auto;
+}
+
+.install-hero {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 22px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--bg-secondary) 78%, transparent);
+}
+
+.install-kicker {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--accent-primary);
+    font-size: 0.8rem;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.install-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.install-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 18px;
+}
+
+.install-summary-card {
+    display: grid;
+    gap: 8px;
+    min-height: 118px;
+}
+
+.install-summary-card span {
+    color: var(--text-muted);
+    font-weight: 800;
+}
+
+.install-summary-card strong {
+    color: var(--text-primary);
+    font-size: 2rem;
+}
+
+.install-summary-card.is-ok strong {
+    color: var(--accent-secondary);
+}
+
+.install-summary-card.is-warning strong {
+    color: var(--accent-warning);
+}
+
+.install-summary-card.is-info strong {
+    color: var(--accent-primary);
+}
+
+.install-progress {
+    width: 100%;
+    height: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--bg-primary) 70%, transparent);
+}
+
+.install-progress span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+}
+
+.install-step-list {
+    display: grid;
+    gap: 12px;
+}
+
+.install-step {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr);
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--bg-primary) 34%, transparent);
+}
+
+.install-step > span {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--accent-primary) 16%, transparent);
+    color: var(--accent-primary);
+    font-weight: 900;
+}
+
+.install-step strong,
+.install-step small,
+.install-step code,
+.install-step a {
+    display: block;
+    min-width: 0;
+}
+
+.install-step small {
+    color: var(--text-muted);
+}
+
+.install-step code {
+    margin-top: 6px;
+    overflow-x: auto;
+    color: var(--accent-primary);
+    white-space: nowrap;
+}
+
+.install-step a {
+    margin-top: 6px;
+    color: var(--accent-primary);
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.install-step.is-ok > span {
+    background: color-mix(in srgb, var(--accent-secondary) 16%, transparent);
+    color: var(--accent-secondary);
+}
+
+.install-step.is-active {
+    border-color: color-mix(in srgb, var(--accent-primary) 42%, var(--border-color));
+}
+
 .text-muted,
 .text-secondary {
     color: var(--text-muted) !important;
@@ -1945,6 +2088,10 @@ body {
         grid-template-columns: 1fr;
     }
 
+    .install-summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .terminal-history-panel {
         max-height: 320px;
     }
@@ -1989,9 +2136,15 @@ body {
     }
 
     .section-title-row,
+    .install-hero,
     .process-row {
         align-items: flex-start;
         flex-direction: column;
+    }
+
+    .install-actions,
+    .install-actions .btn {
+        width: 100%;
     }
 
     .project-summary,
@@ -2015,6 +2168,7 @@ body {
     }
 
     .doctor-summary-grid,
+    .install-summary-grid,
     .doctor-command {
         grid-template-columns: 1fr;
     }
