@@ -2,6 +2,7 @@ let adminUsersState = {
     users: [],
     roles: [],
     permissions: {},
+    projects: [],
     currentUser: ''
 };
 
@@ -28,6 +29,7 @@ async function loadUsersAdmin()
             users: data.users || [],
             roles: data.roles || [],
             permissions: data.permissions || {},
+            projects: data.projects || [],
             currentUser: data.current_user || ''
         };
 
@@ -46,8 +48,9 @@ function renderUsersAdmin()
 {
     const list = document.getElementById('adminUsersList');
     const roleSelect = document.getElementById('adminUserRole');
+    const projectSelect = document.getElementById('adminUserProjects');
 
-    if (!list || !roleSelect) return;
+    if (!list || !roleSelect || !projectSelect) return;
 
     roleSelect.innerHTML = '';
     adminUsersState.roles.forEach(role => {
@@ -55,6 +58,18 @@ function renderUsersAdmin()
         option.value = role.name;
         option.textContent = role.name;
         roleSelect.appendChild(option);
+    });
+
+    projectSelect.innerHTML = '';
+    const allOption = document.createElement('option');
+    allOption.value = '*';
+    allOption.textContent = 'Todos los proyectos';
+    projectSelect.appendChild(allOption);
+    adminUsersState.projects.forEach(project => {
+        const option = document.createElement('option');
+        option.value = project.name;
+        option.textContent = project.name;
+        projectSelect.appendChild(option);
     });
 
     list.innerHTML = '';
@@ -79,7 +94,7 @@ function renderUsersAdmin()
         const name = document.createElement('strong');
         name.textContent = user.name;
         const meta = document.createElement('small');
-        meta.textContent = `Rol: ${user.role}`;
+        meta.textContent = `Rol: ${user.role} · Proyectos: ${(user.projects || ['*']).includes('*') ? 'todos' : (user.projects || []).join(', ')}`;
         text.appendChild(name);
         text.appendChild(meta);
         info.appendChild(icon);
@@ -115,6 +130,10 @@ function fillUserForm(user)
     document.getElementById('adminUserName').value = user.name;
     document.getElementById('adminUserRole').value = user.role;
     document.getElementById('adminUserPassword').value = '';
+    const access = user.projects || ['*'];
+    [...document.getElementById('adminUserProjects').options].forEach(option => {
+        option.selected = access.includes(option.value);
+    });
 }
 
 async function saveAdminUser()
@@ -122,11 +141,13 @@ async function saveAdminUser()
     const name = document.getElementById('adminUserName')?.value.trim() || '';
     const password = document.getElementById('adminUserPassword')?.value || '';
     const role = document.getElementById('adminUserRole')?.value || 'viewer';
+    const projects = [...(document.getElementById('adminUserProjects')?.selectedOptions || [])].map(option => option.value);
 
     const formData = new URLSearchParams();
     formData.append('name', name);
     formData.append('password', password);
     formData.append('role', role);
+    (projects.length ? projects : ['*']).forEach(project => formData.append('projects[]', project));
     formData.append('csrf_token', csrfToken);
 
     try
@@ -310,4 +331,3 @@ document.addEventListener('DOMContentLoaded', () => {
         loadUsersAdmin();
     }
 });
-

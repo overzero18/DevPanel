@@ -1,5 +1,5 @@
 <!-- Terminal -->
-<div class="row mt-5">
+<div class="row mt-5" id="terminal-section">
 
     <div class="col-12">
 

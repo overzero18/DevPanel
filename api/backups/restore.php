@@ -24,7 +24,9 @@ if (!validateCsrfToken())
 
 $file = basename((string) ($_POST['file'] ?? ''));
 $restoreAsNew = ($_POST['mode'] ?? '') === 'new';
-$result = devpanelRestoreProjectBackup($file, $restoreAsNew);
+$files = $_POST['files'] ?? [];
+$files = is_array($files) ? $files : [$files];
+$result = devpanelRestoreProjectBackup($file, $restoreAsNew, $files);
 
 if (!$result)
 {

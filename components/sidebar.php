@@ -14,16 +14,16 @@ $primaryLinks = [
         'match' => ['index.php'],
     ],
     [
-        'url' => '/devpanel/index.php#projects',
+        'url' => '/devpanel/projects.php',
         'icon' => 'folder-fill',
         'label' => 'Proyectos',
-        'match' => [],
+        'match' => ['projects.php'],
     ],
     [
-        'url' => '/devpanel/index.php#file-manager',
+        'url' => '/devpanel/filemanager.php',
         'icon' => 'files',
         'label' => 'File Manager',
-        'match' => [],
+        'match' => ['filemanager.php'],
     ],
     [
         'url' => '/devpanel/index.php#logsContainer',

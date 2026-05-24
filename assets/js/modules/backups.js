@@ -297,6 +297,12 @@ function renderBackups(backups)
         restoreNew.textContent = 'Restaurar copia';
         restoreNew.addEventListener('click', () => restoreProjectBackup(backup, true));
 
+        const restoreSelected = document.createElement('button');
+        restoreSelected.type = 'button';
+        restoreSelected.className = 'btn btn-sm btn-outline-warning';
+        restoreSelected.textContent = 'Restaurar archivos';
+        restoreSelected.addEventListener('click', () => restoreSelectedBackupFiles(backup));
+
         const deleteButton = document.createElement('button');
         deleteButton.type = 'button';
         deleteButton.className = 'btn btn-sm btn-outline-danger';
@@ -307,11 +313,28 @@ function renderBackups(backups)
         actions.appendChild(preview);
         actions.appendChild(restore);
         actions.appendChild(restoreNew);
+        actions.appendChild(restoreSelected);
         actions.appendChild(deleteButton);
         row.appendChild(info);
         row.appendChild(actions);
         container.appendChild(row);
     });
+}
+
+async function restoreSelectedBackupFiles(backup)
+{
+    const value = await appPrompt('Rutas dentro del ZIP separadas por coma', {
+        title: 'Restauración selectiva',
+        placeholder: 'index.php, assets/css/style.css'
+    });
+
+    if (!value) return;
+
+    const files = value.split(',').map(item => item.trim()).filter(Boolean);
+
+    if (!files.length) return;
+
+    return restoreProjectBackup(backup, false, files);
 }
 
 function showBackupHistoryModal(title, history)
@@ -536,13 +559,16 @@ function backupFileStateLabel(state)
     return 'no existe';
 }
 
-async function restoreProjectBackup(backup, asNew = false)
+async function restoreProjectBackup(backup, asNew = false, selectedFiles = [])
 {
     const diffMessage = await getBackupRestoreDiffMessage(backup);
+    const selectedMessage = selectedFiles.length
+        ? `\n\nSolo se restaurarán: ${selectedFiles.join(', ')}`
+        : '';
     const confirmed = await appConfirm(
         asNew
-            ? `Se restaurará ${backup.project} desde ${backup.file} en una carpeta nueva.\n\n${diffMessage}`
-            : `Se restaurará ${backup.project} desde ${backup.file}. Antes se creará un backup de seguridad del estado actual.\n\n${diffMessage}`,
+            ? `Se restaurará ${backup.project} desde ${backup.file} en una carpeta nueva.\n\n${diffMessage}${selectedMessage}`
+            : `Se restaurará ${backup.project} desde ${backup.file}. Antes se creará un backup de seguridad del estado actual.\n\n${diffMessage}${selectedMessage}`,
         {
             title: 'Restaurar backup',
             confirmText: 'Restaurar',
@@ -556,6 +582,7 @@ async function restoreProjectBackup(backup, asNew = false)
     const formData = new URLSearchParams();
     formData.append('file', backup.file);
     if (asNew) formData.append('mode', 'new');
+    selectedFiles.forEach(file => formData.append('files[]', file));
     formData.append('csrf_token', csrfToken);
 
     try

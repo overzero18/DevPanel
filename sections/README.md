@@ -16,3 +16,4 @@ Primer bloque extraído:
 - `dashboard/backups.php`
 - `dashboard/docker.php`
 - `dashboard/terminal.php`
+- `dashboard/file_manager.php`

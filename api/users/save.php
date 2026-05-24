@@ -26,6 +26,8 @@ $name = trim((string) ($_POST['name'] ?? ''));
 $role = trim((string) ($_POST['role'] ?? 'viewer'));
 $password = (string) ($_POST['password'] ?? '');
 $config = devpanelUsersConfig();
+$projectAccess = devpanelConfig('DEVPANEL_PROJECT_ACCESS', []);
+$projectAccess = is_array($projectAccess) ? $projectAccess : [];
 
 if (!devpanelValidateUserName($name))
 {
@@ -67,6 +69,22 @@ if (!$config['users'][$name]['password'] || !devpanelWriteUsersConfig($config['u
 {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'No se pudo guardar el usuario']);
+    exit;
+}
+
+$projects = $_POST['projects'] ?? ['*'];
+$projects = is_array($projects) ? $projects : [$projects];
+$projectAccess[$name] = array_values(array_unique(array_filter(array_map('trim', $projects))));
+
+if (!$projectAccess[$name])
+{
+    $projectAccess[$name] = ['*'];
+}
+
+if (!devpanelWriteProjectAccessConfig($projectAccess))
+{
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'No se pudo guardar acceso a proyectos']);
     exit;
 }
 

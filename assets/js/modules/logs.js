@@ -61,7 +61,12 @@ async function loadLogInsights()
 
     try
     {
-        const response = await fetch('/devpanel/api/logs/insights.php');
+        const params = new URLSearchParams();
+        const projectSelect = document.getElementById('logProject');
+        if (projectSelect && projectSelect.value !== '') {
+            params.set('project', projectSelect.value);
+        }
+        const response = await fetch(`/devpanel/api/logs/insights.php?${params.toString()}`);
 
         if (!checkAuth(response)) return;
 

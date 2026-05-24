@@ -56,6 +56,7 @@ if (!function_exists('devpanelSecurityConfigKeys')) {
             'DEVPANEL_2FA_ENABLED',
             'DEVPANEL_2FA_SECRET',
             'DEVPANEL_API_TOKENS',
+            'DEVPANEL_PROJECT_ACCESS',
         ];
     }
 }

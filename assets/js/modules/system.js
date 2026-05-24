@@ -125,6 +125,8 @@ function renderProcesses(processes)
 
 document.addEventListener("DOMContentLoaded", () =>
 {
+    applyDashboardWidgetPreferences();
+
     if (document.getElementById('cpuLoad')) {
         loadSystemStats();
         loadSystemHealth();
@@ -135,8 +137,53 @@ document.addEventListener("DOMContentLoaded", () =>
 
     if (document.getElementById('security-settings')) {
         loadSecuritySettings();
+        setupDashboardWidgetSettings();
     }
 });
+
+function dashboardWidgetStorageKey()
+{
+    return 'devpanel_dashboard_widgets';
+}
+
+function getDashboardWidgetPreferences()
+{
+    try {
+        return JSON.parse(localStorage.getItem(dashboardWidgetStorageKey()) || '{}');
+    }
+    catch(error) {
+        return {};
+    }
+}
+
+function applyDashboardWidgetPreferences()
+{
+    const preferences = getDashboardWidgetPreferences();
+
+    Object.entries(preferences).forEach(([id, visible]) => {
+        const element = document.getElementById(id);
+        if (element) element.hidden = visible === false;
+    });
+}
+
+function setupDashboardWidgetSettings()
+{
+    const container = document.getElementById('dashboardWidgetSettings');
+
+    if (!container) return;
+
+    const preferences = getDashboardWidgetPreferences();
+
+    container.querySelectorAll('input[type="checkbox"]').forEach(input => {
+        input.checked = preferences[input.value] !== false;
+        input.addEventListener('change', () => {
+            const next = getDashboardWidgetPreferences();
+            next[input.value] = input.checked;
+            localStorage.setItem(dashboardWidgetStorageKey(), JSON.stringify(next));
+            applyDashboardWidgetPreferences();
+        });
+    });
+}
 
 async function loadSystemHealth()
 {

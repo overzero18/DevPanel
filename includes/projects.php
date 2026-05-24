@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/helpers/config.php';
+require_once __DIR__ . '/helpers/users.php';
 
 function getProjectType($path)
 {
@@ -239,5 +240,7 @@ function getProjects()
         return $b['modified_at'] <=> $a['modified_at'];
     });
 
-    return $projects;
+    return array_values(array_filter($projects, static function ($project) {
+        return devpanelUserCanAccessProject($project['name'], $project['path']);
+    }));
 }

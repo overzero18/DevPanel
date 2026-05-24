@@ -136,6 +136,10 @@ curl -H "X-DevPanel-Token: dp_tu_token_local" \
 
 En **Ajustes → Seguridad avanzada → Configuración portable** puedes exportar/importar un JSON sin secretos. No incluye contraseña, tokens, datos privados de GitHub ni contraseña de MariaDB.
 
+### Usuarios y proyectos
+
+En **Usuarios** puedes limitar qué proyectos ve cada usuario. Los roles siguen controlando permisos generales, y el acceso por proyecto limita la lista de proyectos disponible.
+
 ## ✅ Permisos Locales
 
 Después de instalar, entra al dashboard y revisa **Permisos del sistema**.

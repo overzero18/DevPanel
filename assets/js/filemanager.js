@@ -4,6 +4,12 @@ let activePreviewPath = null;
 let currentFileManagerItems = [];
 let filePreviewEditorInstance = null;
 
+function selectProjectInFileManager(path)
+{
+    sessionStorage.setItem('devpanel_file_manager_path', path);
+    window.location.href = '/devpanel/index.php#file-manager';
+}
+
 function getFileManagerCsrfToken()
 {
     const tokenElement = document.querySelector('meta[name="csrf-token"]');
@@ -644,5 +650,7 @@ document.addEventListener('DOMContentLoaded', () =>
         });
     }
 
-    loadFileManager();
+    const requestedPath = sessionStorage.getItem('devpanel_file_manager_path');
+    sessionStorage.removeItem('devpanel_file_manager_path');
+    loadFileManager(requestedPath || undefined);
 });

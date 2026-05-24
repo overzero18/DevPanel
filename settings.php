@@ -238,6 +238,17 @@ $runtimeSettings = devpanelConfig();
                     </button>
                 </div>
             </div>
+
+            <div class="database-users mt-4">
+                <h5 class="mb-3">Dashboard personalizable</h5>
+                <div class="permission-grid" id="dashboardWidgetSettings">
+                    <label class="permission-option"><input type="checkbox" value="projects" checked><div><span>Proyectos</span><small>Cards y actividad</small></div></label>
+                    <label class="permission-option"><input type="checkbox" value="file-manager" checked><div><span>File Manager</span><small>Gestor en dashboard</small></div></label>
+                    <label class="permission-option"><input type="checkbox" value="docker-manager" checked><div><span>Docker</span><small>Contenedores y compose</small></div></label>
+                    <label class="permission-option"><input type="checkbox" value="logs-section" checked><div><span>Logs</span><small>Visor e insights</small></div></label>
+                    <label class="permission-option"><input type="checkbox" value="terminal-section" checked><div><span>Terminal</span><small>Shell segura</small></div></label>
+                </div>
+            </div>
         </section>
 
     </div>

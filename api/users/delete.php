@@ -40,8 +40,11 @@ if (!isset($config['users'][$name]))
 }
 
 unset($config['users'][$name]);
+$projectAccess = devpanelConfig('DEVPANEL_PROJECT_ACCESS', []);
+$projectAccess = is_array($projectAccess) ? $projectAccess : [];
+unset($projectAccess[$name]);
 
-if (!devpanelWriteUsersConfig($config['users'], $config['roles']))
+if (!devpanelWriteUsersConfig($config['users'], $config['roles']) || !devpanelWriteProjectAccessConfig($projectAccess))
 {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'No se pudo borrar el usuario']);

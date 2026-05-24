@@ -51,6 +51,7 @@ $csrfToken = generateCsrfToken();
                     <input type="text" id="adminUserName" class="form-control" placeholder="usuario">
                     <input type="password" id="adminUserPassword" class="form-control" placeholder="contraseña nueva">
                     <select id="adminUserRole" class="form-select"></select>
+                    <select id="adminUserProjects" class="form-select" multiple></select>
                     <button type="button" class="btn btn-devpanel" onclick="saveAdminUser()">
                         <i class="bi bi-save"></i>
                         Guardar

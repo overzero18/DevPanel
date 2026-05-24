@@ -474,7 +474,7 @@ function devpanelPreviewProjectBackup(string $file, int $limit = 120): ?array
     ];
 }
 
-function devpanelRestoreProjectBackup(string $file, bool $restoreAsNew = false): ?array
+function devpanelRestoreProjectBackup(string $file, bool $restoreAsNew = false, array $onlyFiles = []): ?array
 {
     if (!class_exists('ZipArchive'))
     {
@@ -513,6 +513,11 @@ function devpanelRestoreProjectBackup(string $file, bool $restoreAsNew = false):
 
     $safetyBackup = $restoreAsNew ? null : devpanelCreateProjectBackup($targetPath);
     $zip = new ZipArchive();
+    $onlyFiles = array_values(array_filter(array_map(static function ($file) {
+        $file = trim(str_replace('\\', '/', (string) $file));
+        return $file !== '' && !str_starts_with($file, '/') && !str_contains($file, '..') ? $file : '';
+    }, $onlyFiles)));
+    $onlyLookup = array_flip($onlyFiles);
 
     if ($zip->open($zipPath) !== true)
     {
@@ -536,6 +541,11 @@ function devpanelRestoreProjectBackup(string $file, bool $restoreAsNew = false):
     {
         $entry = $zip->getNameIndex($index);
         $destination = rtrim($targetPath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $entry;
+
+        if ($onlyLookup && !isset($onlyLookup[rtrim($entry, '/')]))
+        {
+            continue;
+        }
 
         if (str_ends_with($entry, '/'))
         {
@@ -573,6 +583,7 @@ function devpanelRestoreProjectBackup(string $file, bool $restoreAsNew = false):
         'file' => $file,
         'restored_files' => $restoredFiles,
         'mode' => $restoreAsNew ? 'new_folder' : 'overwrite',
+        'selected_files' => $onlyFiles,
         'safety_backup' => $safetyBackup,
         'restored_at' => date('Y-m-d H:i:s'),
     ];

@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../../includes/security.php';
 require_once __DIR__ . '/../../includes/helpers/config.php';
+require_once __DIR__ . '/../../includes/projects.php';
 
 header('Content-Type: application/json');
 
@@ -172,6 +173,26 @@ $patterns = [
 
 $items = [];
 $grouped = [];
+$project = trim((string) ($_GET['project'] ?? ''));
+$projectNeedles = [];
+
+if ($project !== '')
+{
+    foreach (getProjects() as $item)
+    {
+        if ($item['name'] === $project)
+        {
+            $projectNeedles = array_values(array_filter([
+                $item['name'],
+                '/' . $item['name'] . '/',
+                rawurlencode($item['name']),
+                $item['path'],
+                $item['url'] ?? null,
+            ]));
+            break;
+        }
+    }
+}
 
 foreach ($sources as $label => $file)
 {
@@ -183,6 +204,25 @@ foreach ($sources as $label => $file)
         if (devpanelShouldIgnoreInsight($line))
         {
             continue;
+        }
+
+        if ($project !== '')
+        {
+            $matchesProject = false;
+
+            foreach ($projectNeedles as $needle)
+            {
+                if (stripos($line, $needle) !== false)
+                {
+                    $matchesProject = true;
+                    break;
+                }
+            }
+
+            if (!$matchesProject)
+            {
+                continue;
+            }
         }
 
         if (preg_match($patterns['danger'], $lower))
@@ -240,5 +280,6 @@ echo json_encode([
     'success' => true,
     'summary' => $summary,
     'occurrences' => $occurrences,
+    'project' => $project,
     'items' => $items,
 ]);

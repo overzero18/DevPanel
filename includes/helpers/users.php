@@ -43,6 +43,8 @@ function devpanelUsersConfig(): array
 function devpanelPublicUsers(): array
 {
     $config = devpanelUsersConfig();
+    $projectAccess = devpanelConfig('DEVPANEL_PROJECT_ACCESS', []);
+    $projectAccess = is_array($projectAccess) ? $projectAccess : [];
     $users = [];
 
     foreach ($config['users'] as $name => $user)
@@ -55,10 +57,39 @@ function devpanelPublicUsers(): array
         $users[] = [
             'name' => $name,
             'role' => $user['role'] ?? 'admin',
+            'projects' => $projectAccess[$name] ?? ['*'],
         ];
     }
 
     return $users;
+}
+
+function devpanelUserProjectAccess(string $username = null): array
+{
+    $username = $username ?: getCurrentUserName();
+    $projectAccess = devpanelConfig('DEVPANEL_PROJECT_ACCESS', []);
+    $projectAccess = is_array($projectAccess) ? $projectAccess : [];
+
+    return $projectAccess[$username] ?? ['*'];
+}
+
+function devpanelUserCanAccessProject(string $projectName, string $path = '', string $username = null): bool
+{
+    if (!function_exists('getCurrentUserRole') || !function_exists('getCurrentUserName'))
+    {
+        return true;
+    }
+
+    if (getCurrentUserRole() === 'admin')
+    {
+        return true;
+    }
+
+    $access = devpanelUserProjectAccess($username);
+
+    return in_array('*', $access, true)
+        || in_array($projectName, $access, true)
+        || ($path !== '' && in_array($path, $access, true));
 }
 
 function devpanelPublicApiTokens(): array
@@ -297,6 +328,11 @@ function devpanelWriteUsersConfig(array $users, array $roles): bool
     $passwordHash = $config['DEVPANEL_PASSWORD'] ?? getConfigPassword();
 
     return $passwordHash && devpanelWriteConfig($configFile, $passwordHash, $config);
+}
+
+function devpanelWriteProjectAccessConfig(array $projectAccess): bool
+{
+    return devpanelWriteSecurityConfig(['DEVPANEL_PROJECT_ACCESS' => $projectAccess]);
 }
 
 function devpanelValidateUserName(string $name): bool

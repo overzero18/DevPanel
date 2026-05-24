@@ -429,6 +429,12 @@ Add that command to cron if you want DevPanel to execute the schedules created f
 * API token rotation
 * Public config export/import without secrets
 * Terminal dashboard section extracted into `sections/`
+* Dedicated projects page
+* Dedicated File Manager page
+* Project access control per user
+* Dashboard widget visibility preferences
+* Project-aware log insights
+* Selective backup file restore
 
 API token example:
 
