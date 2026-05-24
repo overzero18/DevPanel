@@ -39,6 +39,7 @@ $projects = getProjects();
 
     <div class="row mt-4 g-4">
         <?php foreach ($projects as $project): ?>
+            <?php $projectPathJson = json_encode($project['path'], JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP); ?>
             <div class="col-12 col-xl-6">
                 <div class="dashboard-card project-detail-card">
                     <div class="section-title-row">
@@ -66,8 +67,8 @@ $projects = getProjects();
                             </div>
                             <div class="database-actions">
                                 <a class="btn btn-sm btn-outline-info" href="<?php echo htmlspecialchars($project['url'], ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener noreferrer">Abrir</a>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectProjectInFileManager('<?php echo htmlspecialchars($project['path'], ENT_QUOTES, 'UTF-8'); ?>')">Archivos</button>
-                                <button type="button" class="btn btn-sm btn-outline-warning" onclick="openProjectTerminal('<?php echo htmlspecialchars($project['path'], ENT_QUOTES, 'UTF-8'); ?>')">Terminal</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectProjectInFileManager(<?php echo $projectPathJson; ?>)">Archivos</button>
+                                <button type="button" class="btn btn-sm btn-outline-warning" onclick="openProjectTerminal(<?php echo $projectPathJson; ?>)">Terminal</button>
                             </div>
                         </div>
                     </div>
