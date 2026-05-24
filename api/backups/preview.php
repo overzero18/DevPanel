@@ -9,7 +9,8 @@ authenticateSession();
 requirePermission('backups');
 
 $file = basename((string) ($_GET['file'] ?? ''));
-$preview = devpanelPreviewProjectBackup($file);
+$limit = (int) ($_GET['limit'] ?? 120);
+$preview = devpanelPreviewProjectBackup($file, $limit);
 
 if (!$preview)
 {

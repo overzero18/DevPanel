@@ -6,6 +6,7 @@ header('Content-Type: application/json');
 
 authenticateSession();
 requirePermission('deploy');
+requirePermission('deploy.run');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST')
 {

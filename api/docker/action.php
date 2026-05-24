@@ -6,6 +6,7 @@ header('Content-Type: application/json');
 
 authenticateSession();
 requirePermission('docker');
+requirePermission('docker.actions');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST')
 {

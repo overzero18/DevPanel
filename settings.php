@@ -60,6 +60,66 @@ $runtimeSettings = devpanelConfig();
             </div>
         </section>
 
+        <section class="dashboard-card runtime-settings-card" id="template-marketplace">
+            <div class="section-title-row">
+                <div>
+                    <h4 class="mb-1">Marketplace de plantillas</h4>
+                    <p class="text-secondary mb-0">Importa/exporta plantillas locales de proyecto en JSON.</p>
+                </div>
+                <button type="button" class="btn btn-outline-info" onclick="loadProjectTemplatesMarketplace()">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    Recargar
+                </button>
+            </div>
+
+            <div class="database-toolbar">
+                <input type="file" id="templateImportFile" class="form-control" accept="application/json">
+                <button type="button" class="btn btn-devpanel" onclick="importProjectTemplateFromFile()">
+                    <i class="bi bi-upload"></i>
+                    Importar
+                </button>
+            </div>
+
+            <div class="database-list" id="projectTemplateMarketplace">
+                <div class="file-manager-empty">Cargando plantillas...</div>
+            </div>
+        </section>
+
+        <section class="dashboard-card runtime-settings-card" id="theme-customizer">
+            <div class="section-title-row">
+                <div>
+                    <h4 class="mb-1">Personalizador visual</h4>
+                    <p class="text-secondary mb-0">Ajusta acento, densidad y ancho de sidebar solo en este navegador.</p>
+                </div>
+                <button type="button" class="btn btn-outline-secondary" onclick="resetThemeCustomizer()">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                    Reset
+                </button>
+            </div>
+
+            <div class="runtime-settings-grid">
+                <label>
+                    Color principal
+                    <input type="color" id="themeAccentPrimary" class="form-control form-control-color" value="#4f9ef9">
+                </label>
+                <label>
+                    Color secundario
+                    <input type="color" id="themeAccentSecondary" class="form-control form-control-color" value="#10d981">
+                </label>
+                <label>
+                    Densidad
+                    <select id="themeDensity" class="form-select">
+                        <option value="comfortable">Cómoda</option>
+                        <option value="compact">Compacta</option>
+                    </select>
+                </label>
+                <label>
+                    Sidebar
+                    <input type="range" id="themeSidebarWidth" class="form-range" min="220" max="320" step="10" value="260">
+                </label>
+            </div>
+        </section>
+
         <section class="dashboard-card runtime-settings-card" id="runtime-settings">
             <div class="section-title-row">
                 <div>

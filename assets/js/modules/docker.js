@@ -21,10 +21,12 @@ async function loadDockerContainers()
             empty.className = 'file-manager-empty';
             empty.textContent = data.message || 'Docker no está disponible';
             container.appendChild(empty);
+            loadDockerSetupAssistant();
             return;
         }
 
         renderDockerContainers(data.containers || []);
+        loadDockerSetupAssistant();
         loadDockerCompose();
     }
     catch(error)
@@ -32,6 +34,61 @@ async function loadDockerContainers()
         console.error(error);
         container.textContent = 'Error cargando Docker';
     }
+}
+
+async function loadDockerSetupAssistant()
+{
+    const container = document.getElementById('dockerSetupAssistant');
+
+    if (!container) return;
+
+    try {
+        const response = await fetch('/devpanel/api/docker/setup.php');
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+        const docker = data.docker || {};
+        const checks = [
+            ['Docker instalado', docker.installed, docker.binary || 'No instalado'],
+            ['Daemon activo', docker.daemon, docker.daemon_output || 'Sin respuesta'],
+            ['Docker Compose', docker.compose, docker.compose_output || 'No detectado'],
+            ['Usuario en grupo docker', docker.user_in_group, docker.user_in_group ? 'OK' : 'Requiere cerrar sesión tras usermod'],
+        ];
+
+        container.innerHTML = `
+            <div class="docker-setup-checks">
+                ${checks.map(([label, ok, detail]) => `
+                    <div class="doctor-check ${ok ? 'is-ok' : 'is-info'}">
+                        <i class="bi ${ok ? 'bi-check-circle-fill' : 'bi-info-circle-fill'}"></i>
+                        <div><strong>${escapeDockerHtml(label)}</strong><small>${escapeDockerHtml(detail)}</small></div>
+                    </div>
+                `).join('')}
+            </div>
+            <div class="doctor-command-list">
+                ${Object.entries(data.commands || {}).map(([label, command]) => `
+                    <div class="doctor-command">
+                        <span>${escapeDockerHtml(label)}</span>
+                        <code>${escapeDockerHtml(command)}</code>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+    catch(error) {
+        console.error(error);
+        container.textContent = 'Error cargando asistente Docker';
+    }
+}
+
+function escapeDockerHtml(value)
+{
+    return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
 }
 
 async function loadDockerCompose()

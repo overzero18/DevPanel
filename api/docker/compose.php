@@ -183,6 +183,8 @@ if ($method !== 'POST')
     exit;
 }
 
+requirePermission('docker.actions');
+
 if (!validateCsrfToken())
 {
     http_response_code(403);

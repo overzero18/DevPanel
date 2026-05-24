@@ -7,6 +7,7 @@ header('Content-Type: application/json');
 
 authenticateSession();
 requirePermission('backups');
+requirePermission('backups.restore');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST')
 {

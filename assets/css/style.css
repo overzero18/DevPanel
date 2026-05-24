@@ -11,6 +11,7 @@
     --accent-danger: #ef4444;
     --accent-warning: #f59e0b;
     --sidebar-bg: rgba(15, 23, 42, 0.96);
+    --sidebar-width: 260px;
     --card-bg: rgba(30, 41, 59, 0.72);
     --overlay: rgba(0, 0, 0, 0.42);
     --blur: blur(12px);
@@ -86,7 +87,7 @@ body {
 
 .sidebar {
     flex: 0 0 260px;
-    width: 260px;
+    width: var(--sidebar-width);
     min-height: 100vh;
     position: relative;
     z-index: 100;
@@ -97,6 +98,19 @@ body {
     display: flex;
     flex-direction: column;
     padding: 18px 14px;
+}
+
+body.density-compact .dashboard-card,
+body.density-compact .card {
+    padding: 14px;
+}
+
+body.density-compact .nav-link,
+body.density-compact .doctor-check,
+body.density-compact .database-row,
+body.density-compact .activity-item {
+    padding-top: 8px;
+    padding-bottom: 8px;
 }
 
 .sidebar-brand {
@@ -1344,6 +1358,156 @@ body {
     border-color: color-mix(in srgb, var(--accent-primary) 42%, var(--border-color));
 }
 
+.backup-compare-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.backup-compare-card {
+    display: grid;
+    gap: 4px;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--bg-primary) 34%, transparent);
+}
+
+.backup-compare-card span {
+    color: var(--text-muted);
+    font-weight: 800;
+}
+
+.backup-compare-card strong {
+    color: var(--text-primary);
+    font-size: 1.4rem;
+}
+
+.backup-compare-card.is-ok strong {
+    color: var(--accent-secondary);
+}
+
+.backup-compare-card.is-warning strong {
+    color: var(--accent-warning);
+}
+
+.backup-compare-card.is-info strong {
+    color: var(--accent-primary);
+}
+
+.backup-restore-tree {
+    display: grid;
+    max-height: 420px;
+    overflow: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.backup-restore-row {
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr) 140px 90px;
+    gap: 10px;
+    align-items: center;
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.backup-restore-row:last-child {
+    border-bottom: 0;
+}
+
+.backup-restore-name {
+    min-width: 0;
+    overflow: hidden;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.backup-restore-state,
+.backup-restore-size {
+    color: var(--text-muted);
+    font-size: 0.84rem;
+}
+
+.backup-restore-row.is-different_hash .backup-restore-state {
+    color: var(--accent-warning);
+}
+
+.backup-restore-row.is-missing .backup-restore-state {
+    color: var(--accent-primary);
+}
+
+.docker-setup-grid {
+    display: grid;
+    gap: 12px;
+}
+
+.docker-setup-checks {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.onboarding-card {
+    display: grid;
+    gap: 14px;
+}
+
+.onboarding-progress {
+    width: 100%;
+    height: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--bg-primary) 70%, transparent);
+}
+
+.onboarding-progress span {
+    display: block;
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+}
+
+.onboarding-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.onboarding-item {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--bg-primary) 34%, transparent);
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+.onboarding-item i {
+    color: var(--accent-warning);
+}
+
+.onboarding-item.is-ok i {
+    color: var(--accent-secondary);
+}
+
+.onboarding-item span {
+    font-weight: 900;
+}
+
+.onboarding-item small {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--text-muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .text-muted,
 .text-secondary {
     color: var(--text-muted) !important;
@@ -2169,8 +2333,26 @@ body {
 
     .doctor-summary-grid,
     .install-summary-grid,
+    .backup-compare-grid,
     .doctor-command {
         grid-template-columns: 1fr;
+    }
+
+    .backup-restore-row {
+        grid-template-columns: 22px minmax(0, 1fr);
+    }
+
+    .docker-setup-checks {
+        grid-template-columns: 1fr;
+    }
+
+    .onboarding-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .backup-restore-state,
+    .backup-restore-size {
+        grid-column: 2;
     }
 
     .process-metrics {

@@ -128,6 +128,7 @@ document.addEventListener("DOMContentLoaded", () =>
     applyDashboardWidgetPreferences();
 
     if (document.getElementById('cpuLoad')) {
+        loadOnboardingChecklist();
         loadSystemStats();
         loadSystemHealth();
         setTimeout(loadSystemHealth, 350);
@@ -138,12 +139,72 @@ document.addEventListener("DOMContentLoaded", () =>
     if (document.getElementById('security-settings')) {
         loadSecuritySettings();
         setupDashboardWidgetSettings();
+        setupThemeCustomizer();
+        loadProjectTemplatesMarketplace();
     }
 });
 
 function dashboardWidgetStorageKey()
 {
     return 'devpanel_dashboard_widgets';
+}
+
+async function loadOnboardingChecklist()
+{
+    const section = document.getElementById('onboarding-section');
+    const container = document.getElementById('onboardingChecklist');
+
+    if (!section || !container) return;
+
+    if (localStorage.getItem('devpanel_onboarding_hidden') === '1') {
+        section.hidden = true;
+        return;
+    }
+
+    try {
+        const [permissionsResponse, logsResponse, usersResponse, backupsResponse] = await Promise.all([
+            fetch('/devpanel/api/permissions.php'),
+            fetch('/devpanel/api/logs/summary.php'),
+            fetch('/devpanel/api/users/list.php'),
+            fetch('/devpanel/api/backups/list.php')
+        ]);
+
+        const permissions = await permissionsResponse.json();
+        const logs = await logsResponse.json();
+        const users = await usersResponse.json();
+        const backups = await backupsResponse.json();
+        const permissionProblems = (permissions.items || permissions.permissions || []).filter(item => item.ok === false).length;
+        const checks = [
+            ['Config y permisos', permissionProblems === 0, permissionProblems ? `${permissionProblems} rutas a revisar` : 'Correcto', '/devpanel/settings.php'],
+            ['Usuarios/roles', (users.users || []).length > 0, `${(users.users || []).length} usuarios`, '/devpanel/users.php'],
+            ['Backups', (backups.backups || []).length > 0, `${(backups.backups || []).length} backups`, '#backups-manager'],
+            ['Logs limpios', Number(logs.summary?.danger || 0) === 0, `${logs.summary?.danger || 0} errores recientes`, '#logs-section'],
+            ['Doctor revisado', true, 'Disponible', '/devpanel/doctor.php'],
+        ];
+        const completed = checks.filter(check => check[1]).length;
+        const percent = Math.round((completed / checks.length) * 100);
+
+        document.getElementById('onboardingSummary').textContent = `${completed}/${checks.length} pasos listos`;
+        document.getElementById('onboardingProgressBar').style.width = `${percent}%`;
+        container.innerHTML = checks.map(([label, ok, detail, href]) => `
+            <a class="onboarding-item ${ok ? 'is-ok' : 'is-warning'}" href="${href}">
+                <i class="bi ${ok ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill'}"></i>
+                <span>${escapeSystemHtml(label)}</span>
+                <small>${escapeSystemHtml(detail)}</small>
+            </a>
+        `).join('');
+    }
+    catch(error) {
+        console.error(error);
+        container.textContent = 'No se pudo cargar el onboarding';
+    }
+}
+
+function dismissOnboarding()
+{
+    localStorage.setItem('devpanel_onboarding_hidden', '1');
+    const section = document.getElementById('onboarding-section');
+    if (section) section.hidden = true;
 }
 
 function getDashboardWidgetPreferences()
@@ -184,6 +245,165 @@ function setupDashboardWidgetSettings()
         });
     });
 }
+
+async function loadProjectTemplatesMarketplace()
+{
+    const container = document.getElementById('projectTemplateMarketplace');
+
+    if (!container) return;
+
+    try {
+        const response = await fetch('/devpanel/api/templates/list.php');
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+        const templates = Object.entries(data.templates || {});
+        container.innerHTML = '';
+
+        templates.forEach(([key, template]) => {
+            const row = document.createElement('div');
+            row.className = 'database-row';
+            row.innerHTML = `
+                <div class="database-info">
+                    <i class="bi bi-box-seam"></i>
+                    <div>
+                        <strong>${escapeSystemHtml(template.label || key)}</strong>
+                        <small>${escapeSystemHtml(template.description || '')}${template.custom ? ' · personalizada' : ' · base'}</small>
+                    </div>
+                </div>
+                <div class="database-actions">
+                    ${template.custom ? `<a class="btn btn-sm btn-outline-info" href="/devpanel/api/templates/export.php?key=${encodeURIComponent(key)}">Exportar</a>` : ''}
+                </div>
+            `;
+            container.appendChild(row);
+        });
+
+        if (!templates.length) {
+            container.innerHTML = '<div class="file-manager-empty">Sin plantillas.</div>';
+        }
+    }
+    catch(error) {
+        console.error(error);
+        container.textContent = 'Error cargando plantillas';
+    }
+}
+
+async function importProjectTemplateFromFile()
+{
+    const input = document.getElementById('templateImportFile');
+    const file = input?.files?.[0];
+
+    if (!file) {
+        showToast('Selecciona un JSON de plantilla', 'danger');
+        return;
+    }
+
+    const formData = new URLSearchParams();
+    formData.append('template', await file.text());
+    formData.append('csrf_token', getSystemCsrfToken());
+
+    try {
+        const response = await fetch('/devpanel/api/templates/import.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: formData
+        });
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+        showToast(data.message || 'Plantilla importada', data.success ? 'success' : 'danger');
+        if (data.success) {
+            input.value = '';
+            loadProjectTemplatesMarketplace();
+        }
+    }
+    catch(error) {
+        console.error(error);
+        showToast('Error importando plantilla', 'danger');
+    }
+}
+
+function escapeSystemHtml(value)
+{
+    return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+}
+
+function themeCustomizerStorageKey()
+{
+    return 'devpanel_theme_customizer';
+}
+
+function getThemeCustomizerSettings()
+{
+    try {
+        return JSON.parse(localStorage.getItem(themeCustomizerStorageKey()) || '{}');
+    }
+    catch(error) {
+        return {};
+    }
+}
+
+function applyThemeCustomizer()
+{
+    const settings = getThemeCustomizerSettings();
+    const root = document.documentElement;
+
+    if (settings.primary) root.style.setProperty('--accent-primary', settings.primary);
+    if (settings.secondary) root.style.setProperty('--accent-secondary', settings.secondary);
+    if (settings.sidebarWidth) root.style.setProperty('--sidebar-width', `${settings.sidebarWidth}px`);
+    document.body.classList.toggle('density-compact', settings.density === 'compact');
+}
+
+function setupThemeCustomizer()
+{
+    const primary = document.getElementById('themeAccentPrimary');
+
+    if (!primary) return;
+
+    const secondary = document.getElementById('themeAccentSecondary');
+    const density = document.getElementById('themeDensity');
+    const sidebar = document.getElementById('themeSidebarWidth');
+    const settings = getThemeCustomizerSettings();
+
+    primary.value = settings.primary || primary.value;
+    secondary.value = settings.secondary || secondary.value;
+    density.value = settings.density || density.value;
+    sidebar.value = settings.sidebarWidth || sidebar.value;
+
+    [primary, secondary, density, sidebar].forEach(input => {
+        input.addEventListener('input', () => {
+            localStorage.setItem(themeCustomizerStorageKey(), JSON.stringify({
+                primary: primary.value,
+                secondary: secondary.value,
+                density: density.value,
+                sidebarWidth: sidebar.value,
+            }));
+            applyThemeCustomizer();
+        });
+    });
+
+    applyThemeCustomizer();
+}
+
+function resetThemeCustomizer()
+{
+    localStorage.removeItem(themeCustomizerStorageKey());
+    document.documentElement.style.removeProperty('--accent-primary');
+    document.documentElement.style.removeProperty('--accent-secondary');
+    document.documentElement.style.removeProperty('--sidebar-width');
+    document.body.classList.remove('density-compact');
+    setupThemeCustomizer();
+    showToast('Personalización reiniciada', 'success');
+}
+
+applyThemeCustomizer();
 
 async function loadSystemHealth()
 {

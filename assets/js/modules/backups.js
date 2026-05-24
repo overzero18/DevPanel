@@ -21,6 +21,16 @@ async function loadBackups()
     }
 }
 
+function escapeBackupHtml(value)
+{
+    return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+}
+
 async function loadBackupSchedules()
 {
     const container = document.getElementById('backupScheduleList');
@@ -301,7 +311,7 @@ function renderBackups(backups)
         restoreSelected.type = 'button';
         restoreSelected.className = 'btn btn-sm btn-outline-warning';
         restoreSelected.textContent = 'Restaurar archivos';
-        restoreSelected.addEventListener('click', () => restoreSelectedBackupFiles(backup));
+        restoreSelected.addEventListener('click', () => showBackupRestoreTree(backup));
 
         const deleteButton = document.createElement('button');
         deleteButton.type = 'button';
@@ -335,6 +345,133 @@ async function restoreSelectedBackupFiles(backup)
     if (!files.length) return;
 
     return restoreProjectBackup(backup, false, files);
+}
+
+async function showBackupRestoreTree(backup)
+{
+    try {
+        const response = await fetch(`/devpanel/api/backups/preview.php?file=${encodeURIComponent(backup.file)}&limit=1000`);
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+
+        if (!data.success) {
+            showToast(data.message || 'No se pudo leer el backup', 'danger');
+            return;
+        }
+
+        renderBackupRestoreTreeModal(backup, data.preview || {});
+    }
+    catch(error) {
+        console.error(error);
+        showToast('Error abriendo restauración visual', 'danger');
+    }
+}
+
+function renderBackupRestoreTreeModal(backup, preview)
+{
+    let modalElement = document.getElementById('backupRestoreTreeModal');
+
+    if (!modalElement) {
+        modalElement = document.createElement('div');
+        modalElement.className = 'modal fade';
+        modalElement.id = 'backupRestoreTreeModal';
+        modalElement.tabIndex = -1;
+        modalElement.innerHTML = `
+            <div class="modal-dialog modal-dialog-centered modal-xl">
+                <div class="modal-content app-dialog">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="backupRestoreTreeTitle"></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="backup-compare-grid" id="backupRestoreSummary"></div>
+                        <div class="database-toolbar mt-3">
+                            <input type="search" id="backupRestoreSearch" class="form-control" placeholder="Filtrar archivo">
+                            <button type="button" class="btn btn-outline-info" id="backupRestoreSelectAll">Todo</button>
+                            <button type="button" class="btn btn-outline-secondary" id="backupRestoreSelectChanged">Cambiados/nuevos</button>
+                            <button type="button" class="btn btn-outline-secondary" id="backupRestoreSelectNone">Nada</button>
+                        </div>
+                        <div class="backup-restore-tree mt-3" id="backupRestoreTree"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <span class="text-secondary me-auto" id="backupRestoreSelectedCount">0 archivos</span>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        <button type="button" class="btn btn-devpanel" id="backupRestoreRun">Restaurar selección</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modalElement);
+    }
+
+    const files = preview.files || [];
+    const diff = preview.diff_summary || {};
+    modalElement.querySelector('#backupRestoreTreeTitle').textContent = `Restauración visual · ${backup.file}`;
+    modalElement.querySelector('#backupRestoreSummary').innerHTML = [
+        ['Idénticos', diff.same_hash || 0, 'is-ok'],
+        ['Cambiados', diff.different_hash || 0, 'is-warning'],
+        ['Nuevos', diff.missing || 0, 'is-info'],
+        ['Total', preview.file_count || files.length, '']
+    ].map(([label, value, state]) => `<div class="backup-compare-card ${state}"><span>${label}</span><strong>${value}</strong></div>`).join('');
+
+    const tree = modalElement.querySelector('#backupRestoreTree');
+    const search = modalElement.querySelector('#backupRestoreSearch');
+    const selectedCount = modalElement.querySelector('#backupRestoreSelectedCount');
+
+    const renderRows = () => {
+        const filter = search.value.trim().toLowerCase();
+        tree.innerHTML = '';
+
+        files
+            .filter(file => !filter || file.name.toLowerCase().includes(filter))
+            .forEach(file => {
+                const row = document.createElement('label');
+                row.className = `backup-restore-row is-${file.current_state || 'missing'}`;
+                row.innerHTML = `
+                    <input type="checkbox" value="${escapeBackupHtml(file.name)}">
+                    <span class="backup-restore-name">${escapeBackupHtml(file.name)}</span>
+                    <span class="backup-restore-state">${backupFileStateLabel(file.current_state)}</span>
+                    <span class="backup-restore-size">${formatBackupSize(file.size || 0)}</span>
+                `;
+                tree.appendChild(row);
+            });
+
+        updateSelectedCount();
+    };
+
+    const updateSelectedCount = () => {
+        selectedCount.textContent = `${tree.querySelectorAll('input:checked').length} archivos seleccionados`;
+    };
+
+    const selectBy = callback => {
+        tree.querySelectorAll('input').forEach(input => {
+            const file = files.find(item => item.name === input.value);
+            input.checked = callback(file);
+        });
+        updateSelectedCount();
+    };
+
+    search.oninput = renderRows;
+    modalElement.querySelector('#backupRestoreSelectAll').onclick = () => selectBy(() => true);
+    modalElement.querySelector('#backupRestoreSelectNone').onclick = () => selectBy(() => false);
+    modalElement.querySelector('#backupRestoreSelectChanged').onclick = () => selectBy(file => file && file.current_state !== 'same_hash');
+    tree.onchange = updateSelectedCount;
+    modalElement.querySelector('#backupRestoreRun').onclick = () => {
+        const selected = Array.from(tree.querySelectorAll('input:checked')).map(input => input.value);
+
+        if (!selected.length) {
+            showToast('Selecciona al menos un archivo', 'danger');
+            return;
+        }
+
+        bootstrap.Modal.getOrCreateInstance(modalElement).hide();
+        restoreProjectBackup(backup, false, selected);
+    };
+
+    renderRows();
+    bootstrap.Modal.getOrCreateInstance(modalElement).show();
 }
 
 function showBackupHistoryModal(title, history)

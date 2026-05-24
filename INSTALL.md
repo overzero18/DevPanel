@@ -128,6 +128,7 @@ Entra en **Ajustes → Seguridad avanzada** para activar 2FA o crear tokens.
 - 2FA queda desactivado por defecto para no romper el primer login.
 - Al activar 2FA, guarda el secret en tu app autenticadora antes de cerrar sesión.
 - Si quieres QR visual, instala `qrencode` en el sistema; DevPanel generará el SVG localmente.
+- Si `qrencode` no está instalado, DevPanel muestra un fallback local y mantiene visible el URI manual.
 - Los API tokens se muestran una sola vez al crearlos.
 - Cada token tiene rol y fecha de expiración.
 - DevPanel registra `last_used_at` cuando un token se usa correctamente.
@@ -240,6 +241,9 @@ Formato:
 - ✅ **Diagnóstico de Permisos** - Detecta rutas sin escritura/lectura
 - 🧭 **Instalador guiado** - Resume preparación, pasos recomendados y checks
 - 🧪 **Smoke visual** - Comprueba pantallas y controles críticos con Chromium
+- 🧩 **Marketplace de plantillas** - Importa/exporta plantillas JSON locales
+- 🎛️ **Personalizador visual** - Acentos, densidad y ancho de sidebar por navegador
+- 🧰 **Asistente Docker** - Instalación, daemon, grupo y comandos recomendados
 - 📦 **Descargar ZIP** - Comprime proyectos (excluye node_modules, .git)
 - 🚀 **Deploy FTP** - Sube proyectos a servidores remotos
 - 🔧 **Control de Servicios** - Start/Stop/Restart Apache y MySQL

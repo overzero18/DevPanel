@@ -17,16 +17,38 @@ function devpanelPermissionCatalog(): array
         'dashboard' => 'Dashboard, métricas y notificaciones',
         'projects' => 'Crear proyectos y ver actividad',
         'files' => 'File Manager, VS Code y ZIP',
+        'files.write' => 'Crear, editar, subir y renombrar archivos',
+        'files.delete' => 'Borrar archivos y carpetas',
         'git' => 'Git clone, pull, push, ramas',
         'terminal' => 'Terminal web',
+        'terminal.execute' => 'Ejecutar comandos en terminal',
         'logs' => 'Logs e insights',
         'backups' => 'Crear, descargar y restaurar backups',
+        'backups.restore' => 'Restaurar backups',
+        'backups.delete' => 'Borrar y limpiar backups',
         'domains' => 'Dominios locales y vhosts',
         'database' => 'MariaDB manager',
         'docker' => 'Docker y Docker Compose',
+        'docker.actions' => 'Acciones Docker start/stop/logs/compose',
         'deploy' => 'Deploy FTP/Strato',
+        'deploy.run' => 'Ejecutar deploy',
         'services' => 'Control Apache/MariaDB',
+        'services.control' => 'Arrancar, parar y reiniciar servicios',
         'settings' => 'Configuración, permisos y GitHub',
+    ];
+}
+
+function devpanelPermissionParents(): array
+{
+    return [
+        'files.write' => 'files',
+        'files.delete' => 'files',
+        'terminal.execute' => 'terminal',
+        'backups.restore' => 'backups',
+        'backups.delete' => 'backups',
+        'docker.actions' => 'docker',
+        'deploy.run' => 'deploy',
+        'services.control' => 'services',
     ];
 }
 

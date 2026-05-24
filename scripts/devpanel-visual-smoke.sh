@@ -5,6 +5,7 @@ BASE_URL="${BASE_URL:-http://localhost/devpanel}"
 PASSWORD="${DEVPANEL_TEST_PASSWORD:-}"
 CHROMIUM_BIN="${CHROMIUM_BIN:-}"
 TEST_FILE="/opt/lampp/htdocs/devpanel/tmp/visual-smoke.html"
+SCREENSHOT_FILE="/opt/lampp/htdocs/devpanel/tmp/visual-smoke-failure.png"
 
 if [[ -z "$PASSWORD" ]]; then
     echo "Define DEVPANEL_TEST_PASSWORD para ejecutar el test visual." >&2
@@ -72,6 +73,7 @@ cat > "$TEST_FILE" <<'HTML'
                 '#fileManagerContent',
                 '#logSummaryGrid',
                 '#backupScheduleList',
+                '#onboardingChecklist',
                 '[onclick*="openProjectTerminal"]',
                 '[onclick*="copyTerminalOutput"]',
                 '[onclick*="saveBackupSchedule"]',
@@ -105,6 +107,8 @@ cat > "$TEST_FILE" <<'HTML'
                 '#twoFactorQr',
                 '#configImportFile',
                 '#dashboardWidgetSettings',
+                '#template-marketplace',
+                '#theme-customizer',
                 '[onclick*="saveRuntimeSettings"]',
                 '[onclick*="saveGithubSettings"]'
             ]),
@@ -129,6 +133,9 @@ cat > "$TEST_FILE" <<'HTML'
                 '#fileEditorStatus',
                 '[onclick*="createFileManagerFile"]',
                 '#fileManagerUpload'
+            ]),
+            ...assertSelectors('docker', dashboardDoc, [
+                '#dockerSetupAssistant'
             ]),
             ...assertSelectors('audit', auditDoc, [
                 '#auditList',
@@ -166,10 +173,13 @@ cat > "$TEST_FILE" <<'HTML'
 HTML
 
 encoded_password="$(printf '%s' "$PASSWORD" | sed 's/%/%25/g; s/&/%26/g; s/+/%2B/g; s/#/%23/g; s/?/%3F/g; s/ /%20/g')"
-output="$("$CHROMIUM_BIN" --headless --disable-gpu --no-sandbox --dump-dom --virtual-time-budget=3500 "$BASE_URL/tmp/visual-smoke.html?password=$encoded_password")"
+test_url="$BASE_URL/tmp/visual-smoke.html?password=$encoded_password"
+output="$("$CHROMIUM_BIN" --headless --disable-gpu --no-sandbox --dump-dom --virtual-time-budget=3500 "$test_url")"
 
 if ! grep -q 'VISUAL_SMOKE_OK' <<< "$output"; then
+    "$CHROMIUM_BIN" --headless --disable-gpu --no-sandbox --screenshot="$SCREENSHOT_FILE" --window-size=1440,1100 --virtual-time-budget=3500 "$test_url" >/dev/null 2>&1 || true
     echo "$output" | sed -n '1,120p'
+    echo "Screenshot de fallo: $SCREENSHOT_FILE"
     exit 1
 fi
 

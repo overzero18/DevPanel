@@ -6,6 +6,7 @@ header('Content-Type: application/json');
 
 authenticateSession();
 requirePermission('terminal');
+requirePermission('terminal.execute');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST')
 {

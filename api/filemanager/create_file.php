@@ -7,6 +7,7 @@ header('Content-Type: application/json');
 
 authenticateSession();
 requirePermission('files');
+requirePermission('files.write');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST')
 {

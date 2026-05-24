@@ -402,8 +402,12 @@ function currentUserCan($permission)
     $config = require AUTH_PASSWORD_FILE;
     $roles = $config['DEVPANEL_ROLES'] ?? ['admin' => ['*']];
     $permissions = $roles[getCurrentUserRole()] ?? ['*'];
+    $parents = function_exists('devpanelPermissionParents') ? devpanelPermissionParents() : [];
+    $parent = $parents[$permission] ?? null;
 
-    return in_array('*', $permissions, true) || in_array($permission, $permissions, true);
+    return in_array('*', $permissions, true)
+        || in_array($permission, $permissions, true)
+        || ($parent !== null && in_array($parent, $permissions, true));
 }
 
 function requirePermission($permission)

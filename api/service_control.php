@@ -7,6 +7,7 @@ header('Content-Type: application/json');
 
 authenticateSession();
 requirePermission('services');
+requirePermission('services.control');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST')
 {

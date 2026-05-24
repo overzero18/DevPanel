@@ -2,7 +2,7 @@
 
 function devpanelProjectTemplates(): array
 {
-    return [
+    return array_merge([
         'php' => [
             'label' => 'PHP básico',
             'description' => 'index.php, assets y README inicial.',
@@ -23,7 +23,78 @@ function devpanelProjectTemplates(): array
             'label' => 'WordPress starter',
             'description' => 'Estructura base wp-content y notas de instalación.',
         ],
+    ], devpanelLoadCustomProjectTemplates());
+}
+
+function devpanelProjectTemplatesFile(): string
+{
+    return dirname(__DIR__, 2) . '/logs/project_templates.json';
+}
+
+function devpanelLoadCustomProjectTemplates(): array
+{
+    $file = devpanelProjectTemplatesFile();
+
+    if (!is_file($file))
+    {
+        return [];
+    }
+
+    $items = json_decode((string) file_get_contents($file), true);
+
+    return is_array($items) ? $items : [];
+}
+
+function devpanelSaveCustomProjectTemplates(array $templates): bool
+{
+    $file = devpanelProjectTemplatesFile();
+
+    if (!is_dir(dirname($file)) && !mkdir(dirname($file), 0755, true))
+    {
+        return false;
+    }
+
+    return file_put_contents($file, json_encode($templates, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), LOCK_EX) !== false;
+}
+
+function devpanelImportProjectTemplate(array $template): ?array
+{
+    $key = preg_replace('/[^a-zA-Z0-9_-]/', '_', strtolower((string) ($template['key'] ?? $template['label'] ?? 'custom')));
+    $files = is_array($template['files'] ?? null) ? $template['files'] : [];
+
+    if ($key === '' || !$files)
+    {
+        return null;
+    }
+
+    $safeFiles = [];
+
+    foreach ($files as $path => $content)
+    {
+        $path = trim(str_replace('\\', '/', (string) $path));
+
+        if ($path === '' || str_starts_with($path, '/') || str_contains($path, '..'))
+        {
+            continue;
+        }
+
+        $safeFiles[$path] = (string) $content;
+    }
+
+    if (!$safeFiles)
+    {
+        return null;
+    }
+
+    $templates = devpanelLoadCustomProjectTemplates();
+    $templates[$key] = [
+        'label' => substr((string) ($template['label'] ?? $key), 0, 80),
+        'description' => substr((string) ($template['description'] ?? 'Plantilla importada'), 0, 180),
+        'custom' => true,
+        'files' => $safeFiles,
     ];
+
+    return devpanelSaveCustomProjectTemplates($templates) ? [$key, $templates[$key]] : null;
 }
 
 function devpanelTemplateWrite(string $basePath, string $relativePath, string $content): bool
@@ -100,6 +171,18 @@ function devpanelApplyProjectTemplate(string $path, string $name, string $templa
             && devpanelTemplateWrite($path, 'wp-content/themes/.gitkeep', '')
             && devpanelTemplateWrite($path, 'wp-content/plugins/.gitkeep', '')
             && devpanelTemplateWrite($path, 'wp-content/uploads/.gitkeep', '');
+    }
+
+    if (!empty($templates[$template]['custom']) && is_array($templates[$template]['files'] ?? null))
+    {
+        $ok = true;
+
+        foreach ($templates[$template]['files'] as $relativePath => $content)
+        {
+            $ok = devpanelTemplateWrite($path, (string) $relativePath, (string) $content) && $ok;
+        }
+
+        return $ok;
     }
 
     return false;

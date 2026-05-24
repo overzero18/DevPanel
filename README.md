@@ -68,6 +68,9 @@ The project provides a modern interface to manage services, projects, deployment
 * Optional automatic local domain apply with sudo fallback commands
 * Local domain response check
 * Log insights for recent errors and warnings
+* Visual backup restore by file tree
+* Docker setup assistant with install commands and daemon checks
+* Local project template marketplace
 
 ## 🎨 UI
 
@@ -78,6 +81,9 @@ The project provides a modern interface to manage services, projects, deployment
 * Dashboard cards
 * Dark, Cyber, Ubuntu and Glass themes
 * Optional users and roles configuration
+* Per-action permissions for sensitive actions
+* Browser-local theme customizer
+* First-run onboarding checklist
 
 ---
 
@@ -439,6 +445,14 @@ Add that command to cron if you want DevPanel to execute the schedules created f
 * Selective backup file restore
 * Guided installer with readiness summary and actionable checks
 * Expanded visual smoke coverage for the main project pages
+* Visual backup restore tree with SHA-256 comparison cards
+* Per-action permission checks for terminal, Docker, deploy, services, backups and File Manager writes/deletes
+* Visual smoke failure screenshot saved to `tmp/visual-smoke-failure.png`
+* Local 2FA QR fallback when `qrencode` is not installed
+* Docker setup assistant
+* Local project template marketplace import/export
+* Browser-local theme customizer
+* Dashboard onboarding checklist
 
 API token example:
 
