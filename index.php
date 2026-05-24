@@ -161,10 +161,16 @@ $writableProjectCount = count(array_filter($projects, function ($project) {
                     <h4 class="mb-1">Primeros pasos</h4>
                     <p class="text-secondary mb-0" id="onboardingSummary">Comprobando progreso del entorno.</p>
                 </div>
-                <button type="button" class="btn btn-outline-secondary" onclick="dismissOnboarding()">
-                    <i class="bi bi-eye-slash"></i>
-                    Ocultar
-                </button>
+                <div class="database-actions">
+                    <button type="button" class="btn btn-outline-info" onclick="startDashboardTour()">
+                        <i class="bi bi-signpost-2"></i>
+                        Tour
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="dismissOnboarding()">
+                        <i class="bi bi-eye-slash"></i>
+                        Ocultar
+                    </button>
+                </div>
             </div>
             <div class="onboarding-progress">
                 <span id="onboardingProgressBar"></span>

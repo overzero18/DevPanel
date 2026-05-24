@@ -208,6 +208,51 @@ function dismissOnboarding()
     if (section) section.hidden = true;
 }
 
+function dashboardTourSteps()
+{
+    return [
+        ['#systemHealthGrid', 'Estado global', 'Comprueba servicios, permisos, terminal, Git y logs antes de trabajar.'],
+        ['#onboarding-section', 'Primeros pasos', 'Checklist rápido para terminar la instalación y mantener el panel sano.'],
+        ['#projects', 'Proyectos', 'Gestiona proyectos detectados, abre terminal, archivos y acciones por proyecto.'],
+        ['#backups-manager', 'Backups', 'Crea, programa, compara, versiona y restaura backups por archivo.'],
+        ['#docker-manager', 'Docker', 'Revisa Docker, Compose, servicios y edita compose con validación.'],
+        ['#logs-section', 'Logs inteligentes', 'Agrupa errores por categoría, proyecto y sugerencias de causa probable.'],
+        ['#terminal-section', 'Terminal', 'Ejecuta comandos seguros desde el proyecto seleccionado.'],
+    ];
+}
+
+function startDashboardTour(index = 0)
+{
+    const steps = dashboardTourSteps();
+    const step = steps[index];
+
+    if (!step) {
+        localStorage.setItem('devpanel_tour_done', '1');
+        showToast('Tour completado', 'success');
+        return;
+    }
+
+    const [selector, title, text] = step;
+    const target = document.querySelector(selector);
+
+    if (!target) {
+        startDashboardTour(index + 1);
+        return;
+    }
+
+    target.scrollIntoView({behavior: 'smooth', block: 'center'});
+    target.classList.add('tour-highlight');
+
+    appConfirm(text, {
+        title: `${index + 1}/${steps.length} · ${title}`,
+        confirmText: index === steps.length - 1 ? 'Terminar' : 'Siguiente',
+        cancelText: 'Cerrar'
+    }).then(confirmed => {
+        target.classList.remove('tour-highlight');
+        if (confirmed) startDashboardTour(index + 1);
+    });
+}
+
 function getDashboardWidgetPreferences()
 {
     try {
@@ -418,6 +463,7 @@ function setupThemeCustomizer()
     const secondary = document.getElementById('themeAccentSecondary');
     const density = document.getElementById('themeDensity');
     const sidebar = document.getElementById('themeSidebarWidth');
+    const quickPreset = document.getElementById('themeQuickPreset');
     const settings = getThemeCustomizerSettings();
 
     primary.value = settings.primary || primary.value;
@@ -436,6 +482,23 @@ function setupThemeCustomizer()
             applyThemeCustomizer();
         });
     });
+
+    if (quickPreset) {
+        quickPreset.addEventListener('change', () => {
+            const presets = {
+                ocean: {primary: '#0ea5e9', secondary: '#14b8a6', density: 'comfortable', sidebarWidth: 260},
+                forest: {primary: '#22c55e', secondary: '#84cc16', density: 'comfortable', sidebarWidth: 250},
+                mono: {primary: '#94a3b8', secondary: '#e2e8f0', density: 'compact', sidebarWidth: 240},
+            };
+            const preset = presets[quickPreset.value];
+
+            if (!preset) return;
+
+            localStorage.setItem(themeCustomizerStorageKey(), JSON.stringify(preset));
+            setupThemeCustomizer();
+            applyThemeCustomizer();
+        });
+    }
 
     applyThemeCustomizer();
 }

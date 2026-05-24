@@ -121,6 +121,15 @@ $runtimeSettings = devpanelConfig();
                     Sidebar
                     <input type="range" id="themeSidebarWidth" class="form-range" min="220" max="320" step="10" value="260">
                 </label>
+                <label>
+                    Preset rápido
+                    <select id="themeQuickPreset" class="form-select">
+                        <option value="">Manual</option>
+                        <option value="ocean">Ocean</option>
+                        <option value="forest">Forest</option>
+                        <option value="mono">Mono</option>
+                    </select>
+                </label>
             </div>
             <div class="database-toolbar mt-3">
                 <button type="button" class="btn btn-outline-info" onclick="exportThemePreset()">

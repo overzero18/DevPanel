@@ -1582,6 +1582,13 @@ body.density-compact .activity-item {
     white-space: pre-wrap;
 }
 
+.tour-highlight {
+    position: relative;
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 4px;
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent-primary) 18%, transparent);
+}
+
 .text-muted,
 .text-secondary {
     color: var(--text-muted) !important;

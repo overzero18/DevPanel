@@ -74,6 +74,7 @@ cat > "$TEST_FILE" <<'HTML'
                 '#logSummaryGrid',
                 '#backupScheduleList',
                 '#onboardingChecklist',
+                '[onclick*="startDashboardTour"]',
                 '[onclick*="openProjectTerminal"]',
                 '[onclick*="copyTerminalOutput"]',
                 '[onclick*="saveBackupSchedule"]',
@@ -111,6 +112,7 @@ cat > "$TEST_FILE" <<'HTML'
                 '#templateImportPreview',
                 '#theme-customizer',
                 '#themePresetImportFile',
+                '#themeQuickPreset',
                 '[onclick*="saveRuntimeSettings"]',
                 '[onclick*="saveGithubSettings"]'
             ]),

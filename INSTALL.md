@@ -247,6 +247,8 @@ Formato:
 - 🧰 **Asistente Docker** - Instalación, daemon, grupo y comandos recomendados
 - 🧾 **Editor Compose** - Edita y valida `docker-compose.yml` desde el panel
 - 🕘 **Versionado de backups** - Consulta versiones por archivo dentro del historial
+- 🧭 **Tour del dashboard** - Guía visual rápida para usuarios nuevos
+- 🎨 **Presets visuales** - Ocean, Forest y Mono como presets rápidos
 - 📦 **Descargar ZIP** - Comprime proyectos (excluye node_modules, .git)
 - 🚀 **Deploy FTP** - Sube proyectos a servidores remotos
 - 🔧 **Control de Servicios** - Start/Stop/Restart Apache y MySQL

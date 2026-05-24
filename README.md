@@ -88,6 +88,8 @@ The project provides a modern interface to manage services, projects, deployment
 * Browser-local theme customizer
 * Theme preset export/import
 * First-run onboarding checklist
+* Guided dashboard tour
+* Built-in quick theme presets
 
 ---
 
@@ -473,6 +475,8 @@ Add that command to cron if you want DevPanel to execute the schedules created f
 * Docker Compose editor with validation
 * Theme customizer preset export/import
 * More granular DB, Git and File Manager permissions
+* Guided dashboard tour
+* Built-in quick theme presets
 
 API token example:
 
