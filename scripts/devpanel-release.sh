@@ -15,5 +15,5 @@ if [[ -n "$(git status --short)" ]]; then
     exit 1
 fi
 
-git tag -a "v$VERSION" -m "DevPanel v$VERSION"
+git tag "v$VERSION"
 echo "Tag creado: v$VERSION"
