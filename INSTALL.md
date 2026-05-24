@@ -199,6 +199,7 @@ find . -name '*.php' -print0 | xargs -0 -n1 /opt/lampp/bin/php -l
 git diff --check
 DEVPANEL_TEST_PASSWORD=tu_password ./scripts/devpanel-api-smoke.sh
 DEVPANEL_TEST_PASSWORD=tu_password ./scripts/devpanel-visual-smoke.sh
+DEVPANEL_TEST_PASSWORD=tu_password ./scripts/devpanel-functional-smoke.sh
 ```
 
 También revisa en el navegador:

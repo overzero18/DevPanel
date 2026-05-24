@@ -75,7 +75,7 @@ async function loadLogInsights()
         if (summary) {
             summary.textContent = `${info.danger || 0} errores · ${info.warning || 0} avisos`;
         }
-        renderLogInsights(data.items || []);
+        renderLogInsights(data.items || [], data.suggestions || [], data.projects || {});
         loadLogSummary();
     }
     catch(error)
@@ -136,10 +136,31 @@ function renderLogSummary(groups)
     });
 }
 
-function renderLogInsights(items)
+function renderLogInsights(items, suggestions = [], projects = {})
 {
     const container = document.getElementById('logInsightsList');
     container.innerHTML = '';
+
+    if (suggestions.length) {
+        const box = document.createElement('div');
+        box.className = 'log-suggestion-box';
+        const title = document.createElement('strong');
+        title.textContent = 'Sugerencias';
+        box.appendChild(title);
+        suggestions.slice(0, 3).forEach(suggestion => {
+            const item = document.createElement('small');
+            item.textContent = `${suggestion.message} (${suggestion.count})`;
+            box.appendChild(item);
+        });
+        container.appendChild(box);
+    }
+
+    Object.entries(projects).slice(0, 4).forEach(([project, counts]) => {
+        const chip = document.createElement('div');
+        chip.className = 'log-project-chip';
+        chip.textContent = `${project}: ${counts.danger || 0} errores · ${counts.warning || 0} avisos`;
+        container.appendChild(chip);
+    });
 
     if (!items.length) {
         const empty = document.createElement('div');

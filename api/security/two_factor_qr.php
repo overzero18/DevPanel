@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../includes/security.php';
+require_once __DIR__ . '/../../includes/helpers/qr.php';
 
 authenticateSession();
 requirePermission('settings');
@@ -24,26 +25,9 @@ $qrencode = trim(shell_exec('command -v qrencode') ?? '');
 
 if ($qrencode === '')
 {
-    $hash = hash('sha256', $uri);
-    $cells = '';
-    $size = 25;
-    $cell = 7;
+    $svg = devpanelQrSvg($uri);
 
-    for ($y = 0; $y < $size; $y++)
-    {
-        for ($x = 0; $x < $size; $x++)
-        {
-            $finder = ($x < 7 && $y < 7) || ($x > 17 && $y < 7) || ($x < 7 && $y > 17);
-            $bit = hexdec($hash[($x + ($y * $size)) % strlen($hash)]) % 2 === 0;
-
-            if ($finder || $bit)
-            {
-                $cells .= '<rect x="' . (22 + ($x * $cell)) . '" y="' . (16 + ($y * $cell)) . '" width="' . $cell . '" height="' . $cell . '" fill="#111827"/>';
-            }
-        }
-    }
-
-    echo '<svg xmlns="http://www.w3.org/2000/svg" width="220" height="240" viewBox="0 0 220 240"><rect width="100%" height="100%" fill="#fff"/>' . $cells . '<text x="110" y="216" fill="#334155" text-anchor="middle" font-family="sans-serif" font-size="10">Fallback local: copia el URI si tu app no lo escanea</text></svg>';
+    echo $svg ?: '<svg xmlns="http://www.w3.org/2000/svg" width="220" height="220"><rect width="100%" height="100%" fill="#111827"/><text x="50%" y="48%" fill="#94a3b8" text-anchor="middle" font-family="sans-serif" font-size="13">URI demasiado largo</text><text x="50%" y="58%" fill="#64748b" text-anchor="middle" font-family="sans-serif" font-size="11">Copia el URI manual</text></svg>';
     exit;
 }
 

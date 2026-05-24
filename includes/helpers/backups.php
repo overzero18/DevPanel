@@ -247,6 +247,15 @@ function devpanelCreateProjectBackup(string $path): ?array
     $project = basename($path);
     $fileName = preg_replace('/[^a-zA-Z0-9._-]/', '_', $project) . '-' . date('Ymd-His') . '.zip';
     $zipPath = $backupDir . '/' . $fileName;
+    $suffix = 1;
+
+    while (is_file($zipPath))
+    {
+        $fileName = preg_replace('/[^a-zA-Z0-9._-]/', '_', $project) . '-' . date('Ymd-His') . '-' . $suffix . '.zip';
+        $zipPath = $backupDir . '/' . $fileName;
+        $suffix++;
+    }
+
     $zip = new ZipArchive();
 
     if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true)

@@ -150,6 +150,62 @@ function devpanelNormalizeInsightLine(string $line): string
     return trim($line);
 }
 
+function devpanelInsightSuggestion(string $line, string $source): string
+{
+    $lower = strtolower($line);
+
+    if (str_contains($lower, 'permission denied') || str_contains($lower, 'permiso denegado') || str_contains($lower, 'failed to open stream'))
+    {
+        return 'Revisa permisos del proyecto/ruta desde Ajustes o ejecuta el helper local de permisos.';
+    }
+
+    if (str_contains($lower, 'not found') || str_contains($lower, 'unable to stat'))
+    {
+        return 'Comprueba que la ruta exista y que el frontend no esté llamando a un endpoint antiguo.';
+    }
+
+    if (str_contains($lower, 'mysql') || str_contains($lower, 'mariadb') || $source === 'MariaDB')
+    {
+        return 'Revisa el estado de MariaDB, mysql_upgrade y permisos del directorio de datos.';
+    }
+
+    if (str_contains($lower, 'csrf'))
+    {
+        return 'Recarga la página y comprueba que la sesión no haya caducado.';
+    }
+
+    if (str_contains($lower, 'docker'))
+    {
+        return 'Abre el asistente Docker para verificar instalación, daemon y grupo del usuario.';
+    }
+
+    return 'Revisa el log completo y filtra por proyecto para acotar el origen.';
+}
+
+function devpanelDetectInsightProject(string $line, array $projects): ?string
+{
+    foreach ($projects as $project)
+    {
+        $needles = array_values(array_filter([
+            $project['name'] ?? '',
+            !empty($project['name']) ? '/' . $project['name'] . '/' : '',
+            !empty($project['name']) ? rawurlencode($project['name']) : '',
+            $project['path'] ?? '',
+            $project['url'] ?? '',
+        ]));
+
+        foreach ($needles as $needle)
+        {
+            if ($needle !== '' && stripos($line, $needle) !== false)
+            {
+                return $project['name'] ?? null;
+            }
+        }
+    }
+
+    return null;
+}
+
 $hostname = gethostname() ?: '';
 $mysqlDataDir = rtrim(devpanelConfig('MYSQL_DATA_DIR'), DIRECTORY_SEPARATOR);
 $mariaDbLogPath = "$mysqlDataDir/$hostname.err";
@@ -173,12 +229,15 @@ $patterns = [
 
 $items = [];
 $grouped = [];
+$suggestions = [];
+$projectSummary = [];
 $project = trim((string) ($_GET['project'] ?? ''));
 $projectNeedles = [];
+$projects = getProjects();
 
 if ($project !== '')
 {
-    foreach (getProjects() as $item)
+    foreach ($projects as $item)
     {
         if ($item['name'] === $project)
         {
@@ -244,18 +303,33 @@ foreach ($sources as $label => $file)
         }
 
         $key = $label . '|' . $severity . '|' . devpanelNormalizeInsightLine($line);
+        $detectedProject = devpanelDetectInsightProject($line, $projects);
+        $suggestion = devpanelInsightSuggestion($line, $label);
 
         if (isset($grouped[$key]))
         {
             $grouped[$key]['count']++;
+            if ($detectedProject)
+            {
+                $projectSummary[$detectedProject][$severity] = ($projectSummary[$detectedProject][$severity] ?? 0) + 1;
+            }
             continue;
         }
+
+        if ($detectedProject)
+        {
+            $projectSummary[$detectedProject][$severity] = ($projectSummary[$detectedProject][$severity] ?? 0) + 1;
+        }
+
+        $suggestions[$suggestion] = ($suggestions[$suggestion] ?? 0) + 1;
 
         $grouped[$key] = [
             'source' => $label,
             'severity' => $severity,
             'line' => $line,
             'count' => 1,
+            'project' => $detectedProject,
+            'suggestion' => $suggestion,
         ];
         $items = array_values($grouped);
 
@@ -281,5 +355,11 @@ echo json_encode([
     'summary' => $summary,
     'occurrences' => $occurrences,
     'project' => $project,
+    'projects' => $projectSummary,
+    'suggestions' => array_map(
+        static fn ($message, $count) => ['message' => $message, 'count' => $count],
+        array_keys($suggestions),
+        array_values($suggestions)
+    ),
     'items' => $items,
 ]);

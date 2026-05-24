@@ -61,6 +61,7 @@ The project provides a modern interface to manage services, projects, deployment
 * CPU / RAM / Disk usage
 * Global health panel for services, permissions, terminal, Git and logs
 * Visual log dashboard grouped by security, permissions, PHP, Apache and MariaDB
+* Project-aware log suggestions grouped by project and likely cause
 * Persistent notification center
 * Docker detection and container actions
 * Docker Compose detection and basic actions
@@ -260,6 +261,7 @@ Then update `/config.php` with the generated hash.
 * ✅ Cron-ready backup runner
 * ✅ Log insights
 * ✅ API smoke test script for dashboard, assets, terminal, Git, File Manager and APIs
+* ✅ Functional smoke test for File Manager writes, backups, selective restore, template import and Docker assistant
 * ✅ Visual Chromium smoke test for dashboard, installer, Doctor, users, projects, File Manager, settings and audit controls
 * ✅ Guided installer with readiness summary, actionable steps and Doctor checks
 * ✅ Permissions diagnostics
@@ -405,6 +407,12 @@ Visual dashboard check with Chromium:
 DEVPANEL_TEST_PASSWORD=your_local_password ./scripts/devpanel-visual-smoke.sh
 ```
 
+Functional write workflow check:
+
+```bash
+DEVPANEL_TEST_PASSWORD=your_local_password ./scripts/devpanel-functional-smoke.sh
+```
+
 Optional write checks:
 
 ```bash
@@ -449,10 +457,13 @@ Add that command to cron if you want DevPanel to execute the schedules created f
 * Per-action permission checks for terminal, Docker, deploy, services, backups and File Manager writes/deletes
 * Visual smoke failure screenshot saved to `tmp/visual-smoke-failure.png`
 * Local 2FA QR fallback when `qrencode` is not installed
+* Dependency-free local QR SVG generator for 2FA fallback
 * Docker setup assistant
 * Local project template marketplace import/export
 * Browser-local theme customizer
 * Dashboard onboarding checklist
+* Functional smoke script for real write/restore/import workflows
+* Smarter project-aware log suggestions
 
 API token example:
 
