@@ -45,7 +45,9 @@ $fields = [
     'MYSQL_PORT',
     'MYSQL_USER',
     'MYSQL_PASSWORD',
-    'DEVPANEL_DEMO_MODE'
+    'DEVPANEL_DEMO_MODE',
+    'DEVPANEL_MAINTENANCE_MODE',
+    'DEVPANEL_MAINTENANCE_MESSAGE'
 ];
 
 foreach ($fields as $field)
@@ -66,7 +68,7 @@ foreach ($fields as $field)
         continue;
     }
 
-    if ($field === 'DEVPANEL_DEMO_MODE')
+    if ($field === 'DEVPANEL_DEMO_MODE' || $field === 'DEVPANEL_MAINTENANCE_MODE')
     {
         $config[$field] = in_array(strtolower($value), ['1', 'true', 'yes', 'on', 'si', 'sí'], true);
         continue;

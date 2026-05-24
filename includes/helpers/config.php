@@ -22,7 +22,9 @@ if (!function_exists('devpanelDefaultRuntimeConfig')) {
             'GITHUB_REPO' => '',
             'GITHUB_REMOTE_URL' => '',
             'EXCLUDED_PROJECT_FOLDERS' => ['dashboard', 'webalizer', 'xampp', 'phpmyadmin', 'devpanel'],
-            'DEVPANEL_DEMO_MODE' => false
+            'DEVPANEL_DEMO_MODE' => false,
+            'DEVPANEL_MAINTENANCE_MODE' => false,
+            'DEVPANEL_MAINTENANCE_MESSAGE' => 'DevPanel está en mantenimiento local.'
         ];
     }
 }

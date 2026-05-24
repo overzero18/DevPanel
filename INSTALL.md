@@ -204,6 +204,7 @@ Checklist rápido antes de publicar:
 ```bash
 git status --short
 ./scripts/devpanel-release-check.sh
+./scripts/devpanel-release.sh 1.0.0
 DEVPANEL_TEST_PASSWORD=tu_password ./scripts/devpanel-api-smoke.sh
 DEVPANEL_TEST_PASSWORD=tu_password ./scripts/devpanel-visual-smoke.sh
 DEVPANEL_TEST_PASSWORD=tu_password ./scripts/devpanel-functional-smoke.sh
@@ -259,6 +260,9 @@ Formato:
 - 🧪 **Modo demo** - Proyectos falsos para enseñar el panel sin tocar datos reales
 - 🧰 **Diagnóstico ZIP** - Exporta checks, config pública y últimos logs
 - 🧾 **Changelog en panel** - Historial visible desde la sidebar
+- ℹ️ **About/System Info** - Versión, commit, rama y sistema
+- ⬆️ **Updater UI** - Actualiza con Git cuando el árbol está limpio
+- 🚧 **Modo mantenimiento** - Banner visible desde configuración
 - 🎨 **Marketplace de temas** - Presets compartibles desde Ajustes
 - 🎨 **Presets visuales** - Ocean, Forest y Mono como presets rápidos
 - 📦 **Descargar ZIP** - Comprime proyectos (excluye node_modules, .git)

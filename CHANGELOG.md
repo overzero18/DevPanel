@@ -22,3 +22,9 @@
 - Added in-panel changelog page.
 - Added shareable theme marketplace presets.
 - Improved backup restore before/after impact view.
+- Added version file, release script and tag-based GitHub release workflow.
+- Added UI updater status and guarded `git pull --ff-only`.
+- Added About/System Info page.
+- Added config import preview assistant.
+- Added maintenance mode banner.
+- Added README badges and generated demo GIF.

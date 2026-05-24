@@ -1031,7 +1031,12 @@ async function saveRuntimeSettings()
     const formData = new URLSearchParams();
 
     document.querySelectorAll('.runtime-setting-input').forEach(input => {
-        formData.append(input.dataset.setting, input.value.trim());
+        if (input.type === 'checkbox') {
+            formData.append(input.dataset.setting, input.checked ? '1' : '0');
+        }
+        else {
+            formData.append(input.dataset.setting, input.value.trim());
+        }
     });
 
     formData.append('csrf_token', csrfToken);

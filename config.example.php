@@ -25,6 +25,8 @@ return [
     'DEVPANEL_API_TOKENS' => [],
     'DEVPANEL_USERS' => [],
     'DEVPANEL_DEMO_MODE' => false,
+    'DEVPANEL_MAINTENANCE_MODE' => false,
+    'DEVPANEL_MAINTENANCE_MESSAGE' => 'DevPanel está en mantenimiento local.',
     'DEVPANEL_ROLES' => [
         'admin' => ['*'],
         'developer' => ['dashboard', 'projects', 'files', 'git', 'terminal', 'logs', 'backups', 'domains'],

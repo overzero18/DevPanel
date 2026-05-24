@@ -81,5 +81,6 @@ capture projects "/devpanel/projects.php"
 capture filemanager "/devpanel/filemanager.php"
 capture doctor "/devpanel/doctor.php"
 capture changelog "/devpanel/changelog.php"
+capture about "/devpanel/about.php"
 
 echo "Capturas generadas en $OUT_DIR"

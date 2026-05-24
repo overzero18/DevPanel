@@ -1,5 +1,6 @@
 # DevPanel 🚀
 
+![Version](https://img.shields.io/badge/version-1.0.0-4f9ef9)
 ![PHP](https://img.shields.io/badge/PHP-7.4%2B-777BB4)
 ![XAMPP](https://img.shields.io/badge/XAMPP-local-FB7A24)
 ![MariaDB](https://img.shields.io/badge/MariaDB-ready-003545)
@@ -488,6 +489,12 @@ Add that command to cron if you want DevPanel to execute the schedules created f
 * Changelog page inside the panel
 * Shareable theme marketplace presets
 * More visual before/after backup restore impact
+* Versioned releases starting at `v1.0.0`
+* UI updater backed by `git pull --ff-only`
+* About/System Info page
+* Guided config import preview
+* Maintenance mode banner
+* README badges and generated demo GIF
 
 API token example:
 
@@ -530,6 +537,8 @@ Current screenshots are generated locally with Chromium and do not include priva
 
 ![DevPanel dashboard](screenshots/current/dashboard.png)
 
+![DevPanel demo](screenshots/current/devpanel-demo.gif)
+
 ![DevPanel settings](screenshots/current/settings.png)
 
 ![DevPanel projects](screenshots/current/projects.png)
@@ -539,3 +548,5 @@ Current screenshots are generated locally with Chromium and do not include priva
 ![DevPanel doctor](screenshots/current/doctor.png)
 
 ![DevPanel changelog](screenshots/current/changelog.png)
+
+![DevPanel about](screenshots/current/about.png)

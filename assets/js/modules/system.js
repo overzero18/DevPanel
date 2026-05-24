@@ -143,6 +143,8 @@ document.addEventListener("DOMContentLoaded", () =>
         setupTemplateImportPreview();
         loadProjectTemplatesMarketplace();
         loadThemeMarketplace();
+        loadUpdaterStatus();
+        setupConfigImportPreview();
     }
 });
 
@@ -587,6 +589,85 @@ async function loadThemeMarketplace()
     catch(error) {
         console.error(error);
         container.textContent = 'Error cargando marketplace de temas';
+    }
+}
+
+async function loadUpdaterStatus()
+{
+    const container = document.getElementById('updaterStatusList');
+    const summary = document.getElementById('updaterSummary');
+
+    if (!container) return;
+
+    try {
+        const response = await fetch('/devpanel/api/updater/status.php');
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+        const status = data.status || {};
+        summary.textContent = `${status.version || '--'} · ${status.branch || '--'} · ${status.commit || '--'}`;
+        container.innerHTML = '';
+
+        [
+            ['Versión', status.version || '--'],
+            ['Commit', status.commit || '--'],
+            ['Branch', status.branch || '--'],
+            ['Remote', status.remote || 'sin remote'],
+            ['Upstream', status.upstream || 'sin upstream'],
+            ['Estado', status.dirty ? 'Cambios locales pendientes' : 'Git limpio'],
+            ['Pendiente', `${status.behind || 0} detrás · ${status.ahead || 0} delante`],
+        ].forEach(([label, value]) => {
+            const row = document.createElement('div');
+            row.className = 'database-row';
+            row.innerHTML = `
+                <div class="database-info">
+                    <i class="bi bi-cloud-download"></i>
+                    <div><strong>${escapeSystemHtml(label)}</strong><small>${escapeSystemHtml(value)}</small></div>
+                </div>
+            `;
+            container.appendChild(row);
+        });
+    }
+    catch(error) {
+        console.error(error);
+        container.textContent = 'Error cargando updater';
+    }
+}
+
+async function runDevPanelUpdater()
+{
+    const confirmed = await appConfirm('Ejecutará git pull --ff-only si el árbol está limpio y hay upstream configurado.', {
+        title: 'Actualizar DevPanel',
+        confirmText: 'Actualizar',
+        cancelText: 'Cancelar'
+    });
+
+    if (!confirmed) return;
+
+    const formData = new URLSearchParams();
+    formData.append('csrf_token', getSystemCsrfToken());
+
+    try {
+        const response = await fetch('/devpanel/api/updater/run.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: formData
+        });
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+        showToast(data.message || 'Updater ejecutado', data.success ? 'success' : 'danger');
+        await appConfirm(data.output || data.message || 'Sin salida', {
+            title: 'Updater',
+            confirmText: 'Cerrar'
+        });
+        loadUpdaterStatus();
+    }
+    catch(error) {
+        console.error(error);
+        showToast('Error ejecutando updater', 'danger');
     }
 }
 
@@ -1060,6 +1141,41 @@ async function deleteApiToken(id)
 function exportPublicConfig()
 {
     window.location.href = '/devpanel/api/config/export.php';
+}
+
+function setupConfigImportPreview()
+{
+    const input = document.getElementById('configImportFile');
+
+    if (!input) return;
+
+    input.addEventListener('change', previewPublicConfigImport);
+}
+
+async function previewPublicConfigImport()
+{
+    const input = document.getElementById('configImportFile');
+    const panel = document.getElementById('configImportPreview');
+    const file = input?.files?.[0];
+
+    if (!panel || !file) return;
+
+    try {
+        const data = JSON.parse(await file.text());
+        const runtime = data.runtime || {};
+        const roles = data.roles || {};
+        panel.innerHTML = `
+            <div class="backup-compare-grid">
+                <div class="backup-compare-card is-info"><span>Base URL</span><strong>${escapeSystemHtml(runtime.BASE_URL || '--')}</strong></div>
+                <div class="backup-compare-card is-info"><span>Tema</span><strong>${escapeSystemHtml(data.theme || '--')}</strong></div>
+                <div class="backup-compare-card is-info"><span>Roles</span><strong>${Object.keys(roles).length}</strong></div>
+                <div class="backup-compare-card is-warning"><span>Secretos</span><strong>No se importan</strong></div>
+            </div>
+        `;
+    }
+    catch(error) {
+        panel.innerHTML = '<div class="file-manager-empty">JSON inválido.</div>';
+    }
 }
 
 async function importPublicConfig()

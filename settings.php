@@ -60,6 +60,28 @@ $runtimeSettings = devpanelConfig();
             </div>
         </section>
 
+        <section class="dashboard-card runtime-settings-card" id="updater-panel">
+            <div class="section-title-row">
+                <div>
+                    <h4 class="mb-1">Updater</h4>
+                    <p class="text-secondary mb-0" id="updaterSummary">Comprobando versión y remoto Git.</p>
+                </div>
+                <div class="database-actions">
+                    <button type="button" class="btn btn-outline-info" onclick="loadUpdaterStatus()">
+                        <i class="bi bi-arrow-clockwise"></i>
+                        Revisar
+                    </button>
+                    <button type="button" class="btn btn-devpanel" onclick="runDevPanelUpdater()">
+                        <i class="bi bi-cloud-download"></i>
+                        Actualizar
+                    </button>
+                </div>
+            </div>
+            <div class="database-list" id="updaterStatusList">
+                <div class="file-manager-empty">Cargando updater...</div>
+            </div>
+        </section>
+
         <section class="dashboard-card runtime-settings-card" id="template-marketplace">
             <div class="section-title-row">
                 <div>
@@ -176,7 +198,9 @@ $runtimeSettings = devpanelConfig();
                     'MYSQL_PORT' => 'MySQL port',
                     'MYSQL_USER' => 'MySQL user',
                     'MYSQL_PASSWORD' => 'MySQL password',
-                    'DEVPANEL_DEMO_MODE' => 'Demo mode'
+                    'DEVPANEL_DEMO_MODE' => 'Demo mode',
+                    'DEVPANEL_MAINTENANCE_MODE' => 'Maintenance mode',
+                    'DEVPANEL_MAINTENANCE_MESSAGE' => 'Maintenance message'
                 ];
                 ?>
 
@@ -184,10 +208,11 @@ $runtimeSettings = devpanelConfig();
                     <div>
                         <label class="form-label"><?php echo htmlspecialchars($label, ENT_QUOTES, 'UTF-8'); ?></label>
                         <input
-                            type="<?php echo $field === 'MYSQL_PASSWORD' ? 'password' : 'text'; ?>"
+                            type="<?php echo $field === 'MYSQL_PASSWORD' ? 'password' : (str_ends_with($field, '_MODE') ? 'checkbox' : 'text'); ?>"
                             class="form-control runtime-setting-input"
                             data-setting="<?php echo strtolower($field); ?>"
-                            value="<?php echo htmlspecialchars((string) ($runtimeSettings[$field] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+                            value="<?php echo htmlspecialchars((string) ($runtimeSettings[$field] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                            <?php echo str_ends_with($field, '_MODE') && !empty($runtimeSettings[$field]) ? 'checked' : ''; ?>>
                     </div>
                 <?php endforeach; ?>
             </div>
@@ -314,6 +339,9 @@ $runtimeSettings = devpanelConfig();
 
             <div class="database-users mt-4">
                 <h5 class="mb-3">Configuración portable</h5>
+                <div class="template-preview-panel mb-3" id="configImportPreview">
+                    <div class="file-manager-empty">Selecciona un JSON para previsualizar rutas, tema y roles antes de importar.</div>
+                </div>
                 <div class="database-toolbar">
                     <button type="button" class="btn btn-outline-info" onclick="exportPublicConfig()">
                         <i class="bi bi-download"></i>

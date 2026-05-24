@@ -1,0 +1,27 @@
+name: DevPanel release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build archive
+        run: |
+          zip -r devpanel-${GITHUB_REF_NAME}.zip . \
+            -x './.git/*' './config.php' './logs/*' './tmp/*' './node_modules/*' './vendor/*'
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: devpanel-${{ github.ref_name }}.zip
+          generate_release_notes: true
