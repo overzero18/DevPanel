@@ -365,11 +365,12 @@ Before publishing a public release:
 - Confirm `.env`, ZIP files, logs and temporary files are ignored.
 - Search for private usernames, tokens, passwords and personal repository URLs.
 - Run PHP lint across the project.
+- Run `./scripts/devpanel-release-check.sh`.
 - Run `scripts/devpanel-api-smoke.sh` with `DEVPANEL_TEST_PASSWORD` locally.
 - Use `DEVPANEL_SMOKE_WRITE=1` only when you want the smoke test to create a real backup.
 - Open the dashboard and check **Permisos del sistema**.
 - Test login, project listing, File Manager, logs and MariaDB on a fresh local setup.
-- Update screenshots separately when the UI is final.
+- Generate fresh screenshots with `DEVPANEL_TEST_PASSWORD=your_password ./scripts/devpanel-screenshots.sh`.
 
 ### Default Restrictions
 
@@ -477,6 +478,9 @@ Add that command to cron if you want DevPanel to execute the schedules created f
 * More granular DB, Git and File Manager permissions
 * Guided dashboard tour
 * Built-in quick theme presets
+* Release checklist script for public publishing
+* GitHub Actions lint workflow
+* Current documentation screenshots generated with Chromium
 
 API token example:
 
@@ -515,8 +519,14 @@ GitHub: configure your own repository in DevPanel settings.
 
 # 📸 Screenshots
 
-Existing screenshots are kept at the end so public docs can be updated without exposing private paths, tokens or usernames.
+Current screenshots are generated locally with Chromium and do not include private tokens or repository credentials.
 
-![DevPanel screenshot 1](screenshots/Captura%20de%20pantalla%202026-05-16%20035127.png)
+![DevPanel dashboard](screenshots/current/dashboard.png)
 
-![DevPanel screenshot 2](screenshots/Captura%20de%20pantalla%202026-05-16%20035210.png)
+![DevPanel settings](screenshots/current/settings.png)
+
+![DevPanel projects](screenshots/current/projects.png)
+
+![DevPanel file manager](screenshots/current/filemanager.png)
+
+![DevPanel doctor](screenshots/current/doctor.png)

@@ -195,11 +195,11 @@ Checklist rápido antes de publicar:
 
 ```bash
 git status --short
-find . -name '*.php' -print0 | xargs -0 -n1 /opt/lampp/bin/php -l
-git diff --check
+./scripts/devpanel-release-check.sh
 DEVPANEL_TEST_PASSWORD=tu_password ./scripts/devpanel-api-smoke.sh
 DEVPANEL_TEST_PASSWORD=tu_password ./scripts/devpanel-visual-smoke.sh
 DEVPANEL_TEST_PASSWORD=tu_password ./scripts/devpanel-functional-smoke.sh
+DEVPANEL_TEST_PASSWORD=tu_password ./scripts/devpanel-screenshots.sh
 ```
 
 También revisa en el navegador:
