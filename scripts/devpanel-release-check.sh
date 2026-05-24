@@ -24,6 +24,7 @@ echo "[2/6] Bash syntax"
 while IFS= read -r -d '' file; do
     bash -n "$file"
 done < <(find scripts -name '*.sh' -print0)
+bash -n install.sh
 
 echo "[3/6] Git whitespace"
 git diff --check

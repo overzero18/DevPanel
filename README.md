@@ -481,6 +481,13 @@ Add that command to cron if you want DevPanel to execute the schedules created f
 * Release checklist script for public publishing
 * GitHub Actions lint workflow
 * Current documentation screenshots generated with Chromium
+* GitHub Actions smoke workflow with PHP built-in server
+* `install.sh` installer for local XAMPP setups
+* Demo mode with sample projects
+* Diagnostic ZIP export from Doctor and Changelog
+* Changelog page inside the panel
+* Shareable theme marketplace presets
+* More visual before/after backup restore impact
 
 API token example:
 
@@ -530,3 +537,5 @@ Current screenshots are generated locally with Chromium and do not include priva
 ![DevPanel file manager](screenshots/current/filemanager.png)
 
 ![DevPanel doctor](screenshots/current/doctor.png)
+
+![DevPanel changelog](screenshots/current/changelog.png)

@@ -44,7 +44,8 @@ $fields = [
     'MYSQL_HOST',
     'MYSQL_PORT',
     'MYSQL_USER',
-    'MYSQL_PASSWORD'
+    'MYSQL_PASSWORD',
+    'DEVPANEL_DEMO_MODE'
 ];
 
 foreach ($fields as $field)
@@ -62,6 +63,12 @@ foreach ($fields as $field)
         }
 
         $config[$field] = $port;
+        continue;
+    }
+
+    if ($field === 'DEVPANEL_DEMO_MODE')
+    {
+        $config[$field] = in_array(strtolower($value), ['1', 'true', 'yes', 'on', 'si', 'sí'], true);
         continue;
     }
 

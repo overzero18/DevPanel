@@ -64,6 +64,7 @@ cat > "$TEST_FILE" <<'HTML'
         const projectsDoc = await loadDoc('/devpanel/projects.php');
         const fileManagerDoc = await loadDoc('/devpanel/filemanager.php');
         const auditDoc = await loadDoc('/devpanel/audit.php');
+        const changelogDoc = await loadDoc('/devpanel/changelog.php');
 
         const missing = [
             ...assertSelectors('dashboard', dashboardDoc, [
@@ -111,6 +112,7 @@ cat > "$TEST_FILE" <<'HTML'
                 '#template-marketplace',
                 '#templateImportPreview',
                 '#theme-customizer',
+                '#themeMarketplaceList',
                 '#themePresetImportFile',
                 '#themeQuickPreset',
                 '[onclick*="saveRuntimeSettings"]',
@@ -148,6 +150,10 @@ cat > "$TEST_FILE" <<'HTML'
                 '#auditAction',
                 '#auditUser',
                 '[onclick*="loadAuditLog"]'
+            ]),
+            ...assertSelectors('changelog', changelogDoc, [
+                '.content',
+                'a[href="/devpanel/api/diagnostics/export.php"]'
             ])
         ];
 
@@ -159,7 +165,9 @@ cat > "$TEST_FILE" <<'HTML'
             ['/devpanel/api/logs/summary.php', 'logs summary'],
             ['/devpanel/api/permissions.php', 'permissions'],
             ['/devpanel/api/users/list.php', 'users list'],
-            ['/devpanel/api/backups/schedules.php', 'backup schedules']
+            ['/devpanel/api/backups/schedules.php', 'backup schedules'],
+            ['/devpanel/api/demo/status.php', 'demo status'],
+            ['/devpanel/api/themes/marketplace.php', 'theme marketplace']
         ];
 
         for (const [path, label] of jsonChecks) {

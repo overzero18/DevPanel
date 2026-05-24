@@ -28,10 +28,16 @@ $doctor = devpanelDoctorChecks();
                 <p class="text-secondary mb-0">Instalación, permisos y entorno local.</p>
             </div>
 
-            <a href="/devpanel/doctor.php" class="btn btn-outline-info">
-                <i class="bi bi-arrow-clockwise"></i>
-                Revisar
-            </a>
+            <div class="database-actions">
+                <a href="/devpanel/api/diagnostics/export.php" class="btn btn-outline-secondary">
+                    <i class="bi bi-file-zip"></i>
+                    Diagnóstico ZIP
+                </a>
+                <a href="/devpanel/doctor.php" class="btn btn-outline-info">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    Revisar
+                </a>
+            </div>
         </div>
 
         <div class="doctor-summary-grid">

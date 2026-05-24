@@ -387,6 +387,7 @@ function renderBackupRestoreTreeModal(backup, preview)
                     </div>
                     <div class="modal-body">
                         <div class="backup-compare-grid" id="backupRestoreSummary"></div>
+                        <div class="backup-compare-grid mt-3" id="backupRestoreImpact"></div>
                         <div class="database-toolbar mt-3">
                             <input type="search" id="backupRestoreSearch" class="form-control" placeholder="Filtrar archivo">
                             <button type="button" class="btn btn-outline-info" id="backupRestoreSelectAll">Todo</button>
@@ -415,6 +416,11 @@ function renderBackupRestoreTreeModal(backup, preview)
         ['Nuevos', diff.missing || 0, 'is-info'],
         ['Total', preview.file_count || files.length, '']
     ].map(([label, value, state]) => `<div class="backup-compare-card ${state}"><span>${label}</span><strong>${value}</strong></div>`).join('');
+    modalElement.querySelector('#backupRestoreImpact').innerHTML = [
+        ['Antes', `${diff.same_hash || 0} iguales · ${diff.different_hash || 0} distintos`, ''],
+        ['Después', `${(diff.same_hash || 0) + (diff.different_hash || 0) + (diff.missing || 0)} desde backup`, 'is-info'],
+        ['Riesgo', diff.different_hash || diff.missing ? 'Sobrescribe cambios' : 'Sin cambios detectados', diff.different_hash || diff.missing ? 'is-warning' : 'is-ok']
+    ].map(([label, value, state]) => `<div class="backup-compare-card ${state}"><span>${label}</span><strong>${value}</strong></div>`).join('');
 
     const tree = modalElement.querySelector('#backupRestoreTree');
     const search = modalElement.querySelector('#backupRestoreSearch');
@@ -434,6 +440,7 @@ function renderBackupRestoreTreeModal(backup, preview)
                     <span class="backup-restore-name">${escapeBackupHtml(file.name)}</span>
                     <span class="backup-restore-state">${backupFileStateLabel(file.current_state)}</span>
                     <span class="backup-restore-size">${formatBackupSize(file.size || 0)}</span>
+                    <span class="backup-restore-state">${escapeBackupHtml((file.current_hash || '').slice(0, 8) || 'nuevo')} → ${escapeBackupHtml((file.backup_hash || '').slice(0, 8) || 'backup')}</span>
                     <button type="button" class="btn btn-sm btn-outline-info">Versiones</button>
                 `;
                 row.querySelector('button').addEventListener('click', event => {

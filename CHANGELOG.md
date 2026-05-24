@@ -15,3 +15,10 @@
 - Added dashboard sections, onboarding checklist, guided tour, quick theme presets and theme export/import.
 - Added API, visual and functional smoke scripts for local verification.
 - Added release checks, CI lint workflow and generated screenshot workflow.
+- Added CI smoke workflow with PHP built-in server.
+- Added local `install.sh` installer.
+- Added demo mode sample projects.
+- Added diagnostic ZIP export.
+- Added in-panel changelog page.
+- Added shareable theme marketplace presets.
+- Improved backup restore before/after impact view.

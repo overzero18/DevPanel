@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/helpers/config.php';
+require_once __DIR__ . '/helpers/demo.php';
 require_once __DIR__ . '/helpers/users.php';
 
 function getProjectType($path)
@@ -166,6 +167,11 @@ function getProjectGitInfo($path)
 
 function getProjects()
 {
+    if (devpanelDemoModeEnabled())
+    {
+        return devpanelDemoProjects();
+    }
+
     $projectsPath = devpanelConfig('HTDOCS_PATH', '/opt/lampp/htdocs');
     $localhostUrl = rtrim(devpanelConfig('LOCALHOST_URL', 'http://localhost'), '/');
 

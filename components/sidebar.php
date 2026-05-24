@@ -44,6 +44,12 @@ $primaryLinks = [
         'match' => ['audit.php'],
     ],
     [
+        'url' => '/devpanel/changelog.php',
+        'icon' => 'clock-history',
+        'label' => 'Changelog',
+        'match' => ['changelog.php'],
+    ],
+    [
         'url' => '/devpanel/settings.php',
         'icon' => 'sliders',
         'label' => 'Ajustes',

@@ -36,6 +36,12 @@ git clone https://github.com/tuusuario/devpanel.git /opt/lampp/htdocs/devpanel
 http://localhost/devpanel/setup.php
 ```
 
+También puedes instalar/copiar el proyecto con el instalador local:
+
+```bash
+./install.sh
+```
+
 **En la página de setup:**
 - ✅ Ingresa tu contraseña (mínimo 12 caracteres)
 - ✅ Confirma la contraseña
@@ -250,6 +256,10 @@ Formato:
 - 🧾 **Editor Compose** - Edita y valida `docker-compose.yml` desde el panel
 - 🕘 **Versionado de backups** - Consulta versiones por archivo dentro del historial
 - 🧭 **Tour del dashboard** - Guía visual rápida para usuarios nuevos
+- 🧪 **Modo demo** - Proyectos falsos para enseñar el panel sin tocar datos reales
+- 🧰 **Diagnóstico ZIP** - Exporta checks, config pública y últimos logs
+- 🧾 **Changelog en panel** - Historial visible desde la sidebar
+- 🎨 **Marketplace de temas** - Presets compartibles desde Ajustes
 - 🎨 **Presets visuales** - Ocean, Forest y Mono como presets rápidos
 - 📦 **Descargar ZIP** - Comprime proyectos (excluye node_modules, .git)
 - 🚀 **Deploy FTP** - Sube proyectos a servidores remotos

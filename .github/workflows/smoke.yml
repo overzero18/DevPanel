@@ -1,0 +1,41 @@
+name: DevPanel smoke
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  php-server-smoke:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          extensions: zip
+          coverage: none
+
+      - name: Prepare local layout
+        run: |
+          sudo mkdir -p /opt/lampp/htdocs
+          sudo cp -a "$GITHUB_WORKSPACE" /opt/lampp/htdocs/devpanel
+          sudo mkdir -p /opt/lampp/bin /opt/lampp/logs /opt/lampp/var/mysql
+          sudo ln -sf "$(command -v php)" /opt/lampp/bin/php
+          sudo chown -R "$USER:$USER" /opt/lampp/htdocs/devpanel /opt/lampp/logs /opt/lampp/var/mysql
+          php -r 'file_put_contents("/opt/lampp/htdocs/devpanel/config.php", "<?php\nreturn " . var_export(array_merge(require "/opt/lampp/htdocs/devpanel/config.example.php", ["DEVPANEL_PASSWORD" => password_hash("ci-devpanel-password", PASSWORD_BCRYPT), "DEVPANEL_DEMO_MODE" => true]), true) . ";\n");'
+
+      - name: Start PHP server
+        run: |
+          php -S 127.0.0.1:8080 -t /opt/lampp/htdocs >/tmp/devpanel-php-server.log 2>&1 &
+          sleep 2
+          curl -fsS http://127.0.0.1:8080/devpanel/login.html >/dev/null
+
+      - name: API smoke
+        run: |
+          cd /opt/lampp/htdocs/devpanel
+          BASE_URL=http://127.0.0.1:8080/devpanel DEVPANEL_TEST_PASSWORD=ci-devpanel-password ./scripts/devpanel-api-smoke.sh

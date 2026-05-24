@@ -142,6 +142,9 @@ $runtimeSettings = devpanelConfig();
                     Importar preset
                 </button>
             </div>
+            <div class="database-list mt-3" id="themeMarketplaceList">
+                <div class="file-manager-empty">Cargando marketplace de temas...</div>
+            </div>
         </section>
 
         <section class="dashboard-card runtime-settings-card" id="runtime-settings">
@@ -172,7 +175,8 @@ $runtimeSettings = devpanelConfig();
                     'MYSQL_HOST' => 'MySQL host',
                     'MYSQL_PORT' => 'MySQL port',
                     'MYSQL_USER' => 'MySQL user',
-                    'MYSQL_PASSWORD' => 'MySQL password'
+                    'MYSQL_PASSWORD' => 'MySQL password',
+                    'DEVPANEL_DEMO_MODE' => 'Demo mode'
                 ];
                 ?>
 

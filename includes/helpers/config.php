@@ -21,7 +21,8 @@ if (!function_exists('devpanelDefaultRuntimeConfig')) {
             'GITHUB_USER' => '',
             'GITHUB_REPO' => '',
             'GITHUB_REMOTE_URL' => '',
-            'EXCLUDED_PROJECT_FOLDERS' => ['dashboard', 'webalizer', 'xampp', 'phpmyadmin', 'devpanel']
+            'EXCLUDED_PROJECT_FOLDERS' => ['dashboard', 'webalizer', 'xampp', 'phpmyadmin', 'devpanel'],
+            'DEVPANEL_DEMO_MODE' => false
         ];
     }
 }

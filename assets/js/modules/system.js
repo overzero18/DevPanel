@@ -142,6 +142,7 @@ document.addEventListener("DOMContentLoaded", () =>
         setupThemeCustomizer();
         setupTemplateImportPreview();
         loadProjectTemplatesMarketplace();
+        loadThemeMarketplace();
     }
 });
 
@@ -529,6 +530,102 @@ function exportThemePreset()
     URL.revokeObjectURL(link.href);
 }
 
+async function loadThemeMarketplace()
+{
+    const container = document.getElementById('themeMarketplaceList');
+
+    if (!container) return;
+
+    try {
+        const response = await fetch('/devpanel/api/themes/marketplace.php');
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+        const presets = data.presets || [];
+        container.innerHTML = '';
+
+        if (!presets.length) {
+            container.innerHTML = '<div class="file-manager-empty">Sin presets compartibles.</div>';
+            return;
+        }
+
+        presets.forEach(preset => {
+            const row = document.createElement('div');
+            row.className = 'database-row';
+            const info = document.createElement('div');
+            info.className = 'database-info';
+            info.innerHTML = `
+                <i class="bi bi-palette-fill"></i>
+                <div>
+                    <strong>${escapeSystemHtml(preset.name || 'Preset')}</strong>
+                    <small>${escapeSystemHtml(preset.description || '')}</small>
+                </div>
+            `;
+            const actions = document.createElement('div');
+            actions.className = 'database-actions';
+
+            const apply = document.createElement('button');
+            apply.type = 'button';
+            apply.className = 'btn btn-sm btn-outline-info';
+            apply.textContent = 'Aplicar';
+            apply.addEventListener('click', () => applySharedThemePreset(preset.settings || {}));
+
+            const copy = document.createElement('button');
+            copy.type = 'button';
+            copy.className = 'btn btn-sm btn-outline-secondary';
+            copy.textContent = 'Copiar JSON';
+            copy.addEventListener('click', () => copySharedThemePreset(preset));
+
+            actions.appendChild(apply);
+            actions.appendChild(copy);
+            row.appendChild(info);
+            row.appendChild(actions);
+            container.appendChild(row);
+        });
+    }
+    catch(error) {
+        console.error(error);
+        container.textContent = 'Error cargando marketplace de temas';
+    }
+}
+
+function normalizeThemePresetSettings(settings)
+{
+    return {
+        primary: /^#[0-9a-fA-F]{6}$/.test(settings.primary || '') ? settings.primary : '#4f9ef9',
+        secondary: /^#[0-9a-fA-F]{6}$/.test(settings.secondary || '') ? settings.secondary : '#10d981',
+        density: settings.density === 'compact' ? 'compact' : 'comfortable',
+        sidebarWidth: Math.max(220, Math.min(320, Number(settings.sidebarWidth || 260))),
+    };
+}
+
+function applySharedThemePreset(settings)
+{
+    localStorage.setItem(themeCustomizerStorageKey(), JSON.stringify(normalizeThemePresetSettings(settings)));
+    setupThemeCustomizer();
+    applyThemeCustomizer();
+    showToast('Tema aplicado', 'success');
+}
+
+async function copySharedThemePreset(preset)
+{
+    const payload = JSON.stringify({
+        type: 'devpanel-theme-preset',
+        version: 1,
+        name: preset.name || 'Preset',
+        settings: normalizeThemePresetSettings(preset.settings || {})
+    }, null, 2);
+
+    try {
+        await navigator.clipboard.writeText(payload);
+        showToast('Preset copiado', 'success');
+    }
+    catch(error) {
+        await appConfirm(payload, {title: 'Preset JSON', confirmText: 'Cerrar'});
+    }
+}
+
 async function importThemePreset()
 {
     const input = document.getElementById('themePresetImportFile');
@@ -542,12 +639,7 @@ async function importThemePreset()
     try {
         const data = JSON.parse(await file.text());
         const settings = data.settings || data;
-        const next = {
-            primary: /^#[0-9a-fA-F]{6}$/.test(settings.primary || '') ? settings.primary : '#4f9ef9',
-            secondary: /^#[0-9a-fA-F]{6}$/.test(settings.secondary || '') ? settings.secondary : '#10d981',
-            density: settings.density === 'compact' ? 'compact' : 'comfortable',
-            sidebarWidth: Math.max(220, Math.min(320, Number(settings.sidebarWidth || 260))),
-        };
+        const next = normalizeThemePresetSettings(settings);
 
         localStorage.setItem(themeCustomizerStorageKey(), JSON.stringify(next));
         input.value = '';
