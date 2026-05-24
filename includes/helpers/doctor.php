@@ -51,6 +51,11 @@ function devpanelDoctorChecks(): array
     $qrencode = devpanelDoctorCommand(['sh', '-lc', 'command -v qrencode']);
     $gitVersion = devpanelDoctorCommand(['git', '--version']);
     $fileMode = devpanelDoctorCommand(['git', '-C', $projectDir, 'config', '--get', 'core.fileMode']);
+    $fileModeValue = trim($fileMode['output']);
+    $fileModeSeverity = $fileModeValue === 'true' ? 'warning' : ($fileModeValue === 'false' ? 'ok' : 'info');
+    $fileModeDetail = $fileModeValue === ''
+        ? 'Opcional: configura core.fileMode=false para evitar cambios de permisos en Git'
+        : 'core.fileMode=' . $fileModeValue;
 
     $items = [
         devpanelDoctorItem('Proyecto', is_dir($projectDir), $projectDir),
@@ -63,7 +68,7 @@ function devpanelDoctorChecks(): array
         devpanelDoctorItem('LAMPP', is_file($lamppPath . '/lampp'), $lamppPath . '/lampp'),
         devpanelDoctorItem('PHP XAMPP', is_file($phpBinary), $phpBinary),
         devpanelDoctorItem('Git', $gitVersion['ok'], $gitVersion['output']),
-        devpanelDoctorItem('Git fileMode', trim($fileMode['output']) === 'false', 'core.fileMode=' . ($fileMode['output'] ?: 'sin configurar')),
+        devpanelDoctorItem('Git fileMode', $fileModeSeverity === 'ok', $fileModeDetail, $fileModeSeverity),
         devpanelDoctorItem('Docker', $docker['ok'], $docker['ok'] ? $docker['output'] : 'No instalado o fuera de PATH', $docker['ok'] ? 'ok' : 'info'),
         devpanelDoctorItem('qrencode', $qrencode['ok'], $qrencode['ok'] ? $qrencode['output'] : 'Opcional para mostrar QR 2FA real', $qrencode['ok'] ? 'ok' : 'info'),
         devpanelDoctorItem('Apache error log', is_readable(devpanelConfig('APACHE_ERROR_LOG')), devpanelConfig('APACHE_ERROR_LOG')),
@@ -72,18 +77,22 @@ function devpanelDoctorChecks(): array
         devpanelDoctorItem('MySQL data dir', is_readable(devpanelConfig('MYSQL_DATA_DIR')), devpanelConfig('MYSQL_DATA_DIR')),
     ];
 
-    $warnings = array_values(array_filter($items, static fn ($item) => $item['severity'] !== 'ok'));
+    $warnings = array_values(array_filter($items, static fn ($item) => in_array($item['severity'], ['warning', 'danger'], true)));
+    $info = array_values(array_filter($items, static fn ($item) => $item['severity'] === 'info'));
+    $ok = array_values(array_filter($items, static fn ($item) => $item['severity'] === 'ok'));
 
     return [
         'items' => $items,
         'summary' => [
             'total' => count($items),
-            'ok' => count($items) - count($warnings),
+            'ok' => count($ok),
             'warnings' => count($warnings),
+            'info' => count($info),
         ],
         'commands' => [
             'Permisos base' => 'APACHE_USER=daemon ./scripts/fix-local-permissions.sh',
             'Permisos htdocs' => 'FIX_HTDOCS=1 APACHE_USER=daemon ./scripts/fix-local-permissions.sh',
+            'Git fileMode' => 'git config core.fileMode false',
             'Doctor CLI' => './scripts/devpanel-doctor.sh',
             'Instalar QR 2FA' => 'sudo apt install qrencode',
             'Lint PHP' => "find . -name '*.php' -print0 | xargs -0 -n1 /opt/lampp/bin/php -l",

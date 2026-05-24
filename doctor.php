@@ -49,6 +49,11 @@ $doctor = devpanelDoctorChecks();
                 <span>Avisos</span>
                 <strong><?php echo (int) $doctor['summary']['warnings']; ?></strong>
             </div>
+
+            <div class="dashboard-card doctor-summary-card is-info">
+                <span>Opcional</span>
+                <strong><?php echo (int) $doctor['summary']['info']; ?></strong>
+            </div>
         </div>
 
         <div class="dashboard-card doctor-card">
@@ -62,7 +67,7 @@ $doctor = devpanelDoctorChecks();
             <div class="doctor-check-list">
                 <?php foreach ($doctor['items'] as $item): ?>
                     <div class="doctor-check is-<?php echo htmlspecialchars($item['severity'], ENT_QUOTES, 'UTF-8'); ?>">
-                        <i class="bi <?php echo $item['severity'] === 'ok' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill'; ?>"></i>
+                        <i class="bi <?php echo $item['severity'] === 'ok' ? 'bi-check-circle-fill' : ($item['severity'] === 'info' ? 'bi-info-circle-fill' : 'bi-exclamation-triangle-fill'); ?>"></i>
                         <div>
                             <strong><?php echo htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8'); ?></strong>
                             <small><?php echo htmlspecialchars($item['detail'], ENT_QUOTES, 'UTF-8'); ?></small>

@@ -1104,7 +1104,7 @@ body {
 
 .doctor-summary-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 14px;
 }
 
@@ -1130,6 +1130,11 @@ body {
 
 .doctor-summary-card.is-warning strong {
     color: var(--accent-warning);
+}
+
+.doctor-summary-card.is-info strong,
+.doctor-check.is-info i {
+    color: var(--accent-primary);
 }
 
 .doctor-card {
