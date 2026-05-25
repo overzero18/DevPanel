@@ -49,11 +49,13 @@ async function loadDockerSetupAssistant()
 
         const data = await response.json();
         const docker = data.docker || {};
+        const socket = docker.socket || {};
         const checks = [
             ['Docker instalado', docker.installed, docker.binary || 'No instalado'],
             ['Daemon activo', docker.daemon, docker.daemon_output || 'Sin respuesta'],
             ['Docker Compose', docker.compose, docker.compose_output || 'No detectado'],
             ['Usuario en grupo docker', docker.user_in_group, docker.user_in_group ? 'OK' : 'Requiere cerrar sesión tras usermod'],
+            ['Socket Docker', socket.exists && socket.readable && socket.writable, socket.exists ? `${socket.owner || '?'}:${socket.group || '?'} · PHP ${docker.php_user || '?'}` : 'No existe /var/run/docker.sock'],
         ];
 
         container.innerHTML = `

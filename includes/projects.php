@@ -94,19 +94,23 @@ function getProjectFilesystemStats($path)
     ];
 }
 
-function formatProjectModifiedAt($timestamp)
-{
-    if (!$timestamp)
-    {
-        return 'Sin fecha';
-    }
-
-    return date('d/m/Y H:i', $timestamp);
-}
-
 function getFolderSize($path)
 {
     return getProjectFilesystemStats($path)['size'];
+}
+
+function devpanelProjectPublicBaseUrl(): string
+{
+    $configured = rtrim(devpanelConfig('LOCALHOST_URL', 'http://localhost'), '/');
+    $defaultUrls = ['http://localhost', 'https://localhost'];
+
+    if (in_array($configured, $defaultUrls, true) && !empty($_SERVER['HTTP_HOST']))
+    {
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        return $scheme . '://' . $_SERVER['HTTP_HOST'];
+    }
+
+    return $configured;
 }
 
 function runProjectGitCommand($path, $args)
@@ -174,7 +178,7 @@ function getProjects()
     }
 
     $projectsPath = devpanelConfig('HTDOCS_PATH', '/opt/lampp/htdocs');
-    $localhostUrl = rtrim(devpanelConfig('LOCALHOST_URL', 'http://localhost'), '/');
+    $localhostUrl = devpanelProjectPublicBaseUrl();
 
     $folders = scandir($projectsPath);
 
