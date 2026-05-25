@@ -27,6 +27,7 @@ return [
     'DEVPANEL_DEMO_MODE' => false,
     'DEVPANEL_MAINTENANCE_MODE' => false,
     'DEVPANEL_MAINTENANCE_MESSAGE' => 'DevPanel está en mantenimiento local.',
+    'DEVPANEL_PLUGINS_ENABLED' => ['docker', 'database', 'git', 'backups', 'terminal', 'templates', 'domains'],
     'DEVPANEL_ROLES' => [
         'admin' => ['*'],
         'developer' => ['dashboard', 'projects', 'files', 'git', 'terminal', 'logs', 'backups', 'domains'],

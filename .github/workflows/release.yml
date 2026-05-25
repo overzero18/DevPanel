@@ -17,8 +17,8 @@ jobs:
 
       - name: Build archive
         run: |
-          zip -r devpanel-${GITHUB_REF_NAME}.zip . \
-            -x './.git/*' './config.php' './logs/*' './tmp/*' './node_modules/*' './vendor/*'
+          bash ./scripts/devpanel-build-release.sh
+          cp "tmp/releases/devpanel-${GITHUB_REF_NAME}.zip" "devpanel-${GITHUB_REF_NAME}.zip"
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2

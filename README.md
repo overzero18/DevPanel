@@ -495,6 +495,12 @@ Add that command to cron if you want DevPanel to execute the schedules created f
 * Guided config import preview
 * Maintenance mode banner
 * README badges and generated demo GIF
+* SQLite local state for API tokens so secrets stay out of `config.php`
+* Separate CI and local smoke runners
+* PHP unit test script for config, plugins, CI helpers and token state
+* Clean release ZIP builder excluding private/local files
+* CI Health page with local checks and optional GitHub CLI run list
+* Local plugin system with enable/disable controls
 
 API token example:
 

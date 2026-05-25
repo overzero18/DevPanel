@@ -144,7 +144,12 @@ document.addEventListener("DOMContentLoaded", () =>
         loadProjectTemplatesMarketplace();
         loadThemeMarketplace();
         loadUpdaterStatus();
+        loadDevPanelPlugins();
         setupConfigImportPreview();
+    }
+
+    if (document.getElementById('ciLocalChecks')) {
+        loadCiHealth();
     }
 });
 
@@ -1215,5 +1220,147 @@ async function importPublicConfig()
     catch(error) {
         console.error(error);
         showToast('Error importando configuración', 'danger');
+    }
+}
+
+async function loadDevPanelPlugins()
+{
+    const container = document.getElementById('devpanelPluginList');
+
+    if (!container) return;
+
+    try {
+        const response = await fetch('/devpanel/api/plugins/list.php');
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+        renderDevPanelPlugins(data.plugins || []);
+    }
+    catch(error) {
+        console.error(error);
+        container.innerHTML = '<div class="file-manager-empty">Error cargando plugins.</div>';
+    }
+}
+
+function renderDevPanelPlugins(plugins)
+{
+    const container = document.getElementById('devpanelPluginList');
+
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    if (!plugins.length) {
+        container.innerHTML = '<div class="file-manager-empty">No hay plugins disponibles.</div>';
+        return;
+    }
+
+    plugins.forEach(plugin => {
+        const label = document.createElement('label');
+        label.className = 'permission-option';
+        label.innerHTML = `
+            <input type="checkbox" value="${escapeSystemHtml(plugin.key || '')}" ${plugin.enabled ? 'checked' : ''}>
+            <div>
+                <span><i class="bi bi-${escapeSystemHtml(plugin.icon || 'puzzle')}"></i> ${escapeSystemHtml(plugin.name || plugin.key || 'Plugin')}</span>
+                <small>${escapeSystemHtml(plugin.description || '')}</small>
+            </div>
+        `;
+        label.querySelector('input').addEventListener('change', event => toggleDevPanelPlugin(plugin.key, event.target.checked));
+        container.appendChild(label);
+    });
+}
+
+async function toggleDevPanelPlugin(key, enabled)
+{
+    const formData = new URLSearchParams();
+    formData.append('key', key);
+    formData.append('enabled', enabled ? '1' : '0');
+    formData.append('csrf_token', getSystemCsrfToken());
+
+    try {
+        const response = await fetch('/devpanel/api/plugins/toggle.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: formData
+        });
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+        showToast(data.success ? 'Plugin actualizado' : (data.message || 'No se pudo guardar plugin'), data.success ? 'success' : 'danger');
+        renderDevPanelPlugins(data.plugins || []);
+    }
+    catch(error) {
+        console.error(error);
+        showToast('Error guardando plugin', 'danger');
+    }
+}
+
+async function loadCiHealth()
+{
+    const localContainer = document.getElementById('ciLocalChecks');
+    const remoteContainer = document.getElementById('ciRemoteRuns');
+    const localSummary = document.getElementById('ciLocalSummary');
+    const remoteSummary = document.getElementById('ciRemoteSummary');
+
+    if (!localContainer || !remoteContainer) return;
+
+    try {
+        const response = await fetch('/devpanel/api/ci/status.php');
+
+        if (!checkAuth(response)) return;
+
+        const data = await response.json();
+        const checks = data.checks || [];
+        localSummary.textContent = `${data.summary?.ok || 0}/${data.summary?.total || 0} preparados`;
+        localContainer.innerHTML = '';
+
+        checks.forEach(check => {
+            const row = document.createElement('div');
+            row.className = 'database-row';
+            row.innerHTML = `
+                <div class="database-info">
+                    <i class="bi ${check.ok ? 'bi-check-circle-fill text-success' : 'bi-exclamation-triangle-fill text-warning'}"></i>
+                    <div><strong>${escapeSystemHtml(check.name || 'check')}</strong><small>${escapeSystemHtml(check.detail || '')}</small></div>
+                </div>
+            `;
+            localContainer.appendChild(row);
+        });
+
+        const remote = data.remote || {};
+        const runs = remote.runs || [];
+        remoteSummary.textContent = remote.message || 'CI remoto no disponible';
+        remoteContainer.innerHTML = '';
+
+        if (!runs.length) {
+            remoteContainer.innerHTML = `<div class="file-manager-empty">${escapeSystemHtml(remote.message || 'Sin runs remotos.')}</div>`;
+            return;
+        }
+
+        runs.forEach(run => {
+            const row = document.createElement('div');
+            row.className = 'database-row';
+            row.innerHTML = `
+                <div class="database-info">
+                    <i class="bi bi-play-circle-fill"></i>
+                    <div><strong>${escapeSystemHtml(run.name || 'workflow')}</strong><small>${escapeSystemHtml((run.status || '-') + ' · ' + (run.conclusion || 'pendiente'))}</small></div>
+                </div>
+            `;
+            if (run.url) {
+                const link = document.createElement('a');
+                link.className = 'btn btn-sm btn-outline-info';
+                link.href = run.url;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                link.textContent = 'Abrir';
+                row.appendChild(link);
+            }
+            remoteContainer.appendChild(row);
+        });
+    }
+    catch(error) {
+        console.error(error);
+        localContainer.innerHTML = '<div class="file-manager-empty">Error cargando CI Health.</div>';
     }
 }

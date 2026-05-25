@@ -111,6 +111,22 @@ $runtimeSettings = devpanelConfig();
             </div>
         </section>
 
+        <section class="dashboard-card runtime-settings-card" id="plugins-panel">
+            <div class="section-title-row">
+                <div>
+                    <h4 class="mb-1">Plugins locales</h4>
+                    <p class="text-secondary mb-0">Activa o desactiva módulos del panel sin guardar secretos.</p>
+                </div>
+                <button type="button" class="btn btn-outline-info" onclick="loadDevPanelPlugins()">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    Recargar
+                </button>
+            </div>
+            <div class="permission-grid" id="devpanelPluginList">
+                <div class="file-manager-empty">Cargando plugins...</div>
+            </div>
+        </section>
+
         <section class="dashboard-card runtime-settings-card" id="theme-customizer">
             <div class="section-title-row">
                 <div>

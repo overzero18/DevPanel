@@ -205,9 +205,9 @@ Checklist rápido antes de publicar:
 git status --short
 ./scripts/devpanel-release-check.sh
 ./scripts/devpanel-release.sh 1.0.0
-DEVPANEL_TEST_PASSWORD=tu_password ./scripts/devpanel-api-smoke.sh
-DEVPANEL_TEST_PASSWORD=tu_password ./scripts/devpanel-visual-smoke.sh
-DEVPANEL_TEST_PASSWORD=tu_password ./scripts/devpanel-functional-smoke.sh
+DEVPANEL_TEST_PASSWORD=tu_password bash ./scripts/devpanel-local-smoke.sh
+php scripts/devpanel-unit-tests.php
+bash ./scripts/devpanel-build-release.sh
 DEVPANEL_TEST_PASSWORD=tu_password ./scripts/devpanel-screenshots.sh
 ```
 

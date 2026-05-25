@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/state.php';
 
 function devpanelDefaultRoles(): array
 {
@@ -130,7 +131,12 @@ function devpanelUserCanAccessProject(string $projectName, string $path = '', st
 
 function devpanelPublicApiTokens(): array
 {
-    $tokens = devpanelConfig('DEVPANEL_API_TOKENS', []);
+    $tokens = devpanelStateTokenRows();
+
+    if (!$tokens)
+    {
+        $tokens = devpanelConfig('DEVPANEL_API_TOKENS', []);
+    }
 
     if (!is_array($tokens))
     {
@@ -201,8 +207,6 @@ function devpanelCreateApiToken(string $name, string $role, int $expiresDays = 3
     }
 
     $plain = 'dp_' . bin2hex(random_bytes(24));
-    $tokens = devpanelConfig('DEVPANEL_API_TOKENS', []);
-    $tokens = is_array($tokens) ? $tokens : [];
     $expiresDays = max(1, min(365, $expiresDays));
     $expiresAt = date('Y-m-d H:i:s', time() + ($expiresDays * 86400));
     $item = [
@@ -216,9 +220,7 @@ function devpanelCreateApiToken(string $name, string $role, int $expiresDays = 3
         'expires_at' => $expiresAt,
     ];
 
-    array_unshift($tokens, $item);
-
-    if (!devpanelWriteSecurityConfig(['DEVPANEL_API_TOKENS' => array_slice($tokens, 0, 50)]))
+    if (!devpanelStateUpsertToken($item))
     {
         return null;
     }
@@ -240,7 +242,13 @@ function devpanelCreateApiToken(string $name, string $role, int $expiresDays = 3
 
 function devpanelFindApiToken(string $id): ?array
 {
-    $tokens = devpanelConfig('DEVPANEL_API_TOKENS', []);
+    $tokens = devpanelStateTokenRows();
+
+    if (!$tokens)
+    {
+        $tokens = devpanelConfig('DEVPANEL_API_TOKENS', []);
+    }
+
     $tokens = is_array($tokens) ? $tokens : [];
 
     foreach ($tokens as $token)
@@ -256,61 +264,34 @@ function devpanelFindApiToken(string $id): ?array
 
 function devpanelTouchApiToken(string $id): bool
 {
-    $tokens = devpanelConfig('DEVPANEL_API_TOKENS', []);
-    $tokens = is_array($tokens) ? $tokens : [];
-    $changed = false;
-
-    foreach ($tokens as &$token)
-    {
-        if (($token['id'] ?? '') === $id)
-        {
-            $token['last_used_at'] = date('Y-m-d H:i:s');
-            $changed = true;
-            break;
-        }
-    }
-
-    unset($token);
-
-    return $changed && devpanelWriteSecurityConfig(['DEVPANEL_API_TOKENS' => $tokens]);
+    return devpanelStateTouchToken($id);
 }
 
 function devpanelDeleteApiToken(string $id): bool
 {
-    $tokens = devpanelConfig('DEVPANEL_API_TOKENS', []);
-    $tokens = is_array($tokens) ? $tokens : [];
-    $tokens = array_values(array_filter($tokens, static fn ($token) => ($token['id'] ?? '') !== $id));
-
-    return devpanelWriteSecurityConfig(['DEVPANEL_API_TOKENS' => $tokens]);
+    return devpanelStateDeleteToken($id);
 }
 
 function devpanelRotateApiToken(string $id): ?array
 {
-    $tokens = devpanelConfig('DEVPANEL_API_TOKENS', []);
-    $tokens = is_array($tokens) ? $tokens : [];
+    $existing = devpanelFindApiToken($id);
     $plain = 'dp_' . bin2hex(random_bytes(24));
-    $rotated = null;
 
-    foreach ($tokens as &$token)
-    {
-        if (($token['id'] ?? '') === $id)
-        {
-            $token['id'] = hash('sha256', $plain);
-            $token['prefix'] = substr($plain, 0, 10);
-            $token['hash'] = password_hash($plain, PASSWORD_BCRYPT, ['cost' => 10]);
-            $token['last_used_at'] = null;
-            $token['rotated_at'] = date('Y-m-d H:i:s');
-            $rotated = $token;
-            break;
-        }
-    }
-
-    unset($token);
-
-    if (!$rotated || !devpanelWriteSecurityConfig(['DEVPANEL_API_TOKENS' => $tokens]))
+    if (!$existing)
     {
         return null;
     }
+
+    devpanelStateDeleteToken($id);
+    $rotated = array_merge($existing, [
+        'id' => hash('sha256', $plain),
+        'prefix' => substr($plain, 0, 10),
+        'hash' => password_hash($plain, PASSWORD_BCRYPT, ['cost' => 10]),
+        'last_used_at' => null,
+        'rotated_at' => date('Y-m-d H:i:s'),
+    ]);
+
+    if (!devpanelStateUpsertToken($rotated)) return null;
 
     return [
         'token' => $plain,

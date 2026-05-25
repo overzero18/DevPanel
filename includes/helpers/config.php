@@ -24,7 +24,8 @@ if (!function_exists('devpanelDefaultRuntimeConfig')) {
             'EXCLUDED_PROJECT_FOLDERS' => ['dashboard', 'webalizer', 'xampp', 'phpmyadmin', 'devpanel'],
             'DEVPANEL_DEMO_MODE' => false,
             'DEVPANEL_MAINTENANCE_MODE' => false,
-            'DEVPANEL_MAINTENANCE_MESSAGE' => 'DevPanel está en mantenimiento local.'
+            'DEVPANEL_MAINTENANCE_MESSAGE' => 'DevPanel está en mantenimiento local.',
+            'DEVPANEL_PLUGINS_ENABLED' => ['docker', 'database', 'git', 'backups', 'terminal', 'templates', 'domains']
         ];
     }
 }
@@ -60,6 +61,7 @@ if (!function_exists('devpanelSecurityConfigKeys')) {
             'DEVPANEL_2FA_SECRET',
             'DEVPANEL_API_TOKENS',
             'DEVPANEL_PROJECT_ACCESS',
+            'DEVPANEL_PLUGINS_ENABLED',
         ];
     }
 }

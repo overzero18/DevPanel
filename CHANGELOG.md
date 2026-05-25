@@ -28,3 +28,8 @@
 - Added config import preview assistant.
 - Added maintenance mode banner.
 - Added README badges and generated demo GIF.
+- Added SQLite local state for API token storage outside `config.php`.
+- Added separate CI/local smoke runners and PHP unit tests.
+- Added clean release ZIP builder used by release checks and GitHub releases.
+- Added CI Health page with local checks and optional GitHub CLI runs.
+- Added local plugin catalog with enable/disable controls.

@@ -18,6 +18,7 @@ define('LOGIN_ATTEMPT_WINDOW', 900);
 require_once __DIR__ . '/helpers/filesystem.php';
 require_once __DIR__ . '/helpers/config.php';
 require_once __DIR__ . '/helpers/users.php';
+require_once __DIR__ . '/helpers/state.php';
 
 function setSecurityHeaders()
 {
@@ -85,7 +86,12 @@ function authenticateApiToken(): bool
         $plain = trim($matches[1]);
     }
 
-    $tokens = devpanelConfig('DEVPANEL_API_TOKENS', []);
+    $tokens = devpanelStateTokenRows();
+
+    if (!$tokens)
+    {
+        $tokens = devpanelConfig('DEVPANEL_API_TOKENS', []);
+    }
 
     if ($plain === '' || !is_array($tokens))
     {

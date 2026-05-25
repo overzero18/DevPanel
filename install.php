@@ -104,8 +104,17 @@ $nextActionLabel = $hasConfig ? 'Ir al login' : 'Crear configuración';
                             <div>
                                 <strong>Ejecutar pruebas locales</strong>
                                 <small>Comprueba APIs, botones críticos y pantallas principales.</small>
-                                <code>DEVPANEL_TEST_PASSWORD=... ./scripts/devpanel-api-smoke.sh</code>
-                                <code>DEVPANEL_TEST_PASSWORD=... ./scripts/devpanel-visual-smoke.sh</code>
+                                <code>DEVPANEL_TEST_PASSWORD=... bash ./scripts/devpanel-local-smoke.sh</code>
+                                <code>/opt/lampp/bin/php scripts/devpanel-unit-tests.php</code>
+                            </div>
+                        </div>
+                        <div class="install-step">
+                            <span>5</span>
+                            <div>
+                                <strong>Preparar release público</strong>
+                                <small>Genera un ZIP limpio sin config.php, logs, tmp ni secretos.</small>
+                                <code>bash ./scripts/devpanel-release-check.sh</code>
+                                <code>bash ./scripts/devpanel-build-release.sh</code>
                             </div>
                         </div>
                     </div>

@@ -57,6 +57,8 @@ if ! grep -q 'is-internal' <<< "$dashboard"; then
 fi
 install_page="$(curl -s "$BASE_URL/install.php")"
 expect_contains "$install_page" 'Instalación guiada'
+ci_page="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/ci.php")"
+expect_contains "$ci_page" 'CI Health'
 
 echo "[3/15] Assets"
 for asset in \
@@ -163,6 +165,8 @@ audit_response="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/api/audit/list.php?limit=
 demo_response="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/api/demo/status.php")"
 theme_marketplace_response="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/api/themes/marketplace.php")"
 updater_response="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/api/updater/status.php")"
+ci_response="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/api/ci/status.php")"
+plugins_response="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/api/plugins/list.php")"
 expect_json_success "$logs_response"
 expect_json_success "$insights_response"
 expect_json_success "$summary_response"
@@ -170,6 +174,8 @@ expect_json_success "$audit_response"
 expect_json_success "$demo_response"
 expect_json_success "$theme_marketplace_response"
 expect_json_success "$updater_response"
+expect_json_success "$ci_response"
+expect_json_success "$plugins_response"
 
 echo "[6/15] Notificaciones"
 notifications_response="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/api/notifications/list.php")"
