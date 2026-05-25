@@ -199,6 +199,16 @@ function isDevpanelResolvedApacheNoise(string $line): bool
 function isDevpanelResolvedPhpNoise(string $line): bool
 {
     $lower = strtolower($line);
+    $resolvedDevpanelFatals = [
+        'call to undefined function is_socket()',
+        'cannot redeclare formatprojectmodifiedat()',
+        'call to undefined function formatprojectmodifiedat()',
+    ];
+
+    if (lineContainsAnyPattern($line, $resolvedDevpanelFatals))
+    {
+        return true;
+    }
 
     if (str_contains($lower, 'devpanel_template_check') || str_contains($lower, 'devpanel_check_db'))
     {

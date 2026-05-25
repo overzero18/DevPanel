@@ -48,6 +48,9 @@ function devpanelShouldIgnoreInsight(string $line): bool
         'ah00072: make_sock',
         'no listening sockets available, shutting down',
         'ah00015: unable to open logs',
+        'call to undefined function is_socket()',
+        'cannot redeclare formatprojectmodifiedat()',
+        'call to undefined function formatprojectmodifiedat()',
     ];
 
     foreach ($ignoredPatterns as $pattern)
