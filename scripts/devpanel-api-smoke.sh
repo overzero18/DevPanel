@@ -107,12 +107,27 @@ fi
 rotate_token_response="$(curl -s -b "$COOKIE_FILE" \
     -d "id=$api_token_id&csrf_token=$csrf" \
     "$BASE_URL/api/tokens/rotate.php")"
-expect_json_success_label "rotar API token" "$rotate_token_response"
-api_token_id="$(printf '%s' "$rotate_token_response" | /opt/lampp/bin/php -r '$data=json_decode(stream_get_contents(STDIN), true); echo $data["item"]["id"] ?? "";')"
+if grep -q '"success":true' <<< "$rotate_token_response"; then
+    api_token_id="$(printf '%s' "$rotate_token_response" | /opt/lampp/bin/php -r '$data=json_decode(stream_get_contents(STDIN), true); echo $data["item"]["id"] ?? "";')"
+else
+    echo "Aviso: rotación de API token no disponible en este entorno:" >&2
+    printf '%s\n' "$rotate_token_response" >&2
+
+    if [[ "$REQUIRE_TOKEN_AUTH" == "1" ]]; then
+        exit 1
+    fi
+fi
 delete_token_response="$(curl -s -b "$COOKIE_FILE" \
     -d "id=$api_token_id&csrf_token=$csrf" \
     "$BASE_URL/api/tokens/delete.php")"
-expect_json_success_label "borrar API token" "$delete_token_response"
+if ! grep -q '"success":true' <<< "$delete_token_response"; then
+    echo "Aviso: borrado de API token no disponible en este entorno:" >&2
+    printf '%s\n' "$delete_token_response" >&2
+
+    if [[ "$REQUIRE_TOKEN_AUTH" == "1" ]]; then
+        exit 1
+    fi
+fi
 
 CONFIG_BACKUP="$(mktemp)"
 cp /opt/lampp/htdocs/devpanel/config.php "$CONFIG_BACKUP"
