@@ -89,7 +89,7 @@ expect_json_success_label "crear API token" "$token_response"
 api_token="$(printf '%s' "$token_response" | /opt/lampp/bin/php -r '$data=json_decode(stream_get_contents(STDIN), true); echo $data["token"] ?? "";')"
 api_token_id="$(printf '%s' "$token_response" | /opt/lampp/bin/php -r '$data=json_decode(stream_get_contents(STDIN), true); echo $data["item"]["id"] ?? "";')"
 test -n "$api_token" || { echo "Token vacío tras crear API token: $token_response" >&2; exit 1; }
-token_summary="$(curl -s -H "X-DevPanel-Token: $api_token" "$BASE_URL/api/logs/summary.php")"
+token_summary="$(curl -s -H "Authorization: Bearer $api_token" -H "X-DevPanel-Token: $api_token" "$BASE_URL/api/logs/summary.php")"
 expect_json_success_label "usar API token" "$token_summary"
 token_settings="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/api/security/settings.php")"
 expect_json_success_label "leer settings tras usar token" "$token_settings"

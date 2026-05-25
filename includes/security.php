@@ -60,6 +60,26 @@ function authenticateApiToken(): bool
     $header = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
     $plain = trim((string) ($_SERVER['HTTP_X_DEVPANEL_TOKEN'] ?? ''));
 
+    if (($plain === '' || $header === '') && function_exists('getallheaders'))
+    {
+        $headers = getallheaders();
+
+        foreach ($headers as $name => $value)
+        {
+            $normalized = strtolower((string) $name);
+
+            if ($plain === '' && $normalized === 'x-devpanel-token')
+            {
+                $plain = trim((string) $value);
+            }
+
+            if ($header === '' && $normalized === 'authorization')
+            {
+                $header = trim((string) $value);
+            }
+        }
+    }
+
     if ($plain === '' && preg_match('/^Bearer\s+(.+)$/i', $header, $matches))
     {
         $plain = trim($matches[1]);
