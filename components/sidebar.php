@@ -50,6 +50,12 @@ $primaryLinks = [
         'match' => ['changelog.php'],
     ],
     [
+        'url' => '/devpanel/releases.php',
+        'icon' => 'tag-fill',
+        'label' => 'Releases',
+        'match' => ['releases.php'],
+    ],
+    [
         'url' => '/devpanel/ci.php',
         'icon' => 'check2-circle',
         'label' => 'CI Health',

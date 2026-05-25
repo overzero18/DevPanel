@@ -96,3 +96,140 @@ function devpanelWritePluginConfig(array $enabled): bool
 
     return $passwordHash && devpanelWriteConfig($configFile, $passwordHash, $config);
 }
+
+function devpanelPluginMarketplace(): array
+{
+    return [
+        [
+            'id' => 'devpanel-plugin-slack',
+            'name' => 'Slack Notifications',
+            'description' => 'Send deployment and alert notifications to Slack',
+            'author' => 'DevPanel',
+            'version' => '1.0.0',
+            'repository' => 'https://github.com/devpanel-io/devpanel-plugin-slack',
+            'icon' => 'chat-fill',
+            'tags' => ['notifications', 'integrations'],
+        ],
+        [
+            'id' => 'devpanel-plugin-monitoring',
+            'name' => 'Advanced Monitoring',
+            'description' => 'Extended monitoring with Prometheus and Grafana integration',
+            'author' => 'DevPanel',
+            'version' => '1.0.0',
+            'repository' => 'https://github.com/devpanel-io/devpanel-plugin-monitoring',
+            'icon' => 'graph-up',
+            'tags' => ['monitoring', 'metrics'],
+        ],
+        [
+            'id' => 'devpanel-plugin-ssl',
+            'name' => 'SSL Certificate Manager',
+            'description' => 'Manage Let\'s Encrypt certificates and renewals',
+            'author' => 'DevPanel',
+            'version' => '1.0.0',
+            'repository' => 'https://github.com/devpanel-io/devpanel-plugin-ssl',
+            'icon' => 'shield-lock-fill',
+            'tags' => ['security', 'ssl'],
+        ],
+    ];
+}
+
+function devpanelPluginInstall(string $repositoryUrl): array
+{
+    $pluginDir = dirname(__DIR__, 2) . '/api/plugins';
+    $tmpDir = dirname(__DIR__, 2) . '/tmp/plugin-install-' . uniqid();
+
+    if (!mkdir($tmpDir, 0755, true))
+    {
+        return [
+            'success' => false,
+            'message' => 'Failed to create temporary directory',
+        ];
+    }
+
+    $clone = shell_exec('git clone ' . escapeshellarg($repositoryUrl) . ' ' . escapeshellarg($tmpDir) . ' 2>&1');
+
+    if ($clone === null || str_contains($clone, 'error') || str_contains($clone, 'fatal'))
+    {
+        system('rm -rf ' . escapeshellarg($tmpDir));
+        return [
+            'success' => false,
+            'message' => $clone ?: 'Failed to clone repository',
+        ];
+    }
+
+    if (!is_file($tmpDir . '/plugin.json'))
+    {
+        system('rm -rf ' . escapeshellarg($tmpDir));
+        return [
+            'success' => false,
+            'message' => 'Invalid plugin: missing plugin.json',
+        ];
+    }
+
+    $manifest = json_decode(file_get_contents($tmpDir . '/plugin.json'), true);
+
+    if (!is_array($manifest) || empty($manifest['id']))
+    {
+        system('rm -rf ' . escapeshellarg($tmpDir));
+        return [
+            'success' => false,
+            'message' => 'Invalid plugin manifest',
+        ];
+    }
+
+    $pluginId = $manifest['id'];
+    $targetDir = $pluginDir . '/' . $pluginId;
+
+    if (is_dir($targetDir))
+    {
+        system('rm -rf ' . escapeshellarg($tmpDir));
+        return [
+            'success' => false,
+            'message' => 'Plugin already installed',
+        ];
+    }
+
+    if (!rename($tmpDir, $targetDir))
+    {
+        system('rm -rf ' . escapeshellarg($tmpDir));
+        return [
+            'success' => false,
+            'message' => 'Failed to install plugin',
+        ];
+    }
+
+    return [
+        'success' => true,
+        'message' => 'Plugin installed successfully',
+        'plugin_id' => $pluginId,
+        'manifest' => $manifest,
+    ];
+}
+
+function devpanelPluginUninstall(string $pluginId): array
+{
+    $pluginDir = dirname(__DIR__, 2) . '/api/plugins/' . $pluginId;
+
+    if (!is_dir($pluginDir))
+    {
+        return [
+            'success' => false,
+            'message' => 'Plugin not found',
+        ];
+    }
+
+    $remove = shell_exec('rm -rf ' . escapeshellarg($pluginDir) . ' 2>&1');
+
+    if (is_dir($pluginDir))
+    {
+        return [
+            'success' => false,
+            'message' => 'Failed to uninstall plugin',
+        ];
+    }
+
+    return [
+        'success' => true,
+        'message' => 'Plugin uninstalled successfully',
+    ];
+}
