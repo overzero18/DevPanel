@@ -38,4 +38,4 @@ jobs:
       - name: API smoke
         run: |
           cd /opt/lampp/htdocs/devpanel
-          BASE_URL=http://127.0.0.1:8080/devpanel DEVPANEL_TEST_PASSWORD=ci-devpanel-password ./scripts/devpanel-api-smoke.sh
+          BASE_URL=http://127.0.0.1:8080/devpanel DEVPANEL_TEST_PASSWORD=ci-devpanel-password bash ./scripts/devpanel-api-smoke.sh
