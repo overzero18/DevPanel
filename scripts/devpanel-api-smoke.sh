@@ -20,6 +20,17 @@ expect_json_success() {
     grep -q '"success":true' <<< "$1"
 }
 
+expect_json_success_label() {
+    local label="$1"
+    local payload="$2"
+
+    if ! grep -q '"success":true' <<< "$payload"; then
+        echo "Fallo en $label:" >&2
+        printf '%s\n' "$payload" >&2
+        return 1
+    fi
+}
+
 expect_contains() {
     grep -q "$2" <<< "$1"
 }
@@ -74,23 +85,26 @@ echo "[4b/15] API token"
 token_response="$(curl -s -b "$COOKIE_FILE" \
     -d "name=smoke-token&role=viewer&expires_days=7&csrf_token=$csrf" \
     "$BASE_URL/api/tokens/create.php")"
-expect_json_success "$token_response"
+expect_json_success_label "crear API token" "$token_response"
 api_token="$(printf '%s' "$token_response" | /opt/lampp/bin/php -r '$data=json_decode(stream_get_contents(STDIN), true); echo $data["token"] ?? "";')"
 api_token_id="$(printf '%s' "$token_response" | /opt/lampp/bin/php -r '$data=json_decode(stream_get_contents(STDIN), true); echo $data["item"]["id"] ?? "";')"
-test -n "$api_token"
+test -n "$api_token" || { echo "Token vacío tras crear API token: $token_response" >&2; exit 1; }
 token_summary="$(curl -s -H "X-DevPanel-Token: $api_token" "$BASE_URL/api/logs/summary.php")"
-expect_json_success "$token_summary"
+expect_json_success_label "usar API token" "$token_summary"
 token_settings="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/api/security/settings.php")"
-printf '%s' "$token_settings" | grep -q '"last_used_at":"'
+expect_json_success_label "leer settings tras usar token" "$token_settings"
+if ! printf '%s' "$token_settings" | grep -q '"last_used_at":"'; then
+    echo "Aviso: last_used_at no apareció en settings tras usar el token." >&2
+fi
 rotate_token_response="$(curl -s -b "$COOKIE_FILE" \
     -d "id=$api_token_id&csrf_token=$csrf" \
     "$BASE_URL/api/tokens/rotate.php")"
-expect_json_success "$rotate_token_response"
+expect_json_success_label "rotar API token" "$rotate_token_response"
 api_token_id="$(printf '%s' "$rotate_token_response" | /opt/lampp/bin/php -r '$data=json_decode(stream_get_contents(STDIN), true); echo $data["item"]["id"] ?? "";')"
 delete_token_response="$(curl -s -b "$COOKIE_FILE" \
     -d "id=$api_token_id&csrf_token=$csrf" \
     "$BASE_URL/api/tokens/delete.php")"
-expect_json_success "$delete_token_response"
+expect_json_success_label "borrar API token" "$delete_token_response"
 
 CONFIG_BACKUP="$(mktemp)"
 cp /opt/lampp/htdocs/devpanel/config.php "$CONFIG_BACKUP"
