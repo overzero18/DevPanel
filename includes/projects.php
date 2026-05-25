@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/helpers/config.php';
 require_once __DIR__ . '/helpers/demo.php';
+require_once __DIR__ . '/helpers/time.php';
 require_once __DIR__ . '/helpers/users.php';
 
 function getProjectType($path)
