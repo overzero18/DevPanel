@@ -1,14 +1,26 @@
 # DevPanel 🚀
 
-![Version](https://img.shields.io/badge/version-1.0.0-4f9ef9)
+![Version](https://img.shields.io/badge/version-1.0.1-4f9ef9)
 ![PHP](https://img.shields.io/badge/PHP-7.4%2B-777BB4)
 ![XAMPP](https://img.shields.io/badge/XAMPP-local-FB7A24)
 ![MariaDB](https://img.shields.io/badge/MariaDB-ready-003545)
+![Tests](https://img.shields.io/badge/tests-passing-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-brightgreen)
+![Status](https://img.shields.io/badge/status-active-blue)
 
-DevPanel is a lightweight development panel for Ubuntu built with PHP, XAMPP and JavaScript, designed to centralize and simplify the workflow of web development environments.
+**DevPanel** is a lightweight, modern development panel for Ubuntu built with PHP, XAMPP and JavaScript. Designed to centralize and simplify local web development workflows with a focus on security, usability, and Linux native integration.
 
-The project provides a modern interface to manage services, projects, deployments and Linux tools directly from the browser.
+The project provides an intuitive interface to manage services, projects, deployments, databases, backups and Linux tools directly from your browser.
+
+---
+
+# 🆕 What's New in v1.0.1
+
+* **Plugin Marketplace** — Discover, install and manage community plugins
+* **Releases Management** — Track GitHub releases with one-click ZIP downloads
+* **Safe Updater** — Automated updates with automatic rollback on failure
+* **Update History** — Full audit trail of all panel updates
+* **Expanded Tests** — Comprehensive smoke and functional test coverage
 
 ---
 
@@ -92,6 +104,22 @@ The project provides a modern interface to manage services, projects, deployment
 * Guided dashboard tour
 * Built-in quick theme presets
 
+## 🔄 Updates & Releases
+
+* Automated panel updater backed by Git
+* Safe update with automatic rollback on failure
+* Full update history and audit trail
+* GitHub releases browser with ZIP download
+* Manual update control from Settings
+
+## 🛒 Plugin System
+
+* Local plugin marketplace
+* One-click plugin installation from GitHub
+* Plugin enable/disable management
+* Built-in plugins: Docker, Database, Git, Backups, Terminal, Templates, Domains
+* Custom plugin support via manifest
+
 ---
 
 # 🛠 Technologies Used
@@ -130,6 +158,25 @@ devpanel/
 ├── change_password.php      # Password change
 ├── index.php                # Dashboard
 └── README.md
+```
+
+---
+
+# 🚀 Quick Start
+
+```bash
+# 1. Install XAMPP from https://www.apachefriends.org/
+# 2. Clone the repository
+git clone https://github.com/YOUR_REPO/devpanel.git
+
+# 3. Move to XAMPP htdocs
+sudo mv devpanel /opt/lampp/htdocs/
+
+# 4. Start XAMPP
+sudo /opt/lampp/lampp start
+
+# 5. Configure password at http://localhost/devpanel/setup.php
+# 6. Login at http://localhost/devpanel/login.html
 ```
 
 ---
@@ -489,18 +536,22 @@ Add that command to cron if you want DevPanel to execute the schedules created f
 * Changelog page inside the panel
 * Shareable theme marketplace presets
 * More visual before/after backup restore impact
-* Versioned releases starting at `v1.0.0`
-* UI updater backed by `git pull --ff-only`
+* **Versioned releases starting at `v1.0.0`** ✅
+* **UI updater backed by `git pull --ff-only`** ✅
 * About/System Info page
 * Guided config import preview
 * Maintenance mode banner
-* README badges and generated demo GIF
-* SQLite local state for API tokens so secrets stay out of `config.php`
+* **README badges and generated demo GIF** ✅
+* **SQLite local state for API tokens so secrets stay out of `config.php`** ✅
 * Separate CI and local smoke runners
 * PHP unit test script for config, plugins, CI helpers and token state
 * Clean release ZIP builder excluding private/local files
 * CI Health page with local checks and optional GitHub CLI run list
-* Local plugin system with enable/disable controls
+* **Local plugin system with enable/disable controls** ✅
+* **Plugin marketplace with GitHub integration** ✅
+* **GitHub releases page inside panel** ✅
+* **Automated updater with rollback on failure** ✅
+* **Update history and audit trail** ✅
 
 API token example:
 
