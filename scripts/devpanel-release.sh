@@ -15,5 +15,18 @@ if [[ -n "$(git status --short)" ]]; then
     exit 1
 fi
 
-git tag "v$VERSION"
-echo "Tag creado: v$VERSION"
+tag="v$VERSION"
+
+if git rev-parse "$tag" >/dev/null 2>&1; then
+    if [[ "$(git rev-parse "$tag")" == "$(git rev-parse HEAD)" ]]; then
+        echo "Tag ya existe en HEAD: $tag"
+        exit 0
+    fi
+
+    echo "El tag $tag ya existe y apunta a otro commit." >&2
+    echo "Si quieres moverlo manualmente: git tag -f $tag" >&2
+    exit 1
+fi
+
+git tag "$tag"
+echo "Tag creado: $tag"
