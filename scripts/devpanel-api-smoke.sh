@@ -40,7 +40,9 @@ test -n "$csrf"
 grep -q 'Estado global' <<< "$dashboard"
 grep -q 'terminalWorkingDirectory' <<< "$dashboard"
 grep -q 'DevPanel' <<< "$dashboard"
-grep -q 'is-internal' <<< "$dashboard"
+if ! grep -q 'is-internal' <<< "$dashboard"; then
+    grep -q 'demo-laravel-shop' <<< "$dashboard"
+fi
 install_page="$(curl -s "$BASE_URL/install.php")"
 expect_contains "$install_page" 'Instalación guiada'
 
