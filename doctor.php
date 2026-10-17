@@ -65,8 +65,8 @@ $doctor = devpanelDoctorChecks();
         <div class="dashboard-card doctor-card">
             <div class="section-title-row">
                 <div>
-                    <h4 class="mb-1">Checks del sistema</h4>
-                    <p class="text-secondary mb-0">Validación rápida de dependencias y permisos.</p>
+                    <h4 class="mb-1">Salud del sistema, seguridad y recuperación</h4>
+                    <p class="text-secondary mb-0">Dependencias, permisos, estado Git, secretos y antigüedad de backups.</p>
                 </div>
             </div>
 

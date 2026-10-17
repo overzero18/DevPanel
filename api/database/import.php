@@ -32,7 +32,7 @@ if (!devpanelValidateDatabaseName($name) || in_array($name, devpanelSystemDataba
     exit;
 }
 
-if (!isset($_FILES['sql_file']) || $_FILES['sql_file']['error'] !== UPLOAD_ERR_OK)
+if (!isset($_FILES['sql_file']) || $_FILES['sql_file']['error'] !== UPLOAD_ERR_OK || !is_uploaded_file($_FILES['sql_file']['tmp_name']))
 {
     http_response_code(400);
     echo json_encode(['success' => false, 'message' => 'Archivo SQL inválido']);

@@ -12,7 +12,7 @@
 ### Changed
 
 - Document PHP 8.0 as the minimum supported version; CI uses PHP 8.2.
-- Remove the inaccurate public MIT license claim until a license is explicitly added.
+- Add the MIT license selected by the project owner.
 
 ## Unreleased
 

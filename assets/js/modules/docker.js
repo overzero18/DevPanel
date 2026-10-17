@@ -329,6 +329,17 @@ function createComposeHealthChart(summary)
 
 async function runDockerCompose(path, action, service = '')
 {
+    if (['down', 'restart'].includes(action))
+    {
+        const target = service ? ` el servicio ${service}` : ' todos los servicios';
+        const confirmed = await appConfirm(
+            `${action === 'down' ? 'Se detendrán y eliminarán' : 'Se reiniciarán'}${target} de este Compose.`,
+            {title: 'Confirmar acción Docker Compose', confirmText: action === 'down' ? 'Detener' : 'Reiniciar', danger: true}
+        );
+
+        if (!confirmed) return;
+    }
+
     const formData = new URLSearchParams();
     formData.append('path', path);
     formData.append('action', action);

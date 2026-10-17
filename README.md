@@ -473,7 +473,7 @@ Optional write checks:
 DEVPANEL_TEST_PASSWORD=your_local_password DEVPANEL_SMOKE_WRITE=1 ./scripts/devpanel-api-smoke.sh
 ```
 
-The normal smoke test checks login, dashboard HTML, JS/CSS assets, permissions, logs, notifications, users, domains, backups, scheduled-backup endpoints, Docker detection, system stats, terminal, Git status and File Manager listing.
+The normal smoke test checks login, dashboard HTML, JS/CSS assets, CSRF on sensitive actions, permissions, logs, notifications, users, domains, backups, scheduled-backup endpoints, Docker detection, system stats, terminal, Git status and File Manager listing.
 
 The visual smoke test checks the dashboard, installer, Doctor, settings, users, projects, File Manager and audit pages so missing controls are caught before publishing.
 
@@ -584,6 +584,10 @@ focused on:
 Project maintainer
 
 GitHub: configure your own repository in DevPanel settings.
+
+## 📄 License
+
+DevPanel is available under the [MIT License](LICENSE).
 
 ---
 

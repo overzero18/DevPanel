@@ -83,6 +83,14 @@ if (!preg_match('#^[a-zA-Z0-9/.\_\-]+$#', $remote))
     exit;
 }
 
+$remoteSegments = array_values(array_filter(explode('/', $remote), static fn ($segment) => $segment !== ''));
+if (in_array('.', $remoteSegments, true) || in_array('..', $remoteSegments, true))
+{
+    http_response_code(400);
+    echo json_encode(['success' => false, 'output' => 'Ruta remota FTP inválida']);
+    exit;
+}
+
 $hostSafe   = sanitizeFtpCredential($host);
 $userSafe   = sanitizeFtpCredential($user);
 $passSafe   = sanitizeFtpCredential($pass);

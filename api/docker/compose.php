@@ -192,6 +192,8 @@ if (!validateCsrfToken())
     exit;
 }
 
+checkEndpointRateLimit('docker_compose', 12, 60);
+
 $path = trim((string) ($_POST['path'] ?? ''));
 $action = trim((string) ($_POST['action'] ?? ''));
 $service = trim((string) ($_POST['service'] ?? ''));

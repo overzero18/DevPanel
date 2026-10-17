@@ -22,6 +22,8 @@ if (!validateCsrfToken())
     exit;
 }
 
+checkEndpointRateLimit('docker_action', 20, 60);
+
 $name = trim((string) ($_POST['name'] ?? ''));
 $action = trim((string) ($_POST['action'] ?? ''));
 $allowedActions = ['start', 'stop', 'restart', 'logs'];

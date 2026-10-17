@@ -954,6 +954,16 @@ function createDockerActionButton(action, name, label)
 
 async function runDockerAction(name, action)
 {
+    if (['stop', 'restart'].includes(action))
+    {
+        const confirmed = await appConfirm(
+            `${action === 'stop' ? 'Se detendrá' : 'Se reiniciará'} el contenedor ${name}.`,
+            {title: 'Confirmar acción Docker', confirmText: action === 'stop' ? 'Detener' : 'Reiniciar', danger: true}
+        );
+
+        if (!confirmed) return;
+    }
+
     const formData = new URLSearchParams();
     formData.append('name', name);
     formData.append('action', action);

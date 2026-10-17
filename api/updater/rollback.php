@@ -6,7 +6,7 @@ require_once __DIR__ . '/../../includes/helpers/updater.php';
 header('Content-Type: application/json');
 
 authenticateSession();
-requirePermission('git');
+requirePermission('settings');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST')
 {

@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/backups.php';
 
 function devpanelDoctorCommand(array $command): array
 {
@@ -53,17 +54,28 @@ function devpanelDoctorChecks(): array
         : ['ok' => false, 'output' => 'Docker no instalado o fuera de PATH'];
     $qrencode = devpanelDoctorCommand(['sh', '-lc', 'command -v qrencode']);
     $gitVersion = devpanelDoctorCommand(['git', '--version']);
+    $gitStatus = devpanelDoctorCommand(['git', '-C', $projectDir, 'status', '--short']);
     $fileMode = devpanelDoctorCommand(['git', '-C', $projectDir, 'config', '--get', 'core.fileMode']);
     $fileModeValue = trim($fileMode['output']);
     $fileModeSeverity = $fileModeValue === 'true' ? 'warning' : ($fileModeValue === 'false' ? 'ok' : 'info');
     $fileModeDetail = $fileModeValue === ''
         ? 'Opcional: configura core.fileMode=false para evitar cambios de permisos en Git'
         : 'core.fileMode=' . $fileModeValue;
+    $configPermissions = is_file($configFile) ? (fileperms($configFile) & 0o077) : 0;
+    $configPermissionsOk = !is_file($configFile) || $configPermissions === 0;
+    $backupItems = devpanelLoadBackups();
+    $latestBackup = $backupItems[0]['created_at'] ?? null;
+    $latestBackupTimestamp = $latestBackup ? strtotime((string) $latestBackup) : false;
+    $backupSeverity = !$backupItems ? 'warning' : (($latestBackupTimestamp && time() - $latestBackupTimestamp > 7 * 86400) ? 'warning' : 'ok');
+    $backupDetail = !$backupItems
+        ? 'No hay backups registrados. Crea uno antes de operaciones de riesgo.'
+        : 'Último backup: ' . $latestBackup;
 
     $items = [
         devpanelDoctorItem('Proyecto', is_dir($projectDir), $projectDir),
         devpanelDoctorItem('config.php', is_file($configFile), $configFile),
         devpanelDoctorItem('config.php escribible', is_writable($configFile), 'Permite guardar configuración desde UI'),
+        devpanelDoctorItem('config.php privado', $configPermissionsOk, $configPermissionsOk ? 'Sin permisos para grupo u otros usuarios' : 'Restringe config.php a 600 o 640; puede contener secretos.', $configPermissionsOk ? 'ok' : 'warning'),
         devpanelDoctorItem('htdocs', is_dir($htdocsPath), $htdocsPath),
         devpanelDoctorItem('htdocs escribible', is_writable($htdocsPath), 'Permite crear/clonar proyectos desde UI'),
         devpanelDoctorItem('logs escribible', is_writable($projectDir . '/logs'), $projectDir . '/logs'),
@@ -71,6 +83,7 @@ function devpanelDoctorChecks(): array
         devpanelDoctorItem('LAMPP', is_file($lamppPath . '/lampp'), $lamppPath . '/lampp'),
         devpanelDoctorItem('PHP XAMPP', is_file($phpBinary), $phpBinary),
         devpanelDoctorItem('Git', $gitVersion['ok'], $gitVersion['output']),
+        devpanelDoctorItem('Git limpio', $gitStatus['ok'] && trim($gitStatus['output']) === '', trim($gitStatus['output']) === '' ? 'Sin cambios pendientes' : 'Hay cambios locales; no actualices ni hagas rollback hasta revisarlos.', trim($gitStatus['output']) === '' ? 'ok' : 'warning'),
         devpanelDoctorItem('Git fileMode', $fileModeSeverity === 'ok', $fileModeDetail, $fileModeSeverity),
         devpanelDoctorItem('Docker', $docker['ok'], $docker['ok'] ? $docker['output'] : 'No instalado o fuera de PATH', $docker['ok'] ? 'ok' : 'info'),
         devpanelDoctorItem('Docker daemon', $dockerDaemon['ok'], $dockerDaemon['ok'] ? 'Docker responde correctamente' : $dockerDaemon['output'], $dockerDaemon['ok'] ? 'ok' : ($docker['ok'] ? 'warning' : 'info')),
@@ -79,6 +92,8 @@ function devpanelDoctorChecks(): array
         devpanelDoctorItem('Apache access log', is_readable(devpanelConfig('APACHE_ACCESS_LOG')), devpanelConfig('APACHE_ACCESS_LOG')),
         devpanelDoctorItem('PHP error log', is_readable(devpanelConfig('PHP_ERROR_LOG')), devpanelConfig('PHP_ERROR_LOG')),
         devpanelDoctorItem('MySQL data dir', is_readable(devpanelConfig('MYSQL_DATA_DIR')), devpanelConfig('MYSQL_DATA_DIR')),
+        devpanelDoctorItem('Backup reciente', $backupSeverity === 'ok', $backupDetail, $backupSeverity),
+        devpanelDoctorItem('Marketplace de plugins', true, 'Las instalaciones externas están desactivadas hasta disponer de fuentes revisadas e inmutables.', 'info'),
     ];
 
     $warnings = array_values(array_filter($items, static fn ($item) => in_array($item['severity'], ['warning', 'danger'], true)));

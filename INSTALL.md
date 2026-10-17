@@ -155,6 +155,17 @@ En **Ajustes → Seguridad avanzada → Configuración portable** puedes exporta
 
 En **Usuarios** puedes limitar qué proyectos ve cada usuario. Los roles siguen controlando permisos generales, y el acceso por proyecto limita la lista de proyectos disponible.
 
+### Lista de despliegue seguro
+
+DevPanel está diseñado para uso local. Si lo expones fuera de `localhost`, ponlo detrás de HTTPS y una capa de autenticación adicional de confianza. Antes de hacerlo:
+
+1. Ejecuta **Doctor** y corrige sus avisos, especialmente permisos de `config.php`, árbol Git sucio y backups antiguos.
+2. Limita `config.php` a su propietario (`chmod 600 config.php` o permisos equivalentes) y nunca lo subas al repositorio.
+3. Activa 2FA para cuentas administrativas y usa tokens con el rol mínimo y caducidad corta.
+4. Comprueba una restauración de backup en una carpeta nueva antes de depender de ella.
+5. Mantén desactivado el marketplace externo de plugins hasta contar con fuentes revisadas, versiones fijadas y verificación de integridad.
+6. Evita FTP sin cifrado para despliegues públicos; usa SFTP/FTPS configurado fuera de DevPanel cuando sea posible.
+
 ## ✅ Permisos Locales
 
 Después de instalar, entra al dashboard y revisa **Permisos del sistema**.
@@ -321,6 +332,8 @@ Si encuentras problemas:
 3. Asegúrate de tener permisos de carpeta correctos
 
 ## 📄 Licencia
+
+DevPanel se distribuye bajo la licencia [MIT](LICENSE).
 
 No hay una licencia pública definida todavía. No redistribuyas ni reutilices el proyecto fuera de lo permitido por su titular hasta que se añada una licencia.
 

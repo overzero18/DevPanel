@@ -85,8 +85,8 @@ $runtimeSettings = devpanelConfig();
         <section class="dashboard-card runtime-settings-card" id="template-marketplace">
             <div class="section-title-row">
                 <div>
-                    <h4 class="mb-1">Marketplace de plantillas</h4>
-                    <p class="text-secondary mb-0">Importa/exporta plantillas locales de proyecto en JSON.</p>
+                    <h4 class="mb-1">Plantillas locales <span class="badge text-bg-success">Estable</span></h4>
+                    <p class="text-secondary mb-0">Importa/exporta plantillas locales de proyecto en JSON; no descarga código remoto.</p>
                 </div>
                 <button type="button" class="btn btn-outline-info" onclick="loadProjectTemplatesMarketplace()">
                     <i class="bi bi-arrow-clockwise"></i>
@@ -114,8 +114,8 @@ $runtimeSettings = devpanelConfig();
         <section class="dashboard-card runtime-settings-card" id="plugins-panel">
             <div class="section-title-row">
                 <div>
-                    <h4 class="mb-1">Plugins locales</h4>
-                    <p class="text-secondary mb-0">Activa o desactiva módulos del panel sin guardar secretos.</p>
+                    <h4 class="mb-1">Módulos integrados <span class="badge text-bg-success">Estable</span></h4>
+                    <p class="text-secondary mb-0">Activa o desactiva módulos incluidos. El marketplace externo sigue desactivado hasta disponer de fuentes revisadas e inmutables.</p>
                 </div>
                 <button type="button" class="btn btn-outline-info" onclick="loadDevPanelPlugins()">
                     <i class="bi bi-arrow-clockwise"></i>

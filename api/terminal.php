@@ -94,14 +94,19 @@ if (!is_resource($process))
     exit;
 }
 
-$output = stream_get_contents($pipes[1]);
-$errorOutput = stream_get_contents($pipes[2]);
+$output = stream_get_contents($pipes[1], 262144);
+$errorOutput = stream_get_contents($pipes[2], 65536);
 
 fclose($pipes[1]);
 fclose($pipes[2]);
 
 $exitCode = proc_close($process);
 $output .= $errorOutput;
+
+if (strlen($output) >= 327680)
+{
+    $output .= "\n[Salida truncada por seguridad]";
+}
 
 logAction('execute_command', $command);
 
