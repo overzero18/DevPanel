@@ -4,6 +4,13 @@ define('AUTH_PASSWORD_FILE', __DIR__ . '/config.php');
 
 require_once __DIR__ . '/includes/helpers/config.php';
 
+session_set_cookie_params([
+    'httponly' => true,
+    'samesite' => 'Strict',
+    'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+]);
+session_start();
+
 $setupComplete = false;
 $error = '';
 $success = '';
@@ -17,18 +24,24 @@ if (file_exists(AUTH_PASSWORD_FILE))
     }
 }
 
-if ($setupComplete && $_SERVER['REQUEST_METHOD'] !== 'POST')
+if ($setupComplete)
 {
-    header('Location: /devpanel/login.html');
+    http_response_code(404);
+    echo 'Not found';
     exit;
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$setupComplete)
+if ($_SERVER['REQUEST_METHOD'] === 'POST')
 {
     $password = $_POST['password'] ?? '';
     $confirmPassword = $_POST['confirm_password'] ?? '';
+    $csrfToken = $_POST['csrf_token'] ?? '';
 
-    if (empty($password))
+    if (!isset($_SESSION['setup_csrf_token']) || !hash_equals($_SESSION['setup_csrf_token'], $csrfToken))
+    {
+        $error = 'Solicitud de configuración no válida. Recarga la página e inténtalo de nuevo.';
+    }
+    elseif (empty($password))
     {
         $error = 'La contraseña es obligatoria';
     }
@@ -49,14 +62,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$setupComplete)
 
         if (devpanelWriteConfig(AUTH_PASSWORD_FILE, $hash, $existingConfig))
         {
-            $success = 'Contraseña configurada correctamente. Redirigiendo...';
-            $setupComplete = true;
+            unset($_SESSION['setup_csrf_token']);
+            header('Location: /devpanel/login.html?setup=complete', true, 303);
+            exit;
         }
         else
         {
             $error = 'Error al guardar la contraseña. Verifica permisos de carpeta.';
         }
     }
+}
+
+if (!isset($_SESSION['setup_csrf_token']))
+{
+    $_SESSION['setup_csrf_token'] = bin2hex(random_bytes(32));
 }
 
 ?>
@@ -129,37 +148,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$setupComplete)
         <h1>🔐 DevPanel Setup</h1>
         <p>Configura tu contraseña de acceso</p>
 
-        <?php if ($setupComplete): ?>
-            <div class="alert alert-success" role="alert">
-                <strong>¡Listo!</strong> Contraseña configurada correctamente.
-            </div>
-            <div class="redirect-message">
-                <p>Redirigiendo a login en 3 segundos...</p>
-                <script>
-                    setTimeout(() => {
-                        window.location.href = '/devpanel/login.html';
-                    }, 3000);
-                </script>
-            </div>
-        <?php else: ?>
-            <?php if ($error): ?>
+        <?php if ($error): ?>
                 <div class="alert alert-danger" role="alert">
                     <?php echo htmlspecialchars($error); ?>
                 </div>
-            <?php endif; ?>
+        <?php endif; ?>
 
-            <?php if ($success): ?>
-                <div class="alert alert-success" role="alert">
-                    <?php echo htmlspecialchars($success); ?>
-                </div>
-                <script>
-                    setTimeout(() => {
-                        window.location.href = '/devpanel/login.html';
-                    }, 2000);
-                </script>
-            <?php endif; ?>
-
-            <form method="POST">
+            <form method="POST" autocomplete="off">
+                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['setup_csrf_token'], ENT_QUOTES, 'UTF-8'); ?>">
                 <div class="form-group">
                     <label for="password">Contraseña</label>
                     <input type="password" class="form-control" id="password" name="password"
@@ -184,7 +180,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$setupComplete)
                 <strong>ℹ️ Nota:</strong> Esta página solo aparece una vez. Después podrás cambiar
                 la contraseña desde el panel de administración.
             </small>
-        <?php endif; ?>
     </div>
 </body>
 </html>

@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+### Security
+
+- Disabled installation of unreviewed marketplace plugins and removed unavailable default plugin sources.
+- Validate plugin identifiers before composing install or uninstall paths to prevent path traversal.
+- Require CSRF validation for marketplace, updater and logout operations.
+- Protect first-run setup with a session-bound CSRF token and make it return 404 after completion.
+
+### Changed
+
+- Document PHP 8.0 as the minimum supported version; CI uses PHP 8.2.
+- Remove the inaccurate public MIT license claim until a license is explicitly added.
+
+## Unreleased
+
 - Added optional local 2FA with QR setup and dependency-free SVG fallback.
 - Added local API tokens with roles, expiry, rotation and last-used tracking.
 - Added public config export/import without secrets.

@@ -5,7 +5,7 @@ DevPanel es un panel de administración para XAMPP. Gestiona fácilmente tu serv
 ## 📋 Requisitos
 
 - XAMPP instalado
-- PHP 7.4+
+- PHP 8.0+ (PHP 8.2 is used in CI)
 - Apache activado
 - MySQL/MariaDB activado
 
@@ -47,7 +47,7 @@ También puedes instalar/copiar el proyecto con el instalador local:
 - ✅ Confirma la contraseña
 - ✅ Haz clic en "Configurar Contraseña"
 
-Se auto-elimina después de la primera configuración por seguridad.
+Queda bloqueada y responde 404 después de la primera configuración por seguridad.
 
 Para repositorios públicos, no subas tu `config.php`. Usa `config.example.php` como plantilla y deja que cada usuario configure sus propias rutas, contraseña y datos de GitHub.
 
@@ -322,7 +322,7 @@ Si encuentras problemas:
 
 ## 📄 Licencia
 
-MIT
+No hay una licencia pública definida todavía. No redistribuyas ni reutilices el proyecto fuera de lo permitido por su titular hasta que se añada una licencia.
 
 ---
 

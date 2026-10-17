@@ -15,6 +15,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST')
     exit;
 }
 
+if (!validateCsrfToken())
+{
+    http_response_code(403);
+    echo json_encode(['error' => 'CSRF token validation failed']);
+    exit;
+}
+
 $result = devpanelUpdaterPerform();
 auditLog('git', $result['success'] ? 'updated_panel' : 'update_panel_failed', $result['message'] ?? '');
 

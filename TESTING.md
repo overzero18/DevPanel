@@ -107,7 +107,7 @@ DevPanel uses GitHub Actions for continuous integration.
 - **Release**: Smoke tests before publishing releases
 
 ### Requirements
-- PHP 7.4+
+- PHP 8.0+ (PHP 8.2 is used in CI)
 - Chromium (for visual tests)
 - Git
 - curl

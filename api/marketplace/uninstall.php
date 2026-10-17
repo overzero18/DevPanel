@@ -18,6 +18,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST')
 $data = json_decode(file_get_contents('php://input'), true) ?? [];
 $pluginId = $data['plugin_id'] ?? null;
 
+if (!validateCsrfToken($data['csrf_token'] ?? null))
+{
+    http_response_code(403);
+    echo json_encode(['error' => 'CSRF token validation failed']);
+    exit;
+}
+
 if (!$pluginId)
 {
     http_response_code(400);

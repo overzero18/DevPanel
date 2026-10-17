@@ -99,44 +99,59 @@ function devpanelWritePluginConfig(array $enabled): bool
 
 function devpanelPluginMarketplace(): array
 {
-    return [
-        [
-            'id' => 'devpanel-plugin-slack',
-            'name' => 'Slack Notifications',
-            'description' => 'Send deployment and alert notifications to Slack',
-            'author' => 'DevPanel',
-            'version' => '1.0.0',
-            'repository' => 'https://github.com/devpanel-io/devpanel-plugin-slack',
-            'icon' => 'chat-fill',
-            'tags' => ['notifications', 'integrations'],
-        ],
-        [
-            'id' => 'devpanel-plugin-monitoring',
-            'name' => 'Advanced Monitoring',
-            'description' => 'Extended monitoring with Prometheus and Grafana integration',
-            'author' => 'DevPanel',
-            'version' => '1.0.0',
-            'repository' => 'https://github.com/devpanel-io/devpanel-plugin-monitoring',
-            'icon' => 'graph-up',
-            'tags' => ['monitoring', 'metrics'],
-        ],
-        [
-            'id' => 'devpanel-plugin-ssl',
-            'name' => 'SSL Certificate Manager',
-            'description' => 'Manage Let\'s Encrypt certificates and renewals',
-            'author' => 'DevPanel',
-            'version' => '1.0.0',
-            'repository' => 'https://github.com/devpanel-io/devpanel-plugin-ssl',
-            'icon' => 'shield-lock-fill',
-            'tags' => ['security', 'ssl'],
-        ],
-    ];
+    // A plugin executes in the panel's trust boundary. Keep this catalog empty
+    // until each entry has a reviewed, immutable source and a verification path.
+    return [];
+}
+
+function devpanelPluginIdIsValid(string $pluginId): bool
+{
+    return preg_match('/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/', $pluginId) === 1;
+}
+
+function devpanelMarketplaceRepositoryAllowed(string $repositoryUrl): bool
+{
+    foreach (devpanelPluginMarketplace() as $plugin)
+    {
+        if (isset($plugin['repository']) && hash_equals($plugin['repository'], $repositoryUrl))
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 function devpanelPluginInstall(string $repositoryUrl): array
 {
+    if (!devpanelMarketplaceRepositoryAllowed($repositoryUrl))
+    {
+        return [
+            'success' => false,
+            'message' => 'Repository is not in the reviewed plugin catalog',
+        ];
+    }
+
     $pluginDir = dirname(__DIR__, 2) . '/api/plugins';
     $tmpDir = dirname(__DIR__, 2) . '/tmp/plugin-install-' . uniqid();
+
+    if (!is_dir($pluginDir) && !mkdir($pluginDir, 0755, true))
+    {
+        return [
+            'success' => false,
+            'message' => 'Failed to create plugin directory',
+        ];
+    }
+
+    $pluginRoot = realpath($pluginDir);
+
+    if ($pluginRoot === false)
+    {
+        return [
+            'success' => false,
+            'message' => 'Plugin directory is unavailable',
+        ];
+    }
 
     if (!mkdir($tmpDir, 0755, true))
     {
@@ -177,8 +192,18 @@ function devpanelPluginInstall(string $repositoryUrl): array
         ];
     }
 
-    $pluginId = $manifest['id'];
-    $targetDir = $pluginDir . '/' . $pluginId;
+    $pluginId = (string) $manifest['id'];
+
+    if (!devpanelPluginIdIsValid($pluginId))
+    {
+        system('rm -rf ' . escapeshellarg($tmpDir));
+        return [
+            'success' => false,
+            'message' => 'Invalid plugin ID',
+        ];
+    }
+
+    $targetDir = $pluginRoot . DIRECTORY_SEPARATOR . $pluginId;
 
     if (is_dir($targetDir))
     {
@@ -208,7 +233,25 @@ function devpanelPluginInstall(string $repositoryUrl): array
 
 function devpanelPluginUninstall(string $pluginId): array
 {
-    $pluginDir = dirname(__DIR__, 2) . '/api/plugins/' . $pluginId;
+    if (!devpanelPluginIdIsValid($pluginId))
+    {
+        return [
+            'success' => false,
+            'message' => 'Invalid plugin ID',
+        ];
+    }
+
+    $pluginRoot = realpath(dirname(__DIR__, 2) . '/api/plugins');
+
+    if ($pluginRoot === false)
+    {
+        return [
+            'success' => false,
+            'message' => 'Plugin directory is unavailable',
+        ];
+    }
+
+    $pluginDir = $pluginRoot . DIRECTORY_SEPARATOR . $pluginId;
 
     if (!is_dir($pluginDir))
     {

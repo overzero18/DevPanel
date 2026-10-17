@@ -11,6 +11,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST')
     exit;
 }
 
+if (!validateCsrfToken())
+{
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'CSRF token validation failed']);
+    exit;
+}
+
 logout();
 
 echo json_encode(['success' => true]);

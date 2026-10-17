@@ -32,6 +32,20 @@ if (!filter_var($repository, FILTER_VALIDATE_URL))
     exit;
 }
 
+if (!devpanelMarketplaceRepositoryAllowed($repository))
+{
+    http_response_code(403);
+    echo json_encode(['error' => 'Repository is not in the reviewed plugin catalog']);
+    exit;
+}
+
+if (!validateCsrfToken($data['csrf_token'] ?? null))
+{
+    http_response_code(403);
+    echo json_encode(['error' => 'CSRF token validation failed']);
+    exit;
+}
+
 $result = devpanelPluginInstall($repository);
 auditLog('settings', $result['success'] ? 'plugin_installed' : 'plugin_install_failed', $result['plugin_id'] ?? '');
 

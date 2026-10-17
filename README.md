@@ -1,11 +1,10 @@
 # DevPanel 🚀
 
 ![Version](https://img.shields.io/badge/version-1.0.1-4f9ef9)
-![PHP](https://img.shields.io/badge/PHP-7.4%2B-777BB4)
+![PHP](https://img.shields.io/badge/PHP-8.0%2B-777BB4)
 ![XAMPP](https://img.shields.io/badge/XAMPP-local-FB7A24)
 ![MariaDB](https://img.shields.io/badge/MariaDB-ready-003545)
 ![Tests](https://img.shields.io/badge/tests-passing-brightgreen)
-![License](https://img.shields.io/badge/license-MIT-brightgreen)
 ![Status](https://img.shields.io/badge/status-active-blue)
 
 **DevPanel** is a lightweight, modern development panel for Ubuntu built with PHP, XAMPP and JavaScript. Designed to centralize and simplify local web development workflows with a focus on security, usability, and Linux native integration.
@@ -16,7 +15,7 @@ The project provides an intuitive interface to manage services, projects, deploy
 
 # 🆕 What's New in v1.0.1
 
-* **Plugin Marketplace** — Discover, install and manage community plugins
+* **Built-in Plugins** — Enable and manage reviewed panel modules
 * **Releases Management** — Track GitHub releases with one-click ZIP downloads
 * **Safe Updater** — Automated updates with automatic rollback on failure
 * **Update History** — Full audit trail of all panel updates
@@ -114,7 +113,7 @@ The project provides an intuitive interface to manage services, projects, deploy
 
 ## 🛒 Plugin System
 
-* Local plugin marketplace
+* Built-in plugin modules
 * One-click plugin installation from GitHub
 * Plugin enable/disable management
 * Built-in plugins: Docker, Database, Git, Backups, Terminal, Templates, Domains
@@ -124,7 +123,7 @@ The project provides an intuitive interface to manage services, projects, deploy
 
 # 🛠 Technologies Used
 
-* PHP 7.4+
+* PHP 8.0+ (PHP 8.2 is used in CI)
 * JavaScript
 * Bootstrap 5
 * XAMPP
@@ -206,7 +205,7 @@ sudo mv DevPanel /opt/lampp/htdocs/devpanel
 http://localhost/devpanel/setup.php
 ```
 
-Enter your password (minimum 12 characters) and confirm. This page will auto-delete after first use.
+Enter your password (minimum 12 characters) and confirm. After first use, setup is locked and returns 404.
 
 For public repositories, do not commit your local `config.php`. Use `config.example.php` as the template and let each user generate their own configuration.
 
@@ -229,7 +228,7 @@ http://localhost/devpanel/login.html
 ### Initial Setup
 1. Visit `http://localhost/devpanel/setup.php`
 2. Enter your password (12+ characters)
-3. The setup page auto-deletes for security
+3. The setup page locks itself after setup for security
 
 ### Change Password
 **Option 1 - From Panel (Recommended):**
@@ -548,7 +547,7 @@ Add that command to cron if you want DevPanel to execute the schedules created f
 * Clean release ZIP builder excluding private/local files
 * CI Health page with local checks and optional GitHub CLI run list
 * **Local plugin system with enable/disable controls** ✅
-* **Plugin marketplace with GitHub integration** ✅
+* **Reviewed built-in plugin modules** ✅
 * **GitHub releases page inside panel** ✅
 * **Automated updater with rollback on failure** ✅
 * **Update history and audit trail** ✅

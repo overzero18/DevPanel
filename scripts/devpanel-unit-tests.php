@@ -28,6 +28,12 @@ function devpanel_test_assert(bool $condition, string $message): void
 devpanel_test_assert(devpanelConfig('BASE_URL') === '/devpanel', 'default BASE_URL');
 devpanel_test_assert(isset(devpanelDefaultRuntimeConfig()['DEVPANEL_PLUGINS_ENABLED']), 'default plugins key exists');
 devpanel_test_assert(count(devpanelPluginCatalog()) >= 5, 'plugin catalog has core modules');
+devpanel_test_assert(devpanelPluginMarketplace() === [], 'unreviewed plugin marketplace is disabled');
+devpanel_test_assert(devpanelPluginIdIsValid('safe-plugin_2'), 'safe plugin ID is accepted');
+devpanel_test_assert(!devpanelPluginIdIsValid('../htdocs'), 'plugin path traversal is rejected');
+devpanel_test_assert(!devpanelPluginIdIsValid('plugin.id'), 'plugin IDs cannot contain path-like punctuation');
+devpanel_test_assert(!devpanelMarketplaceRepositoryAllowed('https://example.invalid/plugin'), 'unreviewed plugin repository is rejected');
+devpanel_test_assert((devpanelPluginInstall('https://example.invalid/plugin')['success'] ?? true) === false, 'unreviewed plugin install is rejected defensively');
 devpanel_test_assert(in_array('scripts/devpanel-unit-tests.php', array_column(devpanelCiLocalStatus()['checks'], 'name'), true), 'CI local status knows unit tests');
 
 $db = devpanelStateDb();
