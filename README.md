@@ -585,9 +585,9 @@ Project maintainer
 
 GitHub: configure your own repository in DevPanel settings.
 
-## 📄 License
+## 📄 Licencia
 
-DevPanel is available under the [MIT License](LICENSE).
+DevPanel se distribuye bajo la [licencia MIT](LICENSE). Hay una [traducción informativa al español](LICENSE.es.md); el archivo `LICENSE` conserva el texto legal canónico.
 
 ---
 

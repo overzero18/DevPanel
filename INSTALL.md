@@ -333,7 +333,7 @@ Si encuentras problemas:
 
 ## 📄 Licencia
 
-DevPanel se distribuye bajo la licencia [MIT](LICENSE).
+DevPanel se distribuye bajo la [licencia MIT](LICENSE). Consulta también la [traducción informativa al español](LICENSE.es.md).
 
 No hay una licencia pública definida todavía. No redistribuyas ni reutilices el proyecto fuera de lo permitido por su titular hasta que se añada una licencia.
 
