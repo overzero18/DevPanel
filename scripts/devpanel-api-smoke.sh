@@ -202,7 +202,7 @@ expect_json_success "$notifications_response"
 
 echo "[8/16] Doctor"
 doctor_page="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/doctor.php")"
-grep -q 'Checks del sistema' <<< "$doctor_page"
+grep -q 'Salud del sistema, seguridad y recuperación' <<< "$doctor_page"
 
 echo "[9/16] Usuarios"
 users_page="$(curl -s -b "$COOKIE_FILE" "$BASE_URL/users.php")"
