@@ -487,6 +487,14 @@ function logAction($action, $details = '')
     @file_put_contents($logFile, $logEntry, FILE_APPEND | LOCK_EX);
 }
 
+function auditLog(string $category, string $action, string $details = ''): void
+{
+    $safeCategory = preg_replace('/[^a-z0-9_.-]/i', '_', $category) ?: 'system';
+    $safeAction = preg_replace('/[^a-z0-9_.-]/i', '_', $action) ?: 'event';
+
+    logAction($safeCategory . '.' . $safeAction, $details);
+}
+
 function runControlledCommand($command)
 {
     $process = proc_open(
