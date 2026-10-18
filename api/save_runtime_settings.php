@@ -31,7 +31,6 @@ if (!is_array($config))
 }
 
 $fields = [
-    'BASE_URL',
     'LOCALHOST_URL',
     'PHPMYADMIN_URL',
     'LAMPP_PATH',

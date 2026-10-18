@@ -1,10 +1,46 @@
 <?php
 
 require_once __DIR__ . '/filesystem.php';
+require_once __DIR__ . '/config.php';
 
 function devpanelBackupsDir(): string
 {
-    return dirname(__DIR__, 2) . '/tmp/backups';
+    static $backupDir = null;
+
+    if ($backupDir !== null)
+    {
+        return $backupDir;
+    }
+
+    $lamppPath = rtrim((string) devpanelConfig('LAMPP_PATH', dirname(__DIR__, 4)), DIRECTORY_SEPARATOR);
+    $backupDir = $lamppPath . '/var/backups/devpanel';
+
+    if (!is_dir($backupDir))
+    {
+        @mkdir($backupDir, 0700, true);
+    }
+
+    $legacyDir = dirname(__DIR__, 2) . '/tmp/backups';
+
+    if (is_dir($legacyDir) && is_dir($backupDir))
+    {
+        foreach (glob($legacyDir . '/*.zip') ?: [] as $legacyBackup)
+        {
+            $target = $backupDir . '/' . basename($legacyBackup);
+
+            if (!is_file($target))
+            {
+                @rename($legacyBackup, $target);
+            }
+
+            if (is_file($target))
+            {
+                @chmod($target, 0660);
+            }
+        }
+    }
+
+    return $backupDir;
 }
 
 function devpanelBackupIndexFile(): string
@@ -15,6 +51,13 @@ function devpanelBackupIndexFile(): string
 function devpanelBackupSchedulesFile(): string
 {
     return dirname(__DIR__, 2) . '/logs/backup_schedules.json';
+}
+
+function devpanelBackupPathAllowed(string $path): bool
+{
+    return $path !== ''
+        && esRutaPermitida($path)
+        && (!function_exists('devpanelUserCanAccessPath') || devpanelUserCanAccessPath($path));
 }
 
 function devpanelLoadBackups(): array
@@ -80,7 +123,7 @@ function devpanelBackupScheduleIntervalSeconds(string $frequency): int
 
 function devpanelSaveBackupSchedule(string $path, string $frequency, bool $enabled = true): ?array
 {
-    if (!is_dir($path) || !esRutaPermitida($path))
+    if (!is_dir($path) || !devpanelBackupPathAllowed($path))
     {
         return null;
     }
@@ -125,6 +168,11 @@ function devpanelSaveBackupSchedule(string $path, string $frequency, bool $enabl
 
 function devpanelDeleteBackupSchedule(string $id): bool
 {
+    if (!devpanelFindBackupSchedule($id))
+    {
+        return false;
+    }
+
     $items = array_values(array_filter(
         devpanelLoadBackupSchedules(),
         static fn ($item) => ($item['id'] ?? '') !== $id
@@ -137,7 +185,7 @@ function devpanelFindBackupSchedule(string $id): ?array
 {
     foreach (devpanelLoadBackupSchedules() as $item)
     {
-        if (($item['id'] ?? '') === $id)
+        if (($item['id'] ?? '') === $id && devpanelBackupPathAllowed((string) ($item['path'] ?? '')))
         {
             return $item;
         }
@@ -170,7 +218,7 @@ function devpanelRunBackupScheduleNow(string $id): ?array
 
     foreach ($items as $index => $item)
     {
-        if (($item['id'] ?? '') !== $id || empty($item['path']) || !is_dir($item['path']))
+        if (($item['id'] ?? '') !== $id || empty($item['path']) || !is_dir($item['path']) || !devpanelBackupPathAllowed((string) $item['path']))
         {
             continue;
         }
@@ -202,7 +250,7 @@ function devpanelRunDueBackupSchedules(): array
 
     foreach ($items as &$item)
     {
-        if (empty($item['enabled']) || empty($item['path']) || !is_dir($item['path']))
+        if (empty($item['enabled']) || empty($item['path']) || !is_dir($item['path']) || !devpanelBackupPathAllowed((string) $item['path']))
         {
             continue;
         }
@@ -232,7 +280,7 @@ function devpanelRunDueBackupSchedules(): array
 
 function devpanelCreateProjectBackup(string $path): ?array
 {
-    if (!class_exists('ZipArchive') || !is_dir($path) || !esRutaPermitida($path))
+    if (!class_exists('ZipArchive') || !is_dir($path) || !devpanelBackupPathAllowed($path))
     {
         return null;
     }
@@ -279,11 +327,25 @@ function devpanelCreateProjectBackup(string $path): ?array
     {
         if ($file->isFile())
         {
-            $zip->addFile($file->getPathname(), substr($file->getPathname(), $baseLength));
+            $relativePath = substr($file->getPathname(), $baseLength);
+            $filename = $file->getFilename();
+
+            // Never include runtime credentials in an archive. This also keeps
+            // a DevPanel self-backup from carrying its local configuration.
+            if (
+                str_starts_with($filename, '.env')
+                || (realpath($path) === dirname(__DIR__, 2) && $relativePath === 'config.php')
+            )
+            {
+                continue;
+            }
+
+            $zip->addFile($file->getPathname(), $relativePath);
         }
     }
 
     $zip->close();
+    @chmod($zipPath, 0660);
 
     $item = [
         'id' => hash('sha256', $zipPath),
@@ -311,7 +373,7 @@ function devpanelFindBackup(string $file): ?array
 
     foreach (devpanelLoadBackups() as $backup)
     {
-        if (($backup['file'] ?? '') === $file)
+        if (($backup['file'] ?? '') === $file && devpanelBackupPathAllowed((string) ($backup['path'] ?? '')))
         {
             return $backup;
         }
@@ -364,7 +426,9 @@ function devpanelDeleteBackupFile(string $file): bool
 function devpanelCleanupBackups(int $keep = 10): array
 {
     $keep = max(1, min(100, $keep));
-    $items = devpanelLoadBackups();
+    $items = array_values(array_filter(devpanelLoadBackups(), static function (array $item): bool {
+        return devpanelBackupPathAllowed((string) ($item['path'] ?? ''));
+    }));
     $removed = [];
 
     usort($items, static function ($a, $b) {

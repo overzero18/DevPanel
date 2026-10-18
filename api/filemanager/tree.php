@@ -44,7 +44,7 @@ function devpanelBuildFolderTree(string $path, int $depth): array
 
         $child = $path . DIRECTORY_SEPARATOR . $item;
 
-        if (!is_dir($child) || !esRutaPermitida($child))
+        if (!is_dir($child) || !esRutaPermitida($child) || !devpanelUserCanAccessPath($child))
         {
             continue;
         }

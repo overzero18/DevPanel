@@ -129,6 +129,43 @@ function devpanelUserCanAccessProject(string $projectName, string $path = '', st
         || ($path !== '' && in_array($path, $access, true));
 }
 
+function devpanelUserCanAccessPath(string $path): bool
+{
+    if (getCurrentUserRole() === 'admin')
+    {
+        return true;
+    }
+
+    $basePath = realpath(obtenerRutaBase());
+    $realPath = realpath($path);
+
+    if (!$basePath || !$realPath)
+    {
+        return false;
+    }
+
+    $basePath = rtrim($basePath, DIRECTORY_SEPARATOR);
+
+    // The htdocs root is useful for navigation, but individual projects still
+    // need their own explicit access check.
+    if ($realPath === $basePath)
+    {
+        return true;
+    }
+
+    if (!str_starts_with($realPath, $basePath . DIRECTORY_SEPARATOR))
+    {
+        return false;
+    }
+
+    $relative = substr($realPath, strlen($basePath) + 1);
+    $projectName = strtok($relative, DIRECTORY_SEPARATOR);
+
+    return is_string($projectName)
+        && $projectName !== ''
+        && devpanelUserCanAccessProject($projectName, $basePath . DIRECTORY_SEPARATOR . $projectName);
+}
+
 function devpanelPublicApiTokens(): array
 {
     $tokens = devpanelStateTokenRows();

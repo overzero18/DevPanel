@@ -8,4 +8,8 @@ header('Content-Type: application/json');
 authenticateSession();
 requirePermission('backups');
 
-echo json_encode(['success' => true, 'backups' => devpanelLoadBackups()]);
+$backups = array_values(array_filter(devpanelLoadBackups(), static function (array $backup): bool {
+    return devpanelBackupPathAllowed((string) ($backup['path'] ?? ''));
+}));
+
+echo json_encode(['success' => true, 'backups' => $backups]);

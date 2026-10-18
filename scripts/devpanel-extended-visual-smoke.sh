@@ -24,48 +24,32 @@ test_page() {
     local name="$1"
     local url="$2"
     local selectors="$3"
+    local cookie_file
+    local html
 
     echo -n "Testing: $name ... "
 
-    node -e "
-        const fetch = require('node-fetch');
-        const { JSDOM } = require('jsdom');
+    cookie_file="$(mktemp)"
+    trap 'rm -f "$cookie_file"' RETURN
 
-        (async () => {
-            try {
-                const response = await fetch('$BASE_URL/api/auth/login.php', {
-                    method: 'POST',
-                    body: new URLSearchParams({password: '$DEVPANEL_TEST_PASSWORD'}),
-                });
+    curl -fsS -c "$cookie_file" \
+        -d "password=$DEVPANEL_TEST_PASSWORD" \
+        "$BASE_URL/api/login.php" | grep -q '"success":true'
 
-                if (!response.ok) throw new Error('Login failed');
+    html="$(curl -fsS -b "$cookie_file" "$BASE_URL/$url")"
 
-                const cookies = response.headers.get('set-cookie');
-                const docResponse = await fetch('$BASE_URL/$url', {
-                    headers: { 'Cookie': cookies || '' }
-                });
+    IFS=',' read -ra selector_list <<< "$selectors"
+    for selector in "${selector_list[@]}"; do
+        selector="$(echo "$selector" | xargs)"
+        fragment="$(printf '%s' "$selector" | sed -E 's/^[.#]//; s/^\[([^]=]+).*/\1/')"
 
-                if (!docResponse.ok) throw new Error('Page returned ' + docResponse.status);
+        if ! grep -Fq "$fragment" <<< "$html"; then
+            echo "❌ Missing selector: $selector"
+            return 1
+        fi
+    done
 
-                const html = await docResponse.text();
-                const dom = new JSDOM(html);
-                const { document } = dom.window;
-
-                const selectors = '$selectors'.split(',').map(s => s.trim()).filter(Boolean);
-                const missing = selectors.filter(s => !document.querySelector(s));
-
-                if (missing.length > 0) {
-                    console.error('Missing selectors:', missing.join(', '));
-                    process.exit(1);
-                }
-
-                console.log('✓');
-            } catch (err) {
-                console.error(err.message);
-                process.exit(1);
-            }
-        })();
-    " 2>/dev/null || true
+    echo "✓"
 }
 
 echo "🧪 Running expanded visual smoke tests..."

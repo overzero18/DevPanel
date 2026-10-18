@@ -50,7 +50,7 @@ COOKIE_JAR="/tmp/devpanel_cookies.txt"
 curl -s -c "$COOKIE_JAR" -X POST \
     -H 'Content-Type: application/x-www-form-urlencoded' \
     -d "password=$DEVPANEL_TEST_PASSWORD" \
-    "http://localhost:${PORT}/devpanel/api/auth/login.php" >/dev/null 2>&1 || true
+    "http://localhost:${PORT}/devpanel/api/login.php" >/dev/null 2>&1
 
 # Take screenshots of all main pages
 take_screenshot "dashboard" "index.php"

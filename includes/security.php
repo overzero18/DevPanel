@@ -295,6 +295,7 @@ function devpanelVerifyTwoFactorCode(string $code): bool
 
 function finishLogin(string $username, string $role): bool
 {
+    session_regenerate_id(true);
     $_SESSION[SESSION_TOKEN_KEY] = generateAuthToken();
     $_SESSION['auth_time'] = time();
     $_SESSION['user_name'] = $username;
@@ -579,6 +580,12 @@ function validatePath($path)
     if (!esRutaPermitida($normalized))
     {
         logAction('path_blocked', "Blocked: $path");
+        return false;
+    }
+
+    if (function_exists('devpanelUserCanAccessPath') && !devpanelUserCanAccessPath($normalized))
+    {
+        logAction('project_access_blocked', "Blocked: $path");
         return false;
     }
 

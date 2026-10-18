@@ -10,9 +10,13 @@ requirePermission('backups');
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET')
 {
+    $schedules = array_values(array_filter(devpanelLoadBackupSchedules(), static function (array $schedule): bool {
+        return devpanelBackupPathAllowed((string) ($schedule['path'] ?? ''));
+    }));
+
     echo json_encode([
         'success' => true,
-        'schedules' => devpanelLoadBackupSchedules(),
+        'schedules' => $schedules,
         'runner' => '/opt/lampp/bin/php ' . dirname(__DIR__, 2) . '/scripts/devpanel-backup-runner.php --due',
     ]);
     exit;

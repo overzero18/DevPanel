@@ -200,7 +200,6 @@ $runtimeSettings = devpanelConfig();
             <div class="runtime-settings-grid">
                 <?php
                 $runtimeFields = [
-                    'BASE_URL' => 'Base URL',
                     'LOCALHOST_URL' => 'Localhost URL',
                     'PHPMYADMIN_URL' => 'phpMyAdmin URL',
                     'LAMPP_PATH' => 'XAMPP path',
@@ -232,6 +231,7 @@ $runtimeSettings = devpanelConfig();
                     </div>
                 <?php endforeach; ?>
             </div>
+            <p class="text-secondary small mt-3 mb-0">La instalación actual se sirve en <code>/devpanel</code>. La ruta base no se puede cambiar desde esta pantalla porque los enlaces del panel dependen de ella.</p>
         </section>
 
         <section class="dashboard-card github-settings-card">

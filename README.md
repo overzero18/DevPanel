@@ -114,7 +114,7 @@ The project provides an intuitive interface to manage services, projects, deploy
 ## 🛒 Plugin System
 
 * Built-in plugin modules
-* One-click plugin installation from GitHub
+* Reviewed built-in plugin enable/disable management; the external marketplace stays disabled until sources are immutable and verified
 * Plugin enable/disable management
 * Built-in plugins: Docker, Database, Git, Backups, Terminal, Templates, Domains
 * Custom plugin support via manifest

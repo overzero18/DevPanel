@@ -53,7 +53,7 @@ login_and_get_session() {
     login_response=$(curl -s -c /tmp/devpanel_cookies.txt -X POST \
         -H 'Content-Type: application/x-www-form-urlencoded' \
         -d "password=$DEVPANEL_TEST_PASSWORD" \
-        "$BASE_URL/api/auth/login.php")
+        "$BASE_URL/api/login.php")
 
     if echo "$login_response" | grep -q '"success":true'; then
         echo "✓"

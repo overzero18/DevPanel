@@ -50,7 +50,7 @@ if (!validateCommand($command))
 }
 
 $safeCommand = getSafeTerminalCommand($command);
-$defaultWorkingDirectory = realpath(__DIR__ . '/..') ?: obtenerRutaBase();
+$defaultWorkingDirectory = realpath(obtenerRutaBase()) ?: obtenerRutaBase();
 
 if ($workingDirectory === '')
 {

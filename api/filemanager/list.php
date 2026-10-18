@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET')
 
 $path = $_GET['path'] ?? obtenerRutaBase();
 
-if (!esRutaPermitida($path))
+if (!validatePath($path))
 {
     echo json_encode([
 
@@ -46,6 +46,13 @@ if (!is_dir($path))
 $items = listarArchivosDirectorio($path);
 $currentPath = realpath($path);
 $basePath = realpath(obtenerRutaBase());
+
+if ($currentPath && $basePath && $currentPath === $basePath && function_exists('devpanelUserCanAccessPath'))
+{
+    $items = array_values(array_filter($items, static function (array $item): bool {
+        return devpanelUserCanAccessPath($item['path']);
+    }));
+}
 $breadcrumbs = [];
 
 if ($currentPath && $basePath)

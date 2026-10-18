@@ -64,6 +64,9 @@ function devpanelDoctorChecks(): array
     $configPermissions = is_file($configFile) ? (fileperms($configFile) & 0o077) : 0;
     $configPermissionsOk = !is_file($configFile) || $configPermissions === 0;
     $backupItems = devpanelLoadBackups();
+    $backupDir = devpanelBackupsDir();
+    $backupDirPermissions = is_dir($backupDir) ? (fileperms($backupDir) & 0o077) : 0o077;
+    $backupDirPrivate = is_dir($backupDir) && (($backupDirPermissions & 0o007) === 0);
     $latestBackup = $backupItems[0]['created_at'] ?? null;
     $latestBackupTimestamp = $latestBackup ? strtotime((string) $latestBackup) : false;
     $backupSeverity = !$backupItems ? 'warning' : (($latestBackupTimestamp && time() - $latestBackupTimestamp > 7 * 86400) ? 'warning' : 'ok');
@@ -80,6 +83,7 @@ function devpanelDoctorChecks(): array
         devpanelDoctorItem('htdocs escribible', is_writable($htdocsPath), 'Permite crear/clonar proyectos desde UI'),
         devpanelDoctorItem('logs escribible', is_writable($projectDir . '/logs'), $projectDir . '/logs'),
         devpanelDoctorItem('tmp escribible', is_writable($projectDir . '/tmp'), $projectDir . '/tmp'),
+        devpanelDoctorItem('Directorio de backups privado', $backupDirPrivate, $backupDirPrivate ? $backupDir : 'Crea el directorio fuera de htdocs con permisos 700 o 770.', $backupDirPrivate ? 'ok' : 'warning'),
         devpanelDoctorItem('LAMPP', is_file($lamppPath . '/lampp'), $lamppPath . '/lampp'),
         devpanelDoctorItem('PHP XAMPP', is_file($phpBinary), $phpBinary),
         devpanelDoctorItem('Git', $gitVersion['ok'], $gitVersion['output']),

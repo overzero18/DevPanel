@@ -22,7 +22,7 @@ $versions = [];
 
 foreach (devpanelLoadBackups() as $backup)
 {
-    if (($backup['project'] ?? '') !== $project)
+    if (($backup['project'] ?? '') !== $project || !devpanelBackupPathAllowed((string) ($backup['path'] ?? '')))
     {
         continue;
     }
